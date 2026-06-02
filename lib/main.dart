@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-// import 'live_tv.dart';
-// import 'epg.dart';
-// import 'filmes.dart';
-// import 'series.dart';
-// import 'favorites.dart';
-// import 'ajustes.dart';
-// import 'player.dart';
+import 'live_tv.dart';
+import 'epg.dart';
+import 'filmes.dart';
+import 'series.dart';
+import 'favorites.dart';
+import 'ajustes.dart';
+import 'player.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -464,27 +464,27 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   _navigateToLiveTV() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()));
   }
 
   _navigateToEPG() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()));
   }
 
   _navigateToFilmes() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()));
   }
 
   _navigateToSeries() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()));
   }
 
   _navigateToFavorites() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()));
   }
 
   _navigateToAjustes() {
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()));
   }
 
   @override
