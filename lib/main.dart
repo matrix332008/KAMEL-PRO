@@ -42,6 +42,7 @@ class KamelProApp extends StatelessWidget {
   }
 }
 
+// ============= SPLASH SCREEN =============
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -78,6 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ============= LOGIN SELECTION =============
 class LoginSelection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -151,9 +153,17 @@ class __LoginCardState extends State<_LoginCard> {
     return Focus(
       autofocus: widget.autofocus,
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: InkWell(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
           width: 280,
@@ -178,6 +188,7 @@ class __LoginCardState extends State<_LoginCard> {
   }
 }
 
+// ============= XTREAM LOGIN =============
 class XtreamLogin extends StatefulWidget {
   @override
   _XtreamLoginState createState() => _XtreamLoginState();
@@ -196,6 +207,14 @@ class _XtreamLoginState extends State<XtreamLogin> {
   void initState() {
     super.initState();
     _serverFocus.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _serverFocus.dispose();
+    _userFocus.dispose();
+    _passFocus.dispose();
+    super.dispose();
   }
 
   _login() async {
@@ -243,41 +262,48 @@ class _XtreamLoginState extends State<XtreamLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/background.jpeg'), fit: BoxFit.cover)),
-        child: Column(
-          children: [
-            Padding(padding: EdgeInsets.all(20), child: Image.asset('assets/logo.png', width: 200)),
-            Spacer(),
-            Container(
-              width: 500,
-              child: Column(
-                children: [
-                  _InputField(controller: _serverController, hint: 'SERVER URL', color: Colors.cyan, focusNode: _serverFocus, nextFocus: _userFocus),
-                  SizedBox(height: 20),
-                  _InputField(controller: _userController, hint: 'USERNAME', color: Colors.cyan, focusNode: _userFocus, nextFocus: _passFocus),
-                  SizedBox(height: 20),
-                  _InputField(controller: _passController, hint: 'PASSWORD', color: Colors.cyan, obscure: true, focusNode: _passFocus),
-                  SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _Button(text: 'LOGIN', color: Colors.cyan, onPressed: _loading? null : _login),
-                      SizedBox(width: 20),
-                      _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              Image.asset('assets/logo.png', width: 200),
+              SizedBox(height: 40),
+              Container(
+                width: 500,
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _InputField(controller: _serverController, hint: 'SERVER URL', color: Colors.cyan, focusNode: _serverFocus, nextFocus: _userFocus),
+                    SizedBox(height: 20),
+                    _InputField(controller: _userController, hint: 'USERNAME', color: Colors.cyan, focusNode: _userFocus, nextFocus: _passFocus),
+                    SizedBox(height: 20),
+                    _InputField(controller: _passController, hint: 'PASSWORD', color: Colors.cyan, obscure: true, focusNode: _passFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
+                    SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _Button(text: 'LOGIN', color: Colors.cyan, onPressed: _loading? null : _login),
+                        SizedBox(width: 20),
+                        _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    SizedBox(height: 50),
+                  ],
+                ),
               ),
-            ),
-            Spacer(),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// ============= M3U LOGIN =============
 class M3ULogin extends StatefulWidget {
   @override
   _M3ULoginState createState() => _M3ULoginState();
@@ -288,11 +314,19 @@ class _M3ULoginState extends State<M3ULogin> {
   final _nameController = TextEditingController();
   bool _loading = false;
   final _urlFocus = FocusNode();
+  final _nameFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _urlFocus.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _urlFocus.dispose();
+    _nameFocus.dispose();
+    super.dispose();
   }
 
   _login() async {
@@ -318,39 +352,46 @@ class _M3ULoginState extends State<M3ULogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/background.jpeg'), fit: BoxFit.cover)),
-        child: Column(
-          children: [
-            Padding(padding: EdgeInsets.all(20), child: Image.asset('assets/logo.png', width: 200)),
-            Spacer(),
-            Container(
-              width: 500,
-              child: Column(
-                children: [
-                  _InputField(controller: _urlController, hint: 'M3U URL', color: Colors.red, focusNode: _urlFocus),
-                  SizedBox(height: 20),
-                  _InputField(controller: _nameController, hint: 'PLAYLIST NAME (Optional)', color: Colors.red),
-                  SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _Button(text: 'LOGIN', color: Colors.red, onPressed: _loading? null : _login),
-                      SizedBox(width: 20),
-                      _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              Image.asset('assets/logo.png', width: 200),
+              SizedBox(height: 40),
+              Container(
+                width: 500,
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _InputField(controller: _urlController, hint: 'M3U URL', color: Colors.red, focusNode: _urlFocus, nextFocus: _nameFocus),
+                    SizedBox(height: 20),
+                    _InputField(controller: _nameController, hint: 'PLAYLIST NAME (Optional)', color: Colors.red, focusNode: _nameFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
+                    SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _Button(text: 'LOGIN', color: Colors.red, onPressed: _loading? null : _login),
+                        SizedBox(width: 20),
+                        _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    SizedBox(height: 50),
+                  ],
+                ),
               ),
-            ),
-            Spacer(),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// ============= MAIN MENU =============
 class MainMenu extends StatelessWidget {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -442,9 +483,17 @@ class __MainCardState extends State<_MainCard> {
     return Focus(
       autofocus: widget.autofocus,
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: InkWell(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
           width: 300,
@@ -489,9 +538,17 @@ class __BottomButtonState extends State<_BottomButton> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: InkWell(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(border: Border.all(color: _focused? widget.color : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
@@ -523,9 +580,17 @@ class __LanguageButtonState extends State<_LanguageButton> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: InkWell(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(border: Border.all(color: _focused? Colors.white70 : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
@@ -557,6 +622,15 @@ class __LogoutButtonState extends State<_LogoutButton> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onPressed();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
       child: OutlinedButton(
         onPressed: widget.onPressed,
         style: OutlinedButton.styleFrom(side: BorderSide(color: _focused? Colors.white : Colors.white70, width: _focused? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
@@ -574,8 +648,10 @@ class _InputField extends StatefulWidget {
   final bool autofocus;
   final FocusNode? focusNode;
   final FocusNode? nextFocus;
+  final TextInputAction? textInputAction;
+  final Function(String)? onSubmitted;
 
-  _InputField({required this.controller, required this.hint, required this.color, this.obscure = false, this.autofocus = false, this.focusNode, this.nextFocus});
+  _InputField({required this.controller, required this.hint, required this.color, this.obscure = false, this.autofocus = false, this.focusNode, this.nextFocus, this.textInputAction, this.onSubmitted});
 
   @override
   __InputFieldState createState() => __InputFieldState();
@@ -593,10 +669,15 @@ class __InputFieldState extends State<_InputField> {
         obscureText: widget.obscure,
         autofocus: widget.autofocus,
         focusNode: widget.focusNode,
-        style: TextStyle(color: Colors.white),
-        onSubmitted: (_) {
-          if (widget.nextFocus!= null) widget.nextFocus!.requestFocus();
+        textInputAction: widget.textInputAction?? TextInputAction.next,
+        onSubmitted: (value) {
+          if (widget.onSubmitted!= null) {
+            widget.onSubmitted!(value);
+          } else if (widget.nextFocus!= null) {
+            widget.nextFocus!.requestFocus();
+          }
         },
+        style: TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: widget.hint,
           hintStyle: TextStyle(color: Colors.white54),
@@ -628,6 +709,15 @@ class __ButtonState extends State<_Button> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            if (widget.onPressed!= null) widget.onPressed!();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
       child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: _focused? widget.color : Colors.transparent, width: 3)),
         child: ElevatedButton(
