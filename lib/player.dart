@@ -15,7 +15,6 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen> {
   late VideoPlayerController _controller;
   bool _showControls = true;
-  bool _isPlaying = false;
 
   @override
   void initState() {
@@ -27,37 +26,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
     ]);
 
     _controller = VideoPlayerController.network(widget.url)
-      ..initialize().then((_) {
+     ..initialize().then((_) {
         setState(() {});
         _controller.play();
-        _isPlaying = true;
-        _hideControlsAfterDelay();
+        _hideControls();
       });
-
-    _controller.addListener(() {
-      if (_controller.value.isPlaying != _isPlaying) {
-        setState(() {
-          _isPlaying = _controller.value.isPlaying;
-        });
-      }
-    });
   }
 
-  _hideControlsAfterDelay() {
+  _hideControls() {
     Future.delayed(Duration(seconds: 3), () {
       if (mounted && _controller.value.isPlaying) {
         setState(() => _showControls = false);
-      }
-    });
-  }
-
-  _togglePlayPause() {
-    setState(() {
-      if (_controller.value.isPlaying) {
-        _controller.pause();
-      } else {
-        _controller.play();
-        _hideControlsAfterDelay();
       }
     });
   }
@@ -66,10 +45,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void dispose() {
     _controller.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
     super.dispose();
   }
 
@@ -79,14 +54,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: () {
-          setState(() => _showControls = !_showControls);
-          if (_showControls) _hideControlsAfterDelay();
+          setState(() => _showControls =!_showControls);
+          if (_showControls) _hideControls();
         },
         child: Stack(
           children: [
             Center(
               child: _controller.value.isInitialized
-                  ? AspectRatio(
+                 ? AspectRatio(
                       aspectRatio: _controller.value.aspectRatio,
                       child: VideoPlayer(_controller),
                     )
@@ -117,34 +92,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         ],
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.replay_10, color: Colors.white, size: 40),
-                          onPressed: () {
-                            final pos = _controller.value.position - Duration(seconds: 10);
-                            _controller.seekTo(pos);
-                          },
-                        ),
-                        SizedBox(width: 40),
-                        IconButton(
-                          icon: Icon(
-                            _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                            color: Colors.white,
-                            size: 70,
-                          ),
-                          onPressed: _togglePlayPause,
-                        ),
-                        SizedBox(width: 40),
-                        IconButton(
-                          icon: Icon(Icons.forward_10, color: Colors.white, size: 40),
-                          onPressed: () {
-                            final pos = _controller.value.position + Duration(seconds: 10);
-                            _controller.seekTo(pos);
-                          },
-                        ),
-                      ],
+                    IconButton(
+                      icon: Icon(
+                        _controller.value.isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled,
+                        color: Colors.white,
+                        size: 70,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _controller.value.isPlaying? _controller.pause() : _controller.play();
+                        });
+                      },
                     ),
                     SizedBox(height: 20),
                   ],
