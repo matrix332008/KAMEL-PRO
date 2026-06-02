@@ -25,12 +25,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: Arial
-      fonts:
-        - asset: fonts/Arial.ttf
-        - asset: fonts/ArialBold.ttf
-          weight: 700
   assets:
     - assets/background.jpeg
     - assets/logo.png
