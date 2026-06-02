@@ -19,9 +19,6 @@ dependencies:
   http: ^1.2.2
   shared_preferences: ^2.2.3
   
-  # D-Pad Support للريموت
-  flutter_d_pad: ^1.0.1
-  
   # UI
   cupertino_icons: ^1.0.6
   intl: ^0.19.0
