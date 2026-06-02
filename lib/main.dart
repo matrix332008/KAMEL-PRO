@@ -3,10 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+// import 'live_tv.dart';
+// import 'epg.dart';
+// import 'filmes.dart';
+// import 'series.dart';
+// import 'favorites.dart';
+// import 'ajustes.dart';
+// import 'player.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
@@ -450,12 +457,34 @@ class MainMenu extends StatefulWidget {
 }
 
 class _MainMenuState extends State<MainMenu> {
-  int _focusedIndex = 0;
-
   _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
+  }
+
+  _navigateToLiveTV() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()));
+  }
+
+  _navigateToEPG() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()));
+  }
+
+  _navigateToFilmes() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()));
+  }
+
+  _navigateToSeries() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()));
+  }
+
+  _navigateToFavorites() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()));
+  }
+
+  _navigateToAjustes() {
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()));
   }
 
   @override
@@ -490,18 +519,18 @@ class _MainMenuState extends State<MainMenu> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, index: 0),
+                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, onTap: _navigateToLiveTV),
                         SizedBox(width: 40),
-                        _MainCard(title: 'EPG', image: 'assets/epg.png', color: Colors.red, index: 1),
+                        _MainCard(title: 'EPG', image: 'assets/epg.png', color: Colors.red, onTap: _navigateToEPG),
                       ],
                     ),
                     SizedBox(height: 40),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _MainCard(title: 'FILMES', image: 'assets/filmes.png', color: Colors.red, index: 2),
+                        _MainCard(title: 'FILMES', image: 'assets/filmes.png', color: Colors.red, onTap: _navigateToFilmes),
                         SizedBox(width: 40),
-                        _MainCard(title: 'SERIES', image: 'assets/series.png', color: Colors.orange, index: 3),
+                        _MainCard(title: 'SERIES', image: 'assets/series.png', color: Colors.orange, onTap: _navigateToSeries),
                       ],
                     ),
                   ],
@@ -513,7 +542,7 @@ class _MainMenuState extends State<MainMenu> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _BottomButton(icon: Icons.favorite, label: 'FAVORITOS', color: Colors.red),
+                  _BottomButton(icon: Icons.favorite, label: 'FAVORITOS', color: Colors.red, onTap: _navigateToFavorites),
                   Row(
                     children: [
                       Icon(Icons.whatsapp, color: Colors.green, size: 20),
@@ -521,7 +550,7 @@ class _MainMenuState extends State<MainMenu> {
                       Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70)),
                     ],
                   ),
-                  _LanguageButton(),
+                  _LanguageButton(onTap: _navigateToAjustes),
                 ],
               ),
             ),
@@ -536,9 +565,9 @@ class _MainCard extends StatefulWidget {
   final String title;
   final String image;
   final Color color;
-  final int index;
+  final VoidCallback onTap;
   
-  _MainCard({required this.title, required this.image, required this.color, required this.index});
+  _MainCard({required this.title, required this.image, required this.color, required this.onTap});
   
   @override
   __MainCardState createState() => __MainCardState();
@@ -551,40 +580,43 @@ class __MainCardState extends State<_MainCard> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        width: 300,
-        height: 200,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: widget.color, width: _focused ? 4 : 2),
-          boxShadow: _focused ? [
-            BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)
-          ] : [],
-          image: DecorationImage(
-            image: AssetImage(widget.image),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(18),
-                bottomRight: Radius.circular(18),
-              ),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          width: 300,
+          height: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: widget.color, width: _focused ? 4 : 2),
+            boxShadow: _focused ? [
+              BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)
+            ] : [],
+            image: DecorationImage(
+              image: AssetImage(widget.image),
+              fit: BoxFit.cover,
             ),
-            child: Text(
-              widget.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: widget.color,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+          ),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                ),
+              ),
+              child: Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: widget.color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -598,38 +630,52 @@ class _BottomButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
+  final VoidCallback onTap;
   
-  _BottomButton({required this.icon, required this.label, required this.color});
+  _BottomButton({required this.icon, required this.label, required this.color, required this.onTap});
   
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 40),
-        SizedBox(height: 5),
-        Text(label, style: TextStyle(color: color, fontSize: 14)),
-      ],
+    return Focus(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 40),
+            SizedBox(height: 5),
+            Text(label, style: TextStyle(color: color, fontSize: 14)),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _LanguageButton extends StatelessWidget {
+  final VoidCallback onTap;
+  _LanguageButton({required this.onTap});
+  
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
+    return Focus(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
           children: [
-            Text('🇹🇳', style: TextStyle(fontSize: 24)),
-            SizedBox(width: 5),
-            Text('🇫🇷', style: TextStyle(fontSize: 24)),
-            SizedBox(width: 5),
-            Text('🇨🇿', style: TextStyle(fontSize: 24)),
+            Row(
+              children: [
+                Text('🇹🇳', style: TextStyle(fontSize: 24)),
+                SizedBox(width: 5),
+                Text('🇫🇷', style: TextStyle(fontSize: 24)),
+                SizedBox(width: 5),
+                Text('🇨🇿', style: TextStyle(fontSize: 24)),
+              ],
+            ),
+            SizedBox(height: 5),
+            Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
           ],
         ),
-        SizedBox(height: 5),
-        Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
-      ],
+      ),
     );
   }
 }
@@ -640,13 +686,15 @@ class _LogoutButton extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: Colors.white70),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    return Focus(
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.white70),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
       ),
-      child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
     );
   }
 }
@@ -692,14 +740,16 @@ class _Button extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    return Focus(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        ),
+        child: Text(text, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 }
