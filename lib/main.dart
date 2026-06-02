@@ -25,14 +25,19 @@ void main() async {
 class KamelProApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KAMEL PRO',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.black,
-        textTheme: TextTheme(bodyMedium: TextStyle()),
+    return Shortcuts(
+      shortcuts: <LogicalKeySet, Intent>{
+        LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
+      },
+      child: MaterialApp(
+        title: 'KAMEL PRO',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: Colors.black,
+          textTheme: TextTheme(bodyMedium: TextStyle()),
+        ),
+        home: SplashScreen(),
       ),
-      home: SplashScreen(),
     );
   }
 }
@@ -138,6 +143,7 @@ class LoginSelection extends StatelessWidget {
                   title: 'XTREAM CODES',
                   icon: Icons.dns,
                   color: Colors.blue,
+                  autofocus: true,
                   onTap: () => Navigator.push(context, 
                     MaterialPageRoute(builder: (_) => XtreamLogin())),
                 ),
@@ -178,8 +184,9 @@ class _LoginCard extends StatefulWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final bool autofocus;
   
-  _LoginCard({required this.title, required this.icon, required this.color, required this.onTap});
+  _LoginCard({required this.title, required this.icon, required this.color, required this.onTap, this.autofocus = false});
   
   @override
   __LoginCardState createState() => __LoginCardState();
@@ -191,9 +198,11 @@ class __LoginCardState extends State<_LoginCard> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      autofocus: widget.autofocus,
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: GestureDetector(
+      child: InkWell,
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
           width: 280,
@@ -316,7 +325,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
               width: 500,
               child: Column(
                 children: [
-                  _InputField(controller: _serverController, hint: 'SERVER URL', color: Colors.cyan),
+                  _InputField(controller: _serverController, hint: 'SERVER URL', color: Colors.cyan, autofocus: true),
                   SizedBox(height: 20),
                   _InputField(controller: _userController, hint: 'USERNAME', color: Colors.cyan),
                   SizedBox(height: 20),
@@ -417,7 +426,7 @@ class _M3ULoginState extends State<M3ULogin> {
               width: 500,
               child: Column(
                 children: [
-                  _InputField(controller: _urlController, hint: 'M3U URL', color: Colors.red),
+                  _InputField(controller: _urlController, hint: 'M3U URL', color: Colors.red, autofocus: true),
                   SizedBox(height: 20),
                   _InputField(controller: _nameController, hint: 'PLAYLIST NAME (Optional)', color: Colors.red),
                   SizedBox(height: 30),
@@ -520,7 +529,7 @@ class _MainMenuState extends State<MainMenu> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, onTap: _navigateToLiveTV),
+                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: _navigateToLiveTV),
                         SizedBox(width: 40),
                         _MainCard(title: 'EPG', image: 'assets/epg.png', color: Colors.red, onTap: _navigateToEPG),
                       ],
@@ -567,8 +576,9 @@ class _MainCard extends StatefulWidget {
   final String image;
   final Color color;
   final VoidCallback onTap;
+  final bool autofocus;
   
-  _MainCard({required this.title, required this.image, required this.color, required this.onTap});
+  _MainCard({required this.title, required this.image, required this.color, required this.onTap, this.autofocus = false});
   
   @override
   __MainCardState createState() => __MainCardState();
@@ -580,9 +590,11 @@ class __MainCardState extends State<_MainCard> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      autofocus: widget.autofocus,
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
-      child: GestureDetector(
+      child: InkWell,
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(20),
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
           width: 300,
@@ -627,7 +639,7 @@ class __MainCardState extends State<_MainCard> {
   }
 }
 
-class _BottomButton extends StatelessWidget {
+class _BottomButton extends StatefulWidget {
   final IconData icon;
   final String label;
   final Color color;
@@ -636,62 +648,102 @@ class _BottomButton extends StatelessWidget {
   _BottomButton({required this.icon, required this.label, required this.color, required this.onTap});
   
   @override
+  __BottomButtonState createState() => __BottomButtonState();
+}
+
+class __BottomButtonState extends State<_BottomButton> {
+  bool _focused = false;
+  
+  @override
   Widget build(BuildContext context) {
     return Focus(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 40),
-            SizedBox(height: 5),
-            Text(label, style: TextStyle(color: color, fontSize: 14)),
-          ],
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      child: InkWell,
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Icon(widget.icon, color: widget.color, size: 40),
+              SizedBox(height: 5),
+              Text(widget.label, style: TextStyle(color: widget.color, fontSize: 14)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _LanguageButton extends StatelessWidget {
+class _LanguageButton extends StatefulWidget {
   final VoidCallback onTap;
   _LanguageButton({required this.onTap});
   
   @override
+  __LanguageButtonState createState() => __LanguageButtonState();
+}
+
+class __LanguageButtonState extends State<_LanguageButton> {
+  bool _focused = false;
+  
+  @override
   Widget build(BuildContext context) {
     return Focus(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Text('🇹🇳', style: TextStyle(fontSize: 24)),
-                SizedBox(width: 5),
-                Text('🇫🇷', style: TextStyle(fontSize: 24)),
-                SizedBox(width: 5),
-                Text('🇨🇿', style: TextStyle(fontSize: 24)),
-              ],
-            ),
-            SizedBox(height: 5),
-            Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
-          ],
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      child: InkWell,
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            border: Border.all(color: _focused ? Colors.white70 : Colors.transparent, width: 2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text('🇹🇳', style: TextStyle(fontSize: 24)),
+                  SizedBox(width: 5),
+                  Text('🇫🇷', style: TextStyle(fontSize: 24)),
+                  SizedBox(width: 5),
+                  Text('🇨🇿', style: TextStyle(fontSize: 24)),
+                ],
+              ),
+              SizedBox(height: 5),
+              Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _LogoutButton extends StatelessWidget {
+class _LogoutButton extends StatefulWidget {
   final VoidCallback onPressed;
   _LogoutButton({required this.onPressed});
   
   @override
+  __LogoutButtonState createState() => __LogoutButtonState();
+}
+
+class __LogoutButtonState extends State<_LogoutButton> {
+  bool _focused = false;
+  
+  @override
   Widget build(BuildContext context) {
     return Focus(
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: widget.onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.white70),
+          side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
         child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
@@ -700,39 +752,51 @@ class _LogoutButton extends StatelessWidget {
   }
 }
 
-class _InputField extends StatelessWidget {
+class _InputField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final Color color;
   final bool obscure;
+  final bool autofocus;
   
-  _InputField({required this.controller, required this.hint, required this.color, this.obscure = false});
+  _InputField({required this.controller, required this.hint, required this.color, this.obscure = false, this.autofocus = false});
+  
+  @override
+  __InputFieldState createState() => __InputFieldState();
+}
+
+class __InputFieldState extends State<_InputField> {
+  bool _focused = false;
   
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      style: TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.white54),
-        filled: true,
-        fillColor: Colors.black.withOpacity(0.5),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: color, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: color, width: 3),
+    return Focus(
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      child: TextField(
+        controller: widget.controller,
+        obscureText: widget.obscure,
+        autofocus: widget.autofocus,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: TextStyle(color: Colors.white54),
+          filled: true,
+          fillColor: Colors.black.withOpacity(0.5),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: widget.color, width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: widget.color, width: 3),
+          ),
         ),
       ),
     );
   }
 }
 
-class _Button extends StatelessWidget {
+class _Button extends StatefulWidget {
   final String text;
   final Color color;
   final VoidCallback? onPressed;
@@ -740,16 +804,30 @@ class _Button extends StatelessWidget {
   _Button({required this.text, required this.color, this.onPressed});
   
   @override
+  __ButtonState createState() => __ButtonState();
+}
+
+class __ButtonState extends State<_Button> {
+  bool _focused = false;
+  
+  @override
   Widget build(BuildContext context) {
     return Focus(
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 3),
         ),
-        child: Text(text, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        child: ElevatedButton(
+          onPressed: widget.onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: widget.color,
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          ),
+          child: Text(widget.text, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
       ),
     );
   }
