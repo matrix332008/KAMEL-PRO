@@ -30,7 +30,7 @@ class KamelProApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
-        textTheme: TextTheme(bodyMedium: TextStyle(fontFamily: 'Arial')),
+        textTheme: TextTheme(bodyMedium: TextStyle()),
       ),
       home: SplashScreen(),
     );
