@@ -121,13 +121,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
             Expanded(
               child: _loading
-               ? Center(child: CircularProgressIndicator(color: Colors.cyan))
+              ? Center(child: CircularProgressIndicator(color: Colors.cyan))
                   : ListView(
                       padding: EdgeInsets.all(40),
                       children: [
                         // معلومات الحساب
                         _SettingsCard(
-                          icon: Icons.person,
+                          icon: Icon(Icons.person),
                           title: 'معلومات الحساب',
                           subtitle: _username,
                           color: Colors.blue,
@@ -136,7 +136,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                         // تاريخ الانتهاء
                         _SettingsCard(
-                          icon: Icons.calendar_today,
+                          icon: Icon(Icons.calendar_today),
                           title: 'تاريخ انتهاء الاشتراك',
                           subtitle: _expiryDate,
                           color: Colors.orange,
@@ -145,7 +145,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                         // السيرفر
                         _SettingsCard(
-                          icon: Icons.dns,
+                          icon: Icon(Icons.dns),
                           title: 'السيرفر',
                           subtitle: _server,
                           color: Colors.purple,
