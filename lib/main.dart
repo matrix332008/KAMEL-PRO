@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'live_tv.dart';
 import 'epg.dart';
 import 'filmes.dart';
@@ -156,7 +157,7 @@ class LoginSelection extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.whatsapp, color: Colors.green, size: 20),
+                  FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                   SizedBox(width: 8),
                   Text(
                     'WhatsApp +420 777099379',
@@ -338,7 +339,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.whatsapp, color: Colors.green, size: 20),
+                  FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                   SizedBox(width: 8),
                   Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70)),
                 ],
@@ -437,7 +438,7 @@ class _M3ULoginState extends State<M3ULogin> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.whatsapp, color: Colors.green, size: 20),
+                  FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                   SizedBox(width: 8),
                   Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70)),
                 ],
@@ -545,7 +546,7 @@ class _MainMenuState extends State<MainMenu> {
                   _BottomButton(icon: Icons.favorite, label: 'FAVORITOS', color: Colors.red, onTap: _navigateToFavorites),
                   Row(
                     children: [
-                      Icon(Icons.whatsapp, color: Colors.green, size: 20),
+                      FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                       SizedBox(width: 8),
                       Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70)),
                     ],
