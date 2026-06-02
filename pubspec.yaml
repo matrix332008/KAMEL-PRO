@@ -1,0 +1,53 @@
+name: kamel_pro
+description: "KAMEL PRO IPTV - Android TV App"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Video Player
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.1
+  media_kit_libs_video: ^1.0.4
+  
+  # HTTP & Storage
+  http: ^1.2.2
+  shared_preferences: ^2.2.3
+  
+  # D-Pad Support للريموت
+  flutter_d_pad: ^1.0.1
+  
+  # UI
+  cupertino_icons: ^1.0.6
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # الخطوط
+  fonts:
+    - family: Arial
+      fonts:
+        - asset: fonts/Arial.ttf
+        - asset: fonts/ArialBold.ttf
+          weight: 700
+
+  # الصور والـ Assets
+  assets:
+    - assets/background.jpeg
+    - assets/logo.png
+    - assets/avatar.png
+    - assets/live.png
+    - assets/epg.png
+    - assets/filmes.png
+    - assets/series.png
