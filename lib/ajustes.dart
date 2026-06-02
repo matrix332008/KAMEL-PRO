@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'main.dart';
 
 class AjustesScreen extends StatefulWidget {
@@ -120,7 +121,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
             Expanded(
               child: _loading
-                ? Center(child: CircularProgressIndicator(color: Colors.cyan))
+               ? Center(child: CircularProgressIndicator(color: Colors.cyan))
                   : ListView(
                       padding: EdgeInsets.all(40),
                       children: [
@@ -132,7 +133,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           color: Colors.blue,
                         ),
                         SizedBox(height: 20),
-                        
+
                         // تاريخ الانتهاء
                         _SettingsCard(
                           icon: Icons.calendar_today,
@@ -187,7 +188,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
                         // WhatsApp
                         _SettingsCard(
-                          icon: Icons.whatsapp,
+                          icon: FaIcon(FontAwesomeIcons.whatsapp),
                           title: 'الدعم الفني',
                           subtitle: '+420 777099379',
                           color: Colors.green,
@@ -218,7 +219,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 }
 
 class _SettingsCard extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final String title;
   final String subtitle;
   final Color color;
@@ -236,7 +237,10 @@ class _SettingsCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 40),
+          IconTheme(
+            data: IconThemeData(color: color, size: 40),
+            child: icon,
+          ),
           SizedBox(width: 20),
           Expanded(
             child: Column(
