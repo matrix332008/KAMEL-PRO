@@ -47,10 +47,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<void> _initPlayer() async {
     final p = await SharedPreferences.getInstance();
-    _isVlc = (p.getString('player')?? 'vlc') == 'vlc';
+    // Live ديما Exo باش ما يكراشيش، VOD حسب اختيارك
+    _isVlc = isLive? false : (p.getString('player')?? 'vlc') == 'vlc';
     try {
       if (_isVlc) {
-        _vlc = VlcPlayerController.network(widget.url, hwAcc: HwAcc.full, autoPlay: true, options: VlcPlayerOptions());
+        _vlc = VlcPlayerController.network(widget.url, hwAcc: HwAcc.auto, autoPlay: true, options: VlcPlayerOptions());
       } else {
         _exo = VideoPlayerController.networkUrl(Uri.parse(widget.url));
         await _exo!.initialize();
@@ -175,6 +176,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   _playChannel(_listIndex);
                 } else if (key == LogicalKeyboardKey.goBack) {
                   setState(() => _showChannelList = false);
+                  return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               } else {
@@ -184,7 +186,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                 } else if (key == LogicalKeyboardKey.goBack) {
-                  Navigator.maybePop(context);
+                  return KeyEventResult.ignored; // خلي النظام يرجع للـ LiveTV
                 }
                 return KeyEventResult.handled;
               }
@@ -195,7 +197,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                 _togglePlay(); _showControlsTemporarily();
               } else if (key == LogicalKeyboardKey.goBack) {
-                Navigator.maybePop(context);
+                return KeyEventResult.ignored; // يرجع للحلقات/الأفلام
               }
               return KeyEventResult.handled;
             }
@@ -204,17 +206,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
         },
         child: Stack(
           children: [
-            // فيديو يملأ الشاشة بلا باندة
             Positioned.fill(
               child: _isVlc
-                 ? (_vlc!= null
-                     ? FittedBox(
+                ? (_vlc!= null
+                    ? FittedBox(
                           fit: BoxFit.cover,
                           child: SizedBox(width: 1920, height: 1080, child: VlcPlayer(controller: _vlc!, aspectRatio: 16/9)),
                         )
                       : Center(child: CircularProgressIndicator()))
                   : (_exo!= null && _exo!.value.isInitialized
-                     ? FittedBox(
+                    ? FittedBox(
                           fit: BoxFit.cover,
                           child: SizedBox(
                             width: _exo!.value.size.width,
@@ -224,7 +225,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         )
                       : Center(child: CircularProgressIndicator())),
             ),
-            // Info من فوق
             if (_showInfo)
               Positioned(
                 top: 30, left: 30, right: 30,
@@ -255,7 +255,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                 ),
               ),
-            // Controls VOD
             if (!isLive && _showControls)
               Positioned(
                 bottom: 0, left: 0, right: 0,
@@ -287,7 +286,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                 ),
               ),
-            // لستة القنوات أوضح
             if (isLive && _showChannelList)
               Positioned(
                 right: 30, top: 80, bottom: 80, width: 380,
