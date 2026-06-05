@@ -29,6 +29,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Timer? _hideTimer;
   Timer? _controlsTimer;
   Timer? _updateTimer;
+  final ScrollController _channelScroll = ScrollController();
 
   bool get isLive => widget.channelList!= null;
 
@@ -115,6 +116,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
     )));
   }
 
+  void _scrollToIndex() {
+    if (_channelScroll.hasClients) {
+      _channelScroll.animateTo(_listIndex * 56.0, duration: Duration(milliseconds: 150), curve: Curves.easeOut);
+    }
+  }
+
   @override
   void dispose() {
     _vlc?.dispose();
@@ -122,6 +129,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _hideTimer?.cancel();
     _controlsTimer?.cancel();
     _updateTimer?.cancel();
+    _channelScroll.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -148,51 +156,73 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: RawKeyboardListener(
-        focusNode: FocusNode()..requestFocus(),
-        onKey: (e) {
-          if (e is RawKeyDownEvent) {
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
             _showInfoTemporarily();
+            final key = event.logicalKey;
+
             if (isLive) {
               if (_showChannelList) {
-                // داخل الليستة
-                if (e.logicalKey == LogicalKeyboardKey.arrowUp) {
+                if (key == LogicalKeyboardKey.arrowUp) {
                   setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
-                }
-                if (e.logicalKey == LogicalKeyboardKey.arrowDown) {
+                  _scrollToIndex();
+                } else if (key == LogicalKeyboardKey.arrowDown) {
                   setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
-                }
-                if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter) {
+                  _scrollToIndex();
+                } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                   _playChannel(_listIndex);
-                }
-                if (e.logicalKey == LogicalKeyboardKey.goBack) {
+                } else if (key == LogicalKeyboardKey.goBack) {
                   setState(() => _showChannelList = false);
                 }
+                return KeyEventResult.handled;
               } else {
-                // فيديو شغال
-                if (e.logicalKey == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
-                if (e.logicalKey == LogicalKeyboardKey.arrowDown) _nextChannel(1);
-                if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter) {
+                if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
+                else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
+                else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                   setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
+                } else if (key == LogicalKeyboardKey.goBack) {
+                  Navigator.maybePop(context);
                 }
+                return KeyEventResult.handled;
               }
             } else {
               // VOD
-              if (e.logicalKey == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
-              if (e.logicalKey == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
-              if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter || e.logicalKey == LogicalKeyboardKey.mediaPlayPause) {
+              if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
+              else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
+              else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                 _togglePlay(); _showControlsTemporarily();
+              } else if (key == LogicalKeyboardKey.goBack) {
+                Navigator.maybePop(context);
               }
+              return KeyEventResult.handled;
             }
-            if (e.logicalKey == LogicalKeyboardKey.goBack &&!_showChannelList) Navigator.pop(context);
           }
+          return KeyEventResult.ignored;
         },
         child: Stack(
           children: [
-            Center(
+            // فيديو يملأ الشاشة بلا باندة
+            Positioned.fill(
               child: _isVlc
-                 ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16/9) : CircularProgressIndicator())
-                  : (_exo!= null && _exo!.value.isInitialized? AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)) : CircularProgressIndicator()),
+                 ? (_vlc!= null
+                     ? FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(width: 1920, height: 1080, child: VlcPlayer(controller: _vlc!, aspectRatio: 16/9)),
+                        )
+                      : Center(child: CircularProgressIndicator()))
+                  : (_exo!= null && _exo!.value.isInitialized
+                     ? FittedBox(
+                          fit: BoxFit.cover,
+                          child: SizedBox(
+                            width: _exo!.value.size.width,
+                            height: _exo!.value.size.height,
+                            child: VideoPlayer(_exo!),
+                          ),
+                        )
+                      : Center(child: CircularProgressIndicator())),
             ),
             // Info من فوق
             if (_showInfo)
@@ -257,29 +287,35 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                 ),
               ),
-            // لستة القنوات في Live
+            // لستة القنوات أوضح
             if (isLive && _showChannelList)
               Positioned(
-                right: 30, top: 100, bottom: 100, width: 340,
+                right: 30, top: 80, bottom: 80, width: 380,
                 child: Container(
-                  decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white24)),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.92), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.cyan, width: 2)),
                   child: Column(
                     children: [
-                      Padding(padding: EdgeInsets.all(12), child: Text('القنوات', style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold))),
+                      Padding(padding: EdgeInsets.all(14), child: Text('القنوات', style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))),
                       Expanded(
                         child: ListView.builder(
+                          controller: _channelScroll,
                           itemCount: widget.channelList!.length,
                           itemBuilder: (_, i) {
                             final ch = widget.channelList![i];
                             final active = i == _listIndex;
                             return Container(
-                              color: active? Colors.cyan.withOpacity(0.3) : Colors.transparent,
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: active? Colors.cyan : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                               child: Row(
                                 children: [
-                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 32, height: 32, errorBuilder: (_,__,___) => Icon(Icons.tv, color: Colors.white30)),
+                                  SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
+                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
                                   SizedBox(width: 10),
-                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.cyan : Colors.white, fontWeight: active? FontWeight.bold : FontWeight.normal))),
+                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
                                 ],
                               ),
                             );
