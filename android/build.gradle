@@ -3,6 +3,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://repo1.maven.org/maven2' } // يهرب من 403
         gradlePluginPortal()
     }
     dependencies {
@@ -15,6 +16,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://repo1.maven.org/maven2' }
     }
 }
 
