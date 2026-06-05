@@ -52,6 +52,7 @@ class _LiveTVState extends State<LiveTV> {
           ? Center(child: CircularProgressIndicator(color: Colors.cyan))
           : Row(
               children: [
+                // الباقات على اليسار
                 Container(
                   width: 260,
                   color: Colors.black87,
@@ -93,18 +94,20 @@ class _LiveTVState extends State<LiveTV> {
                     ],
                   ),
                 ),
+                // القنوات باللوغو
                 Expanded(
                   child: GridView.builder(
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(20),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 5,
-                      childAspectRatio: 2.3,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.85, // مربع كيما التطبيق القديم
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
                     ),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) {
                       final ch = filtered[i];
+                      final logo = ch['stream_icon'] ?? '';
                       return Focus(
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
@@ -120,19 +123,49 @@ class _LiveTVState extends State<LiveTV> {
                             return GestureDetector(
                               onTap: () => _openChannel(ch, filtered, i),
                               child: AnimatedContainer(
-                                duration: Duration(milliseconds: 120),
-                                alignment: Alignment.center,
+                                duration: Duration(milliseconds: 150),
                                 decoration: BoxDecoration(
-                                  color: hasFocus ? Colors.cyan : Color(0xFF1A1A),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: hasFocus ? Colors.white : Colors.white12, width: hasFocus ? 3 : 1),
+                                  color: Color(0xFF1A1A1A),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
+                                  boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
                                 ),
-                                child: Text(
-                                  ch['name'] ?? '',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: hasFocus ? Colors.black : Colors.white, fontSize: 13, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      // اللوغو
+                                      logo.isNotEmpty
+                                          ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
+                                          : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
+                                      // تدرج من تحت للاسم
+                                      Positioned(
+                                        bottom: 0,
+                                        left: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.85)]),
+                                          ),
+                                          child: Text(
+                                            ch['name'] ?? '',
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
+                                          ),
+                                        ),
+                                      ),
+                                      // علامة قلب كيما القديم
+                                      Positioned(
+                                        top: 6,
+                                        right: 6,
+                                        child: Icon(Icons.favorite_border, size: 18, color: Colors.white70),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
