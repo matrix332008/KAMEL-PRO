@@ -4,27 +4,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
 
-class FilmesScreen extends StatefulWidget { @override _FilmesScreenState createState() => _FilmesScreenState(); }
-class _FilmesScreenState extends State<FilmesScreen> {
-  List movies = []; List cats = []; String sel = 'All'; bool loading = true;
-  @override void initState() { super.initState(); _load(); }
-  _load() async {
-    final p = await SharedPreferences.getInstance();
-    String s = (p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
-    String u = p.getString('username')?? ''; String pw = p.getString('password')?? '';
-    try {
-      final c = await http.get(Uri.parse('$s/player_api.php?username=$u&password=$pw&action=get_vod_categories')).timeout(Duration(seconds: 15));
-      final m = await http.get(Uri.parse('$s/player_api.php?username=$u&password=$pw&action=get_vod_streams')).timeout(Duration(seconds: 20));
-      if (c.statusCode == 200) cats = json.decode(c.body);
-      if (m.statusCode == 200) movies = json.decode(m.body);
-    } catch(_) {}
-    setState(() => loading = false);
-  }
-  @override Widget build(BuildContext context) {
-    final f = sel == 'All'? movies : movies.where((e) => e['category_id'].toString() == sel).toList();
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.transparent, title: Text('FILMES'), actions: [Padding(padding: EdgeInsets.all(16), child: Text('${f.length} فيلم'))]), body: loading? Center(child: CircularProgressIndicator(color: Colors.red)) : f.isEmpty? Center(child: Text('لا يوجد أفلام', style: TextStyle(color: Colors.white70, fontSize: 22))) : Column(children: [
-      Container(height: 50, child: ListView(scrollDirection: Axis.horizontal, children: [Chip(label: Text('الكل'), onDeleted: () => setState(() => sel = 'All')),...cats.map((c) => Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: ActionChip(label: Text(c['category_name']), onPressed: () => setState(() => sel = c['category_id'].toString()))))])),
-      Expanded(child: GridView.builder(padding: EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, childAspectRatio: 0.7), itemCount: f.length, itemBuilder: (_, i) { final m = f[i]; return GestureDetector(onTap: () async { final p = await SharedPreferences.getInstance(); String s = p.getString('server')?? ''; String u = p.getString('username')?? ''; String pw = p.getString('password')?? ''; String url = '$s/movie/$u/$pw/${m['stream_id']}.${m['container_extension']}'; Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: m['name']))); }, child: Column(children: [Expanded(child: m['stream_icon']!= null? Image.network(m['stream_icon'], fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.movie, color: Colors.white30, size: 50)) : Icon(Icons.movie, color: Colors.white30, size: 50)), Text(m['name'], maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 11), textAlign: TextAlign.center)])); })),
-    ]));
-  }
+class FilmesScreen extends StatefulWidget { @override _FilmesScreenState createState()=>_FilmesScreenState(); }
+class _FilmesScreenState extends State<FilmesScreen>{
+  List movies=[]; List cats=[]; String sel='All'; bool loading=true;
+  @override void initState(){super.initState();_load();}
+  _load() async{final p=await SharedPreferences.getInstance();String s=(p.getString('server')??'').replaceAll(RegExp(r'/$'),'');String u=p.getString('username')??'';String pw=p.getString('password')??'';try{final c=await http.get(Uri.parse('$s/player_api.php?username=$u&password=$pw&action=get_vod_categories')).timeout(Duration(seconds:15));final m=await http.get(Uri.parse('$s/player_api.php?username=$u&password=$pw&action=get_vod_streams')).timeout(Duration(seconds:20));if(c.statusCode==200)cats=json.decode(c.body);if(m.statusCode==200)movies=json.decode(m.body);}catch(_){}setState(()=>loading=false);}
+  @override Widget build(BuildContext c){final f=sel=='All'?movies:movies.where((e)=>e['category_id'].toString()==sel).toList();return Scaffold(backgroundColor:Colors.black,appBar:AppBar(backgroundColor:Colors.transparent,title:Text('FILMES'),actions:[Padding(padding:EdgeInsets.all(16),child:Text('${f.length} فيلم'))]),body:loading?Center(child:CircularProgressIndicator(color:Colors.red)):Column(children:[Container(height:48,child:ListView(scrollDirection:Axis.horizontal,padding:EdgeInsets.symmetric(horizontal:8),children:[_cat('All','الكل'),...cats.map((x)=>_cat(x['category_id'].toString(),x['category_name']))])),Expanded(child:GridView.builder(padding:EdgeInsets.all(14),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:6,childAspectRatio:.68,mainAxisSpacing:12,crossAxisSpacing:12),itemCount:f.length,itemBuilder:(_,i){final m=f[i];return Focus(autofocus:i==0,child:Builder(builder:(ctx){final fo=Focus.of(ctx).hasFocus;return GestureDetector(onTap:()=>_play(m),child:AnimatedContainer(duration:Duration(milliseconds:120),decoration:BoxDecoration(border:Border.all(color:fo?Colors.red:Colors.transparent,width:3),borderRadius:BorderRadius.circular(8)),child:Column(children:[Expanded(child:ClipRRect(borderRadius:BorderRadius.circular(6),child:m['stream_icon']!=null?Image.network(m['stream_icon'],fit:BoxFit.cover,width:double.infinity,errorBuilder:(_,__,___)=>Container(color:Colors.grey[900],child:Icon(Icons.movie,size:40))):Container(color:Colors.grey[900],child:Icon(Icons.movie,size:40)))),SizedBox(height:4),Text(m['name']??'',maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,style:TextStyle(color:Colors.white,fontSize:11))]));}));}))]));}
+  Widget _cat(id,name){final a=sel==id;return Padding(padding:EdgeInsets.symmetric(horizontal:4),child:Focus(child:Builder(builder:(ctx){final fo=Focus.of(ctx).hasFocus;return ChoiceChip(label:Text(name,style:TextStyle(color:a?Colors.black:Colors.white)),selected:a,selectedColor:Colors.red,backgroundColor:fo?Colors.white24:Colors.grey[800],onSelected:(_)=>setState(()=>sel=id));})));}
+  _play(m) async{final p=await SharedPreferences.getInstance();String s=p.getString('server')??'';String u=p.getString('username')??'';String pw=p.getString('password')??'';String url='$s/movie/$u/$pw/${m['stream_id']}.${m['container_extension']}';Navigator.push(context,MaterialPageRoute(builder:(_)=>PlayerScreen(url:url,title:m['name'])));}
 }
