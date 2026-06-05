@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -43,7 +44,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text('FILMES'),
-        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length} فيلم'))],
+        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length} فيلم', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
          ? Center(child: CircularProgressIndicator(color: Colors.red))
@@ -55,8 +56,8 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _chip('All', 'الكل'),
-                     ...cats.map((c) => _chip(c['category_id'].toString(), c['category_name'])),
+                      _buildChip('All', 'الكل'),
+                     ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -74,6 +75,13 @@ class _FilmesScreenState extends State<FilmesScreen> {
                       final m = filtered[i];
                       return Focus(
                         autofocus: i == 0,
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _play(m);
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
                         child: Builder(
                           builder: (ctx) {
                             final hasFocus = Focus.of(ctx).hasFocus;
@@ -111,16 +119,23 @@ class _FilmesScreenState extends State<FilmesScreen> {
     );
   }
 
-  Widget _chip(String id, String name) {
+  Widget _buildChip(String id, String name) {
     final selected = sel == id;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4),
-      child: ChoiceChip(
-        label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)),
-        selected: selected,
-        selectedColor: Colors.red,
-        backgroundColor: Colors.grey[800],
-        onSelected: (_) => setState(() => sel = id),
+      child: Focus(
+        child: Builder(
+          builder: (ctx) {
+            final hasFocus = Focus.of(ctx).hasFocus;
+            return ChoiceChip(
+              label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)),
+              selected: selected,
+              selectedColor: Colors.red,
+              backgroundColor: hasFocus? Colors.white24 : Colors.grey[800],
+              onSelected: (_) => setState(() => sel = id),
+            );
+          },
+        ),
       ),
     );
   }
@@ -131,6 +146,6 @@ class _FilmesScreenState extends State<FilmesScreen> {
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     String url = '$server/movie/$user/$pass/${m['stream_id']}.${m['container_extension']}';
-    Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: m['name'])));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: m['name'], logo: m['stream_icon'])));
   }
 }
