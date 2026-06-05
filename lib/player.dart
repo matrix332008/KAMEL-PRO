@@ -33,14 +33,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   _init() async {
     final p = await SharedPreferences.getInstance();
     _isVlc = (p.getString('player')?? 'vlc') == 'vlc';
-
     try {
       if (_isVlc) {
-        _vlc = VlcPlayerController.network(
-          widget.url,
-          hwAcc: HwAcc.full,
-          autoPlay: true,
-        );
+        _vlc = VlcPlayerController.network(widget.url, hwAcc: HwAcc.full, autoPlay: true);
       } else {
         _exo = VideoPlayerController.networkUrl(Uri.parse(widget.url));
         await _exo!.initialize();
@@ -48,10 +43,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
       if (mounted) setState(() {});
     } catch (e) {
-      if (mounted) setState(() {
-        _error = true;
-        _errMsg = 'لا يمكن تشغيل الرابط';
-      });
+      if (mounted) setState(() { _error = true; _errMsg = 'لا يمكن تشغيل الرابط'; });
     }
   }
 
@@ -68,8 +60,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     int idx = (widget.currentIndex! + step) % widget.channelList!.length;
     if (idx < 0) idx += widget.channelList!.length;
     final next = widget.channelList![idx];
+    final nextUrl = next['stream_url']?? next['url']?? widget.url;
+    final nextTitle = next['name']?? widget.title;
     Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (_) => PlayerScreen(url: next['stream_url'], title: next['name'], channelList: widget.channelList, currentIndex: idx),
+      builder: (_) => PlayerScreen(url: nextUrl, title: nextTitle, channelList: widget.channelList, currentIndex: idx),
     ));
   }
 
@@ -90,7 +84,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Center(
               child: _error
-                 ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(Icons.error, color: Colors.red, size: 80),
                       SizedBox(height: 20),
                       Text(_errMsg, style: TextStyle(color: Colors.white, fontSize: 20)),
@@ -100,7 +94,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ElevatedButton(onPressed: () => Navigator.pop(context), child: Text('رجوع')),
                     ])
                   : _isVlc
-                     ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16 / 9, placeholder: Center(child: CircularProgressIndicator(color: Colors.orange))) : CircularProgressIndicator(color: Colors.orange))
+                    ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16 / 9, placeholder: Center(child: CircularProgressIndicator(color: Colors.orange))) : CircularProgressIndicator(color: Colors.orange))
                       : (_exo!= null && _exo!.value.isInitialized? AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)) : CircularProgressIndicator(color: Colors.cyan)),
             ),
             Positioned(top: 30, left: 20, child: Container(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Colors.black54, child: Text(widget.title, style: TextStyle(color: Colors.white)))),
