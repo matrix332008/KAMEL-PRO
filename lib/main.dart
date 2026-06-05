@@ -219,7 +219,10 @@ class _XtreamLoginState extends State<XtreamLogin> {
 
   _login() async {
     setState(() => _loading = true);
-    String server = _serverController.text.trim();
+    // تنظيف السيرفر أوتوماتيكيا
+    String server = _serverController.text.trim()
+        .replaceAll(RegExp(r'/player_api\.php.*$', caseSensitive: false), '')
+        .replaceAll(RegExp(r'/$'), '');
     String user = _userController.text.trim();
     String pass = _passController.text.trim();
 
