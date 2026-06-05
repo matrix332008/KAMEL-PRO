@@ -40,37 +40,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
           widget.url,
           hwAcc: HwAcc.full,
           autoPlay: true,
-          options: VlcPlayerOptions(
-            advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(2000)]),
-            http: VlcHttpOptions([VlcHttpOptions.reconnect(true)]),
-          ),
         );
-        _vlc!.addListener(() {
-          if (_vlc!.value.hasError && mounted) {
-            setState(() {
-              _error = true;
-              _errMsg = 'VLC لا يقرأ الرابط';
-            });
-          }
-        });
       } else {
         _exo = VideoPlayerController.networkUrl(Uri.parse(widget.url));
         await _exo!.initialize();
         await _exo!.play();
-        _exo!.addListener(() {
-          if (_exo!.value.hasError && mounted) {
-            setState(() {
-              _error = true;
-              _errMsg = 'EXO لا يقرأ الرابط';
-            });
-          }
-        });
       }
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) setState(() {
         _error = true;
-        _errMsg = 'خطأ: $e';
+        _errMsg = 'لا يمكن تشغيل الرابط';
       });
     }
   }
@@ -103,7 +83,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (e is RawKeyDownEvent) {
             if (e.logicalKey == LogicalKeyboardKey.arrowUp) _next(1);
             if (e.logicalKey == LogicalKeyboardKey.arrowDown) _next(-1);
-            if (e.logicalKey == LogicalKeyboardKey.goBack || e.logicalKey == LogicalKeyboardKey.escape) Navigator.pop(context);
+            if (e.logicalKey == LogicalKeyboardKey.goBack) Navigator.pop(context);
           }
         },
         child: Stack(
@@ -115,15 +95,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       SizedBox(height: 20),
                       Text(_errMsg, style: TextStyle(color: Colors.white, fontSize: 20)),
                       SizedBox(height: 10),
-                      Text('جرب بدل المشغل من AJUSTES', style: TextStyle(color: Colors.white70)),
+                      Text('بدل المشغل من AJUSTES', style: TextStyle(color: Colors.white70)),
                       SizedBox(height: 30),
                       ElevatedButton(onPressed: () => Navigator.pop(context), child: Text('رجوع')),
                     ])
                   : _isVlc
-                     ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16 / 9, placeholder: Center(child: CircularProgressIndicator())) : CircularProgressIndicator())
-                      : (_exo!= null && _exo!.value.isInitialized? AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)) : CircularProgressIndicator()),
+                     ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16 / 9, placeholder: Center(child: CircularProgressIndicator(color: Colors.orange))) : CircularProgressIndicator(color: Colors.orange))
+                      : (_exo!= null && _exo!.value.isInitialized? AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)) : CircularProgressIndicator(color: Colors.cyan)),
             ),
-            Positioned(top: 30, left: 20, child: Container(padding: EdgeInsets.all(10), color: Colors.black54, child: Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 18)))),
+            Positioned(top: 30, left: 20, child: Container(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Colors.black54, child: Text(widget.title, style: TextStyle(color: Colors.white)))),
           ],
         ),
       ),
