@@ -24,6 +24,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isVlc = true;
   bool _showControls = false;
   bool _showInfo = true;
+  bool _showChannelList = false;
+  int _listIndex = 0;
   Timer? _hideTimer;
   Timer? _controlsTimer;
   Timer? _updateTimer;
@@ -34,11 +36,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _listIndex = widget.currentIndex?? 0;
     _initPlayer();
     _showInfoTemporarily();
-    // يحدّث الـ slider كل 500ms
     _updateTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
-      if (_showControls && mounted) setState(() {});
+      if ((_showControls || _showChannelList) && mounted) setState(() {});
     });
   }
 
@@ -86,8 +88,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Future<void> _seek(int seconds) async {
     if (_isVlc && _vlc!= null) {
       final pos = _vlc!.value.position;
-      final newPos = pos + Duration(seconds: seconds);
-      await _vlc!.seekTo(newPos);
+      await _vlc!.seekTo(pos + Duration(seconds: seconds));
     } else if (!_isVlc && _exo!= null) {
       final pos = _exo!.value.position;
       final newPos = pos + Duration(seconds: seconds);
@@ -97,9 +98,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _nextChannel(int step) {
-    if (widget.channelList == null) return;
+    if (!isLive) return;
     int idx = (widget.currentIndex! + step) % widget.channelList!.length;
     if (idx < 0) idx += widget.channelList!.length;
+    _playChannel(idx);
+  }
+
+  void _playChannel(int idx) {
     final next = widget.channelList![idx];
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PlayerScreen(
       url: next['url'],
@@ -149,31 +154,47 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (e is RawKeyDownEvent) {
             _showInfoTemporarily();
             if (isLive) {
-              // LIVE TV
-              if (e.logicalKey == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
-              if (e.logicalKey == LogicalKeyboardKey.arrowDown) _nextChannel(1);
-              if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter) {
-                Navigator.pop(context);
+              if (_showChannelList) {
+                // داخل الليستة
+                if (e.logicalKey == LogicalKeyboardKey.arrowUp) {
+                  setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
+                }
+                if (e.logicalKey == LogicalKeyboardKey.arrowDown) {
+                  setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
+                }
+                if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter) {
+                  _playChannel(_listIndex);
+                }
+                if (e.logicalKey == LogicalKeyboardKey.goBack) {
+                  setState(() => _showChannelList = false);
+                }
+              } else {
+                // فيديو شغال
+                if (e.logicalKey == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
+                if (e.logicalKey == LogicalKeyboardKey.arrowDown) _nextChannel(1);
+                if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter) {
+                  setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
+                }
               }
             } else {
-              // FILM / SERIE
+              // VOD
               if (e.logicalKey == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
               if (e.logicalKey == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
               if (e.logicalKey == LogicalKeyboardKey.select || e.logicalKey == LogicalKeyboardKey.enter || e.logicalKey == LogicalKeyboardKey.mediaPlayPause) {
                 _togglePlay(); _showControlsTemporarily();
               }
             }
-            if (e.logicalKey == LogicalKeyboardKey.goBack) Navigator.pop(context);
+            if (e.logicalKey == LogicalKeyboardKey.goBack &&!_showChannelList) Navigator.pop(context);
           }
         },
         child: Stack(
           children: [
             Center(
               child: _isVlc
-               ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16/9) : CircularProgressIndicator())
+                 ? (_vlc!= null? VlcPlayer(controller: _vlc!, aspectRatio: 16/9) : CircularProgressIndicator())
                   : (_exo!= null && _exo!.value.isInitialized? AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)) : CircularProgressIndicator()),
             ),
-            // Info overlay من فوق
+            // Info من فوق
             if (_showInfo)
               Positioned(
                 top: 30, left: 30, right: 30,
@@ -204,15 +225,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                 ),
               ),
-            // Controls للفيلم والمسلسل فقط
+            // Controls VOD
             if (!isLive && _showControls)
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: Container(
                   padding: EdgeInsets.fromLTRB(20, 12, 20, 30),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87]),
-                  ),
+                  decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87])),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -230,13 +249,42 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(_formatDuration(position), style: TextStyle(color: Colors.white)),
-                          IconButton(
-                            iconSize: 48,
-                            icon: Icon(isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white),
-                            onPressed: _togglePlay,
-                          ),
+                          IconButton(iconSize: 48, icon: Icon(isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white), onPressed: _togglePlay),
                           Text(_formatDuration(duration), style: TextStyle(color: Colors.white)),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // لستة القنوات في Live
+            if (isLive && _showChannelList)
+              Positioned(
+                right: 30, top: 100, bottom: 100, width: 340,
+                child: Container(
+                  decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white24)),
+                  child: Column(
+                    children: [
+                      Padding(padding: EdgeInsets.all(12), child: Text('القنوات', style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold))),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: widget.channelList!.length,
+                          itemBuilder: (_, i) {
+                            final ch = widget.channelList![i];
+                            final active = i == _listIndex;
+                            return Container(
+                              color: active? Colors.cyan.withOpacity(0.3) : Colors.transparent,
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 32, height: 32, errorBuilder: (_,__,___) => Icon(Icons.tv, color: Colors.white30)),
+                                  SizedBox(width: 10),
+                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.cyan : Colors.white, fontWeight: active? FontWeight.bold : FontWeight.normal))),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -250,6 +298,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   String _formatDuration(Duration d) {
     String two(int n) => n.toString().padLeft(2, '0');
-    return "${two(d.inHours)}:${two(d.inMinutes.remainder(60))}:${two(d.inSeconds.remainder(60))}";
+    return "${two(d.inMinutes.remainder(60))}:${two(d.inSeconds.remainder(60))}";
   }
 }
