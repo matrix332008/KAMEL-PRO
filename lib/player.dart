@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
+import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String url;
@@ -15,169 +17,109 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  late VlcPlayerController _vlcController;
+  VlcPlayerController? _vlc;
+  VideoPlayerController? _exo;
+  bool useVlc = true;
   bool _showControls = true;
-  bool _showChannelList = false;
-  String _channelNumber = '';
-  int _currentIndex = 0;
-  final FocusNode _focusNode = FocusNode();
+  bool _showList = false;
+  String _num = '';
+  int _idx = 0;
+  final _focus = FocusNode();
+  bool _ready = false;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.currentIndex?? 0;
+    _idx = widget.currentIndex?? 0;
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
-    _initializePlayer(widget.url);
-    _focusNode.requestFocus();
+    _setup();
+    _focus.requestFocus();
   }
 
-  _initializePlayer(String url) {
-    _vlcController = VlcPlayerController.network(
-      url,
-      hwAcc: HwAcc.full,
-      autoPlay: true,
-      options: VlcPlayerOptions(),
-    );
-    _hideControls();
+  Future<void> _setup() async {
+    final p = await SharedPreferences.getInstance();
+    useVlc = (p.getString('player')?? 'vlc') == 'vlc';
+    await _initPlayer(widget.url);
   }
 
-  _hideControls() {
-    Future.delayed(Duration(seconds: 3), () {
-      if (mounted &&!_showChannelList) {
-        setState(() => _showControls = false);
-      }
-    });
+  Future<void> _initPlayer(String url) async {
+    if (url.isEmpty) return;
+    setState(() => _ready = false);
+
+    await _vlc?.stop(); await _vlc?.dispose(); _vlc = null;
+    await _exo?.pause(); await _exo?.dispose(); _exo = null;
+
+    if (useVlc) {
+      _vlc = VlcPlayerController.network(
+        url,
+        hwAcc: HwAcc.auto,
+        autoPlay: true,
+        options: VlcPlayerOptions(
+          advanced: VlcAdvancedOptions([VlcAdvancedOptions.networkCaching(2000)]),
+          http: VlcHttpOptions([VlcHttpOptions.httpReconnect(true)]),
+        ),
+      );
+    } else {
+      _exo = VideoPlayerController.networkUrl(Uri.parse(url));
+      await _exo!.initialize();
+      await _exo!.setLooping(true);
+      await _exo!.play();
+    }
+    setState(() => _ready = true);
+    _hide();
   }
 
-  _playChannel(int index) {
-    if (widget.channelList == null || index < 0 || index >= widget.channelList!.length) return;
-    setState(() {
-      _currentIndex = index;
-      _showChannelList = false;
-    });
-    _vlcController.setMediaFromNetwork(widget.channelList![index]['stream_url']?? '');
-    _vlcController.play();
+  void _hide() => Future.delayed(Duration(seconds: 4), () { if(mounted &&!_showList) setState(()=>_showControls=false); });
+
+  Future<void> _play(int i) async {
+    if (widget.channelList == null) return;
+    final url = widget.channelList![i]['stream_url']?? '';
+    setState(() { _idx = i; _showList = false; _showControls = true; });
+    await _initPlayer(url);
   }
 
-  _handleKey(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-        if (_showChannelList) {
-          _playChannel(_currentIndex);
-        } else {
-          setState(() => _showChannelList =!_showChannelList);
-        }
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-        if (_showChannelList) {
-          setState(() => _currentIndex = (_currentIndex - 1).clamp(0, (widget.channelList?.length?? 1) - 1));
-        }
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-        if (_showChannelList) {
-          setState(() => _currentIndex = (_currentIndex + 1).clamp(0, (widget.channelList?.length?? 1) - 1));
-        }
-      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-        if (_showChannelList) {
-          setState(() => _showChannelList = false);
-        } else {
-          Navigator.pop(context);
-        }
-      } else if (event.logicalKey.keyLabel.length == 1 && int.tryParse(event.logicalKey.keyLabel)!= null) {
-        setState(() {
-          _channelNumber += event.logicalKey.keyLabel;
-          if (_channelNumber.length >= 3) {
-            int? num = int.tryParse(_channelNumber);
-            if (num!= null && num > 0 && widget.channelList!= null && num <= widget.channelList!.length) {
-              _playChannel(num - 1);
-            }
-            _channelNumber = '';
-          }
-        });
-        Future.delayed(Duration(seconds: 2), () {
-          if (mounted) setState(() => _channelNumber = '');
-        });
-      }
+  void _key(RawKeyEvent e) {
+    if (e is! RawKeyDownEvent) return;
+    final k = e.logicalKey;
+    if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) {
+      if (_showList) _play(_idx); else setState(()=>_showList =!_showList);
+    } else if (k == LogicalKeyboardKey.arrowUp && _showList) {
+      setState(()=>_idx = (_idx-1).clamp(0, widget.channelList!.length-1));
+    } else if (k == LogicalKeyboardKey.arrowDown && _showList) {
+      setState(()=>_idx = (_idx+1).clamp(0, widget.channelList!.length-1));
+    } else if (k == LogicalKeyboardKey.escape || k == LogicalKeyboardKey.goBack) {
+      if (_showList) setState(()=>_showList=false); else Navigator.pop(context);
     }
   }
 
   @override
   void dispose() {
-    _vlcController.dispose();
-    _focusNode.dispose();
+    _vlc?.dispose();
+    _exo?.dispose();
+    _focus.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    String currentTitle = widget.channelList!= null && _currentIndex < widget.channelList!.length
-       ? widget.channelList![_currentIndex]['name']
-        : widget.title;
+    final title = widget.channelList!= null? widget.channelList![_idx]['name']?? widget.title : widget.title;
+    Widget video = _ready
+     ? (useVlc? VlcPlayer(controller: _vlc!, aspectRatio: 16/9) : AspectRatio(aspectRatio: _exo!.value.aspectRatio, child: VideoPlayer(_exo!)))
+      : Center(child: CircularProgressIndicator(color: Colors.cyan));
 
     return RawKeyboardListener(
-      focusNode: _focusNode,
-      onKey: _handleKey,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: GestureDetector(
-          onTap: () => setState(() => _showControls =!_showControls),
-          child: Stack(
-            children: [
-              Center(child: VlcPlayer(controller: _vlcController, aspectRatio: 16 / 9, placeholder: Center(child: CircularProgressIndicator(color: Colors.cyan)))),
-              if (_showControls || _showChannelList)
-                Positioned(
-                  top: 30,
-                  left: 30,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.circular(10)),
-                    child: Text(currentTitle, style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              if (_channelNumber.isNotEmpty)
-                Center(
-                  child: Container(
-                    padding: EdgeInsets.all(30),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.8), borderRadius: BorderRadius.circular(20)),
-                    child: Text(_channelNumber, style: TextStyle(color: Colors.cyan, fontSize: 80, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              if (_showChannelList && widget.channelList!= null)
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 350,
-                    color: Colors.black.withOpacity(0.9),
-                    child: ListView.builder(
-                      itemCount: widget.channelList!.length,
-                      itemBuilder: (context, index) {
-                        bool selected = index == _currentIndex;
-                        return Container(
-                          padding: EdgeInsets.all(12),
-                          margin: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: selected? Colors.cyan.withOpacity(0.3) : Colors.transparent,
-                            border: Border.all(color: selected? Colors.cyan : Colors.transparent, width: 2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Text('${index + 1}.', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
-                              SizedBox(width: 10),
-                              Expanded(child: Text(widget.channelList![index]['name']?? '', style: TextStyle(color: Colors.white, fontSize: 16), overflow: TextOverflow.ellipsis)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+      focusNode: _focus, onKey: _key,
+      child: Scaffold(backgroundColor: Colors.black,
+        body: GestureDetector(onTap: ()=>setState(()=>_showControls=!_showControls),
+          child: Stack(children: [
+            Center(child: video),
+            if (_showControls) Positioned(top:30,left:30,child:Container(padding:EdgeInsets.symmetric(horizontal:20,vertical:10),decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(10)),child:Text(title,style:TextStyle(color:Colors.white,fontSize:22)))),
+            if (_showList && widget.channelList!=null) Positioned(left:0,top:0,bottom:0,child:Container(width:400,color:Colors.black.withOpacity(0.95),child:ListView.builder(itemCount:widget.channelList!.length,itemBuilder:(_,i){final s=i==_idx;return Container(color:s?Colors.cyan.withOpacity(0.3):null,padding:EdgeInsets.all(14),child:Text('${i+1}. ${widget.channelList![i]['name']}',style:TextStyle(color:Colors.white,fontSize:16)));})))
+          ])
+        )
+      )
     );
   }
 }
