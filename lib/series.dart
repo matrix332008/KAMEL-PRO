@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -42,7 +43,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text('SERIES')),
       body: loading
-         ? Center(child: CircularProgressIndicator(color: Colors.orange))
+        ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
                 Container(
@@ -51,8 +52,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _chip('All', 'الكل'),
-                     ...cats.map((c) => _chip(c['category_id'].toString(), c['category_name'])),
+                      _buildChip('All', 'الكل'),
+                    ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -70,6 +71,13 @@ class _SeriesScreenState extends State<SeriesScreen> {
                       final s = filtered[i];
                       return Focus(
                         autofocus: i == 0,
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _openSeries(s);
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
                         child: Builder(
                           builder: (ctx) {
                             final hasFocus = Focus.of(ctx).hasFocus;
@@ -86,7 +94,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                           ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                          ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -107,16 +115,23 @@ class _SeriesScreenState extends State<SeriesScreen> {
     );
   }
 
-  Widget _chip(String id, String name) {
+  Widget _buildChip(String id, String name) {
     final selected = sel == id;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4),
-      child: ChoiceChip(
-        label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)),
-        selected: selected,
-        selectedColor: Colors.orange,
-        backgroundColor: Colors.grey[800],
-        onSelected: (_) => setState(() => sel = id),
+      child: Focus(
+        child: Builder(
+          builder: (ctx) {
+            final hasFocus = Focus.of(ctx).hasFocus;
+            return ChoiceChip(
+              label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)),
+              selected: selected,
+              selectedColor: Colors.orange,
+              backgroundColor: hasFocus? Colors.white24 : Colors.grey[800],
+              onSelected: (_) => setState(() => sel = id),
+            );
+          },
+        ),
       ),
     );
   }
@@ -147,7 +162,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       String url = '$server/series/$user/$pass/${ep['id']}.${ep['container_extension']}';
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'])));
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: s['cover'])));
                     },
                   );
                 }).toList(),
