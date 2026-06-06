@@ -31,18 +31,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final FavoritesService _favService = FavoritesService();
   Set<String> _favIds = {};
 
-  bool get isLive => widget.channelList!= null;
+  bool get isLive => widget.channelList != null;
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WakelockPlus.enable();
-    _listIndex = widget.currentIndex?? 0;
+    _listIndex = widget.currentIndex ?? 0;
     _initPlayer();
     _showInfoTemporarily();
-    _favService.getFavorites().then((list) {
-      if (mounted) setState(() => _favIds = list.toSet());
+    // هنا التغيير المهم
+    _favService.getFavoriteUrls().then((set) {
+      if (mounted) setState(() => _favIds = set);
     });
     _updateTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
       if ((_showControls || _showChannelList) && mounted) setState(() {});
@@ -87,7 +88,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (_exo == null) return;
     final pos = _exo!.value.position;
     final newPos = pos + Duration(seconds: seconds);
-    await _exo!.seekTo(newPos < Duration.zero? Duration.zero : newPos);
+    await _exo!.seekTo(newPos < Duration.zero ? Duration.zero : newPos);
     setState(() {});
   }
 
@@ -111,10 +112,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _toggleFavorite(int idx) {
     final ch = widget.channelList![idx];
-    final id = ch['url']?? ch['name']?? '$idx';
-    _favService.toggle(id);
+    final name = ch['name'] ?? '';
+    final url = ch['url'] ?? '';
+    _favService.toggle(name, url); // هنا نبعثو الاسم والرابط
     setState(() {
-      if (_favIds.contains(id)) _favIds.remove(id); else _favIds.add(id);
+      if (_favIds.contains(url)) _favIds.remove(url); else _favIds.add(url);
     });
   }
 
@@ -141,12 +143,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final now = DateTime.now();
     final timeStr = "${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}";
     final dateStr = "${now.day}/${now.month}/${now.year}";
-    final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
+    final channelNum = widget.currentIndex != null ? widget.currentIndex! + 1 : null;
 
     Duration duration = Duration.zero;
     Duration position = Duration.zero;
     bool isPlaying = false;
-    if (_exo!= null && _exo!.value.isInitialized) {
+    if (_exo != null && _exo!.value.isInitialized) {
       duration = _exo!.value.duration;
       position = _exo!.value.position;
       isPlaying = _exo!.value.isPlaying;
@@ -182,7 +184,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
                 else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
                 else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
+                  setState(() { _showChannelList = true; _listIndex = widget.currentIndex ?? 0; });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                 } else if (key == LogicalKeyboardKey.goBack) {
                   return KeyEventResult.ignored;
@@ -205,9 +207,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Stack(
           children: [
             Positioned.fill(
-              child: _exo!= null && _exo!.value.isInitialized
+              child: _exo != null && _exo!.value.isInitialized
                ? FittedBox(
-                    fit: isLive? BoxFit.fill : BoxFit.contain,
+                    fit: isLive ? BoxFit.fill : BoxFit.contain,
                     child: SizedBox(
                       width: _exo!.value.size.width,
                       height: _exo!.value.size.height,
@@ -224,13 +226,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
                   child: Row(
                     children: [
-                      if (widget.logo!= null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
+                      if (widget.logo != null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (channelNum!= null) Text('قناة $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
+                            if (channelNum != null) Text('قناة $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
                             Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -240,37 +242,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         children: [
                           Text(timeStr, style: TextStyle(color: Colors.white, fontSize: 18)),
                           Text(dateStr, style: TextStyle(color: Colors.white70)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            if (!isLive && _showControls)
-              Positioned(
-                bottom: 0, left: 0, right: 0,
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(20, 12, 20, 30),
-                  decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87])),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Slider(
-                        value: position.inSeconds.toDouble().clamp(0, duration.inSeconds.toDouble() > 0? duration.inSeconds.toDouble() : 1),
-                        max: duration.inSeconds.toDouble() > 0? duration.inSeconds.toDouble() : 1,
-                        activeColor: Colors.red,
-                        inactiveColor: Colors.white30,
-                        onChanged: (v) async {
-                          final newPos = Duration(seconds: v.toInt());
-                          await _exo!.seekTo(newPos);
-                        },
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_formatDuration(position), style: TextStyle(color: Colors.white)),
-                          IconButton(iconSize: 48, icon: Icon(isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white), onPressed: _togglePlay),
-                          Text(_formatDuration(duration), style: TextStyle(color: Colors.white)),
                         ],
                       ),
                     ],
@@ -292,21 +263,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           itemBuilder: (_, i) {
                             final ch = widget.channelList![i];
                             final active = i == _listIndex;
-                            final id = ch['url']?? ch['name']?? '$i';
-                            final isFav = _favIds.contains(id);
+                            final url = ch['url'] ?? '';
+                            final isFav = _favIds.contains(url);
                             return Container(
                               margin: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
-                                color: active? Colors.cyan : Colors.transparent,
+                                color: active ? Colors.cyan : Colors.transparent,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 children: [
-                                  SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
-                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
+                                  SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active ? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
+                                  if (ch['logo'] != null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active ? Colors.black54 : Colors.white30, size: 24)),
                                   SizedBox(width: 10),
-                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
+                                  Expanded(child: Text(ch['name'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active ? Colors.black : Colors.white, fontSize: 16, fontWeight: active ? FontWeight.bold : FontWeight.normal))),
                                   if (isFav) Image.asset('assets/favorites.png', width: 22, height: 22, color: Colors.red) else Icon(Icons.favorite_border, color: Colors.white24, size: 20),
                                 ],
                               ),
