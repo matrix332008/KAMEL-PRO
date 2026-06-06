@@ -8,8 +8,8 @@
     <application
         android:label="KAMEL PRO"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:banner="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher"
+        android:banner="@drawable/ic_launcher"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true">
