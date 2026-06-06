@@ -128,8 +128,7 @@ class MainMenu extends StatelessWidget {
                     children: [
                       CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                       Spacer(),
-                      Text('+420777099379', style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 8, color: Colors.black)])),
-                      SizedBox(width: 30),
+                      // الرقم تنحى من هنا
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
