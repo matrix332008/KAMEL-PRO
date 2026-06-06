@@ -45,16 +45,17 @@ class _KamelProAppState extends State<KamelProApp> {
   }
 }
 
-// SPLASH
+// SPLASH - تم التعديل: يقرا الاشتراك حتى بدون isLoggedIn
 class SplashScreen extends StatefulWidget { @override _SplashScreenState createState() => _SplashScreenState(); }
 class _SplashScreenState extends State<SplashScreen> {
   @override void initState() { super.initState(); _checkLogin(); }
   _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    String? url = prefs.getString('server_url');
-    if (isLoggedIn && url != null && url.isNotEmpty) {
+    String? url = prefs.getString('server_url') ?? prefs.getString('server');
+    String? user = prefs.getString('username');
+    String? pass = prefs.getString('password');
+    if (url != null && url.isNotEmpty && user != null && user.isNotEmpty && pass != null && pass.isNotEmpty) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
@@ -70,18 +71,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// MAIN MENU
+// MAIN MENU - تم التعديل: الخروج ما يفسخش المعطيات
 class MainMenu extends StatefulWidget { @override _MainMenuState createState() => _MainMenuState(); }
 class _MainMenuState extends State<MainMenu> {
-  _logout(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? savedLang = prefs.getString('lang');
-    await prefs.clear();
-    if (savedLang != null) await prefs.setString('lang', savedLang);
-    await prefs.setBool('isLoggedIn', false);
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
-  }
-
+  
   Future<bool> _onWillPop() async {
     return await showDialog(
       context: context,
@@ -97,11 +90,15 @@ class _MainMenuState extends State<MainMenu> {
     ) ?? false;
   }
 
+  void _exitApp() {
+    SystemNavigator.pop(); // تم التعديل: خروج فقط، ما يمسحش
+  }
+
   @override Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
         bool exit = await _onWillPop();
-        if (exit) _logout(context);
+        if (exit) _exitApp();
         return false;
       },
       child: Scaffold(
@@ -120,7 +117,7 @@ class _MainMenuState extends State<MainMenu> {
                     Spacer(),
                     _LogoutButton(onPressed: () async {
                       bool exit = await _onWillPop();
-                      if (exit) _logout(context);
+                      if (exit) _exitApp();
                     }),
                   ]),
                 ),
@@ -155,14 +152,14 @@ class _MainMenuState extends State<MainMenu> {
                 ),
               ],
             ),
-          ], // <-- هذا القوس كان ناقص
+          ],
         ),
       ),
     );
   }
 }
 
-// باقي الكلاسات نفسهم
+// باقي الكلاسات نفسهم بدون تغيير
 class _MainCard extends StatefulWidget {
   final String title; final String image; final Color color; final VoidCallback onTap; final bool autofocus;
   _MainCard({required this.title, required this.image, required this.color, required this.onTap, this.autofocus = false});
@@ -242,7 +239,7 @@ class __LogoutButtonState extends State<_LogoutButton> {
         if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) { widget.onPressed(); return KeyEventResult.handled; }
         return KeyEventResult.ignored;
       },
-      child: OutlinedButton(onPressed: widget.onPressed, style: OutlinedButton.styleFrom(side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: Text('LOG OUT', style: TextStyle(color: Colors.white70))),
+      child: OutlinedButton(onPressed: widget.onPressed, style: OutlinedButton.styleFrom(side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: Text('EXIT', style: TextStyle(color: Colors.white70))),
     );
   }
 }
