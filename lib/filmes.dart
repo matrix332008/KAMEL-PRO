@@ -25,7 +25,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    String server = (p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
+    String server = (p.getString('server_url')?? p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     try {
@@ -48,7 +48,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
         actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-        ? Center(child: CircularProgressIndicator(color: Colors.red))
+       ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
                 Container(
@@ -58,7 +58,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('All', Lang.get('all')),
-                    ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                   ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -103,7 +103,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.circular(6),
                                             child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                              ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                             ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
                                                 : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
                                           ),
                                         ),
@@ -156,7 +156,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
 
   void _play(m) async {
     final p = await SharedPreferences.getInstance();
-    String server = p.getString('server')?? '';
+    String server = p.getString('server_url')?? p.getString('server')?? '';
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     String url = '$server/movie/$user/$pass/${m['stream_id']}.${m['container_extension']}';
