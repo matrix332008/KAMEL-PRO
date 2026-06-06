@@ -23,7 +23,6 @@ class LoginSelection extends StatelessWidget {
                   children: [
                     CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                     Spacer(),
-                    // نحينا Image.asset('assets/logo.png') باش ما تغطيش الرقم
                     SizedBox(width: 60),
                   ],
                 ),
@@ -98,8 +97,8 @@ class __LoginCardState extends State<_LoginCard> {
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.6),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _focused? widget.color : widget.color.withOpacity(0.5), width: _focused? 4 : 2),
-            boxShadow: _focused? [BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)] : [],
+            border: Border.all(color: _focused ? widget.color : widget.color.withOpacity(0.5), width: _focused ? 4 : 2),
+            boxShadow: _focused ? [BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)] : [],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -175,7 +174,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
         var data = json.decode(response.body);
         if (data['user_info']['auth'] == 1) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isLoggedIn', true);
+          await prefs.setBool('isLoggedIn', true); // <--- هذا اللي يحفظ الدخول
           await prefs.setString('loginType', 'xtream');
           await prefs.setString('server', server);
           await prefs.setString('username', user);
@@ -211,7 +210,6 @@ class _XtreamLoginState extends State<XtreamLogin> {
             child: Column(
               children: [
                 SizedBox(height: 20),
-                // نحينا Image.asset('assets/logo.png') من هنا
                 SizedBox(height: 40),
                 Container(
                   width: 500,
@@ -227,7 +225,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _Button(text: 'LOGIN', color: Colors.cyan, onPressed: _loading? null : _login),
+                          _Button(text: 'LOGIN', color: Colors.cyan, onPressed: _loading ? null : _login),
                           SizedBox(width: 20),
                           _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
                         ],
@@ -313,7 +311,6 @@ class _M3ULoginState extends State<M3ULogin> {
             child: Column(
               children: [
                 SizedBox(height: 20),
-                // نحينا Image.asset('assets/logo.png') من هنا
                 SizedBox(height: 40),
                 Container(
                   width: 500,
@@ -327,7 +324,7 @@ class _M3ULoginState extends State<M3ULogin> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _Button(text: 'LOGIN', color: Colors.red, onPressed: _loading? null : _login),
+                          _Button(text: 'LOGIN', color: Colors.red, onPressed: _loading ? null : _login),
                           SizedBox(width: 20),
                           _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
                         ],
@@ -386,11 +383,11 @@ class __InputFieldState extends State<_InputField> {
         controller: widget.controller,
         obscureText: widget.obscure,
         focusNode: widget.focusNode,
-        textInputAction: widget.textInputAction?? TextInputAction.next,
+        textInputAction: widget.textInputAction ?? TextInputAction.next,
         onSubmitted: (value) {
-          if (widget.onSubmitted!= null) {
+          if (widget.onSubmitted != null) {
             widget.onSubmitted!(value);
-          } else if (widget.nextFocus!= null) {
+          } else if (widget.nextFocus != null) {
             widget.nextFocus!.requestFocus();
           }
         },
@@ -429,14 +426,14 @@ class __ButtonState extends State<_Button> {
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-            if (widget.onPressed!= null) widget.onPressed!();
+            if (widget.onPressed != null) widget.onPressed!();
             return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
       },
       child: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: _focused? widget.color : Colors.transparent, width: 3)),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 3)),
         child: ElevatedButton(
           onPressed: widget.onPressed,
           style: ElevatedButton.styleFrom(backgroundColor: widget.color, padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
