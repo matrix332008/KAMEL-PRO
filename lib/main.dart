@@ -8,7 +8,7 @@ import 'filmes.dart';
 import 'series.dart';
 import 'favorites.dart';
 import 'ajustes.dart';
-import 'login.dart'; // <-- هذا الملف الجديد اللي فيه LoginSelection
+import 'login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,20 +82,27 @@ class _SplashScreenState extends State<SplashScreen> {
 class MainMenu extends StatelessWidget {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // ما عادش نعمل clear، نمسحو كان الدخول
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('loginType');
+    await prefs.remove('server');
+    await prefs.remove('username');
+    await prefs.remove('password');
+    await prefs.remove('m3uUrl');
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
 
   Future<bool> _showExitDialog(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (c) => AlertDialog(
         backgroundColor: Colors.black87,
-        title: Text('خروج', style: TextStyle(color: Colors.white)),
+        title: Text('تأكيد الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: Text('هل تريد الخروج من التطبيق؟', style: TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('لا', style: TextStyle(color: Colors.white70))),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('نعم', style: TextStyle(color: Colors.redAccent))),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('لا', style: TextStyle(color: Colors.white70, fontSize: 18))),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('نعم', style: TextStyle(color: Colors.redAccent, fontSize: 18))),
         ],
       ),
     ) ?? false;
@@ -122,7 +129,6 @@ class MainMenu extends StatelessWidget {
                   child: Row(
                     children: [
                       CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
-                      // نحينا SizedBox و Image.asset logo باش الرقم ما يتغطاش
                       Spacer(),
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
