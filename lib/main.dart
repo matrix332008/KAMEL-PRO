@@ -128,14 +128,12 @@ class MainMenu extends StatelessWidget {
                     children: [
                       CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                       Spacer(),
-                      // الرقم تنحى من هنا
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
                 ),
                 Expanded(
                   child: Center(
-                    // *** هنا التعديل: 3 بوتونات في سطر واحد ***
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -153,8 +151,10 @@ class MainMenu extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _BottomButton(icon: Icons.favorite, label: 'FAVORITOS', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                      // القلب الكبير الجديد
+                      _BottomButton(imagePath: 'assets/favorites.png', label: 'FAVORITOS', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
                       Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
+                      // الترس الذهبي الجديد
                       _LanguageButton(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
                     ],
                   ),
@@ -226,12 +226,12 @@ class __MainCardState extends State<_MainCard> {
 }
 
 class _BottomButton extends StatefulWidget {
-  final IconData icon;
+  final String imagePath;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  _BottomButton({required this.icon, required this.label, required this.color, required this.onTap});
+  _BottomButton({required this.imagePath, required this.label, required this.color, required this.onTap});
 
   @override
   __BottomButtonState createState() => __BottomButtonState();
@@ -256,13 +256,18 @@ class __BottomButtonState extends State<_BottomButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _focused ? Colors.black.withOpacity(0.5) : Colors.transparent,
+            border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 2), 
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _focused ? [BoxShadow(color: widget.color.withOpacity(0.6), blurRadius: 15)] : [],
+          ),
           child: Column(
             children: [
-              Icon(widget.icon, color: widget.color, size: 40),
-              SizedBox(height: 5),
-              Text(widget.label, style: TextStyle(color: widget.color, fontSize: 14)),
+              Image.asset(widget.imagePath, width: 50, height: 50, fit: BoxFit.contain),
+              SizedBox(height: 6),
+              Text(widget.label, style: TextStyle(color: _focused ? widget.color : Colors.white70, fontSize: 16, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
@@ -298,13 +303,18 @@ class __LanguageButtonState extends State<_LanguageButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(border: Border.all(color: _focused ? Colors.white70 : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _focused ? Colors.black.withOpacity(0.5) : Colors.transparent,
+            border: Border.all(color: _focused ? Colors.amber : Colors.transparent, width: 2), 
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _focused ? [BoxShadow(color: Colors.amber.withOpacity(0.6), blurRadius: 15)] : [],
+          ),
           child: Column(
             children: [
-              Row(children: [Text('🇹🇳', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇫🇷', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇨🇿', style: TextStyle(fontSize: 24))]),
-              SizedBox(height: 5),
-              Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
+              Image.asset('assets/ajustes.png', width: 50, height: 50, fit: BoxFit.contain),
+              SizedBox(height: 6),
+              Text('AJUSTES', style: TextStyle(color: _focused ? Colors.amber : Colors.white70, fontSize: 16, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
