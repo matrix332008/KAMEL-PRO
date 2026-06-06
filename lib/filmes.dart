@@ -4,10 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
+import 'favorites.dart';
+import 'lang.dart';
 
 class FilmesScreen extends StatefulWidget {
-  @override
-  _FilmesScreenState createState() => _FilmesScreenState();
+  @override _FilmesScreenState createState() => _FilmesScreenState();
 }
 
 class _FilmesScreenState extends State<FilmesScreen> {
@@ -15,9 +16,9 @@ class _FilmesScreenState extends State<FilmesScreen> {
   List cats = [];
   String sel = 'All';
   bool loading = true;
+  Map<String,bool> favs = {};
 
-  @override
-  void initState() {
+  @override void initState() {
     super.initState();
     _load();
   }
@@ -32,22 +33,22 @@ class _FilmesScreenState extends State<FilmesScreen> {
       final mRes = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_vod_streams')).timeout(Duration(seconds: 20));
       if (cRes.statusCode == 200) cats = json.decode(cRes.body);
       if (mRes.statusCode == 200) movies = json.decode(mRes.body);
+      for(var m in movies){ favs[m['stream_id'].toString()] = await Fav.isFav('movies', m['stream_id'].toString()); }
     } catch (e) {}
     setState(() => loading = false);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     final filtered = sel == 'All'? movies : movies.where((m) => m['category_id'].toString() == sel).toList();
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('FILMES'),
-        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length} فيلم', style: TextStyle(color: Colors.white70)))],
+        title: Text(Lang.get('movies')),
+        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-         ? Center(child: CircularProgressIndicator(color: Colors.red))
+        ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
                 Container(
@@ -56,8 +57,8 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _buildChip('All', 'الكل'),
-                     ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                      _buildChip('All', Lang.get('all')),
+                    ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -73,6 +74,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     itemCount: filtered.length,
                     itemBuilder: (context, i) {
                       final m = filtered[i];
+                      final id = m['stream_id'].toString();
                       return Focus(
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
@@ -87,23 +89,29 @@ class _FilmesScreenState extends State<FilmesScreen> {
                             final hasFocus = Focus.of(ctx).hasFocus;
                             return GestureDetector(
                               onTap: () => _play(m),
+                              onLongPress: () => _toggleFav(m),
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(color: hasFocus? Colors.red : Colors.transparent, width: 3),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Column(
+                                child: Stack(
                                   children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                           ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
-                                            : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
-                                      ),
+                                    Column(
+                                      children: [
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
+                                              ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                                : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(m['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11)),
+                                      ],
                                     ),
-                                    SizedBox(height: 4),
-                                    Text(m['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11)),
+                                    Positioned(top:4,right:4,child: GestureDetector(onTap:()=>_toggleFav(m),child: Icon(favs[id]==true?Icons.favorite:Icons.favorite_border,size:20,color:favs[id]==true?Colors.red:Colors.white70))),
                                   ],
                                 ),
                               ),
@@ -138,6 +146,12 @@ class _FilmesScreenState extends State<FilmesScreen> {
         ),
       ),
     );
+  }
+
+  void _toggleFav(m) async {
+    bool added = await Fav.toggle('movies', {'id':m['stream_id'],'name':m['name'],'logo':m['stream_icon'],'ext':m['container_extension']});
+    setState(()=>favs[m['stream_id'].toString()]=added);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(added?Lang.get('added'):Lang.get('removed')),duration:Duration(seconds:1),backgroundColor:Colors.red));
   }
 
   void _play(m) async {
