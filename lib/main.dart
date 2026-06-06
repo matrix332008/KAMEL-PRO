@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'live_tv.dart';
-import 'epg.dart';
 import 'filmes.dart';
 import 'series.dart';
 import 'favorites.dart';
@@ -82,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen> {
 class MainMenu extends StatelessWidget {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // ما عادش نعمل clear، نمسحو كان الدخول
     await prefs.remove('isLoggedIn');
     await prefs.remove('loginType');
     await prefs.remove('server');
@@ -130,32 +128,23 @@ class MainMenu extends StatelessWidget {
                     children: [
                       CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                       Spacer(),
+                      Text('+420777099379', style: TextStyle(color: Colors.redAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 8, color: Colors.black)])),
+                      SizedBox(width: 30),
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
                 ),
                 Expanded(
                   child: Center(
-                    child: Column(
+                    // *** هنا التعديل: 3 بوتونات في سطر واحد ***
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
-                            SizedBox(width: 40),
-                            _MainCard(title: 'EPG', image: 'assets/epg.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
-                          ],
-                        ),
-                        SizedBox(height: 40),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _MainCard(title: 'FILMES', image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
-                            SizedBox(width: 40),
-                            _MainCard(title: 'SERIES', image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
-                          ],
-                        ),
+                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
+                        SizedBox(width: 40),
+                        _MainCard(title: 'FILMES', image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
+                        SizedBox(width: 40),
+                        _MainCard(title: 'SERIES', image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
                       ],
                     ),
                   ),
