@@ -19,53 +19,77 @@ class _HomeScreenState extends State<HomeScreen> {
     Lang.load().then((_) => setState(() {}));
   }
 
+  Future<bool> _showExitDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text('خروج', style: TextStyle(color: Colors.white)),
+        content: Text('هل تريد الخروج من التطبيق؟', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('لا', style: TextStyle(color: Colors.white70))),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('نعم', style: TextStyle(color: Colors.redAccent))),
+        ],
+      ),
+    ) ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // خلفية
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background.jpeg'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (await _showExitDialog()) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // خلفية نظيفة
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/background.jpeg'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                SizedBox(height: 40),
-                // الشعار
-                Center(child: Text('KAMEL PRO', style: TextStyle(color: Colors.red, fontSize: 48, fontWeight: FontWeight.bold, letterSpacing: 3, shadows: [Shadow(blurRadius: 20, color: Colors.red.withOpacity(0.5))]))),
-                SizedBox(height: 60),
-                // الأزرار
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 80),
-                    child: GridView.count(
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.8,
-                      mainAxisSpacing: 24,
-                      crossAxisSpacing: 24,
-                      children: [
-                        _btn(Icons.live_tv, Lang.get('live'), Colors.red, () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
-                        _btn(Icons.movie, Lang.get('movies'), Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
-                        _btn(Icons.tv, Lang.get('series'), Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
-                        _btn(Icons.calendar_today, Lang.get('epg'), Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
-                        _btn(Icons.favorite, Lang.get('fav'), Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
-                        _btn(Icons.settings, Lang.get('settings'), Colors.grey, () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
-                      ],
+            SafeArea(
+              child: Column(
+                children: [
+                  SizedBox(height: 40),
+                  // الشعار
+                  Center(child: Text('KAMEL PRO', style: TextStyle(color: Colors.red, fontSize: 48, fontWeight: FontWeight.bold, letterSpacing: 3, shadows: [Shadow(blurRadius: 20, color: Colors.red.withOpacity(0.5))]))),
+                  SizedBox(height: 60),
+                  // الأزرار
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 80),
+                      child: GridView.count(
+                        crossAxisCount: 3,
+                        childAspectRatio: 1.8,
+                        mainAxisSpacing: 24,
+                        crossAxisSpacing: 24,
+                        children: [
+                          _btn(Icons.live_tv, Lang.get('live'), Colors.red, () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
+                          _btn(Icons.movie, Lang.get('movies'), Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
+                          _btn(Icons.tv, Lang.get('series'), Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
+                          _btn(Icons.calendar_today, Lang.get('epg'), Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
+                          _btn(Icons.favorite, Lang.get('fav'), Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                          _btn(Icons.settings, Lang.get('settings'), Colors.grey, () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
