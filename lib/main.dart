@@ -8,7 +8,7 @@ import 'filmes.dart';
 import 'series.dart';
 import 'favorites.dart';
 import 'ajustes.dart';
-import 'login.dart';
+import 'login.dart'; // <-- هذا الملف الجديد اللي فيه LoginSelection
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,19 +31,28 @@ class KamelProApp extends StatelessWidget {
       child: MaterialApp(
         title: 'KAMEL PRO',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: Colors.black,
+        ),
         home: SplashScreen(),
       ),
     );
   }
 }
 
+// ============= SPLASH SCREEN =============
 class SplashScreen extends StatefulWidget {
-  @override _SplashScreenState createState() => _SplashScreenState();
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override void initState() { super.initState(); _checkLogin(); }
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+  }
+
   _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -54,7 +63,9 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
     }
   }
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -67,12 +78,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ============= MAIN MENU =============
 class MainMenu extends StatelessWidget {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
+
   Future<bool> _showExitDialog(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
@@ -87,12 +100,15 @@ class MainMenu extends StatelessWidget {
       ),
     ) ?? false;
   }
-  @override Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        if (await _showExitDialog(context)) SystemNavigator.pop();
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (await _showExitDialog(context)) {
+          SystemNavigator.pop();
+        }
+        return false;
       },
       child: Scaffold(
         body: Stack(
@@ -106,6 +122,7 @@ class MainMenu extends StatelessWidget {
                   child: Row(
                     children: [
                       CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                      // نحينا SizedBox و Image.asset logo باش الرقم ما يتغطاش
                       Spacer(),
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
@@ -157,28 +174,42 @@ class MainMenu extends StatelessWidget {
   }
 }
 
-// باقي الكلاسات _MainCard و _BottomButton و _LanguageButton و _LogoutButton كيما بعثتهملك قبل
 class _MainCard extends StatefulWidget {
-  final String title; final String image; final Color color; final VoidCallback onTap; final bool autofocus;
+  final String title;
+  final String image;
+  final Color color;
+  final VoidCallback onTap;
+  final bool autofocus;
+
   _MainCard({required this.title, required this.image, required this.color, required this.onTap, this.autofocus = false});
-  @override __MainCardState createState() => __MainCardState();
+
+  @override
+  __MainCardState createState() => __MainCardState();
 }
+
 class __MainCardState extends State<_MainCard> {
   bool _focused = false;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Focus(
       autofocus: widget.autofocus,
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-          widget.onTap(); return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: Duration(milliseconds: 200), width: 300, height: 200,
+          duration: Duration(milliseconds: 200),
+          width: 300,
+          height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: widget.color, width: _focused ? 4 : 2),
@@ -188,7 +219,8 @@ class __MainCardState extends State<_MainCard> {
           child: Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              width: double.infinity, padding: EdgeInsets.all(12),
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.black.withOpacity(0.7), borderRadius: BorderRadius.only(bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18))),
               child: Text(widget.title, textAlign: TextAlign.center, style: TextStyle(color: widget.color, fontSize: 20, fontWeight: FontWeight.bold)),
             ),
@@ -198,19 +230,32 @@ class __MainCardState extends State<_MainCard> {
     );
   }
 }
+
 class _BottomButton extends StatefulWidget {
-  final IconData icon; final String label; final Color color; final VoidCallback onTap;
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
   _BottomButton({required this.icon, required this.label, required this.color, required this.onTap});
-  @override __BottomButtonState createState() => __BottomButtonState();
+
+  @override
+  __BottomButtonState createState() => __BottomButtonState();
 }
+
 class __BottomButtonState extends State<_BottomButton> {
   bool _focused = false;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-          widget.onTap(); return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
@@ -219,20 +264,41 @@ class __BottomButtonState extends State<_BottomButton> {
         child: Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
-          child: Column(children: [Icon(widget.icon, color: widget.color, size: 40), SizedBox(height: 5), Text(widget.label, style: TextStyle(color: widget.color, fontSize: 14))]),
+          child: Column(
+            children: [
+              Icon(widget.icon, color: widget.color, size: 40),
+              SizedBox(height: 5),
+              Text(widget.label, style: TextStyle(color: widget.color, fontSize: 14)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-class _LanguageButton extends StatefulWidget { final VoidCallback onTap; _LanguageButton({required this.onTap}); @override __LanguageButtonState createState() => __LanguageButtonState(); }
+
+class _LanguageButton extends StatefulWidget {
+  final VoidCallback onTap;
+  _LanguageButton({required this.onTap});
+
+  @override
+  __LanguageButtonState createState() => __LanguageButtonState();
+}
+
 class __LanguageButtonState extends State<_LanguageButton> {
   bool _focused = false;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) { widget.onTap(); return KeyEventResult.handled; }
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
@@ -240,23 +306,48 @@ class __LanguageButtonState extends State<_LanguageButton> {
         child: Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(border: Border.all(color: _focused ? Colors.white70 : Colors.transparent, width: 2), borderRadius: BorderRadius.circular(10)),
-          child: Column(children: [Row(children: [Text('🇹🇳', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇫🇷', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇨🇿', style: TextStyle(fontSize: 24))]), SizedBox(height: 5), Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14))]),
+          child: Column(
+            children: [
+              Row(children: [Text('🇹🇳', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇫🇷', style: TextStyle(fontSize: 24)), SizedBox(width: 5), Text('🇨🇿', style: TextStyle(fontSize: 24))]),
+              SizedBox(height: 5),
+              Text('AJUSTES', style: TextStyle(color: Colors.white70, fontSize: 14)),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-class _LogoutButton extends StatefulWidget { final VoidCallback onPressed; _LogoutButton({required this.onPressed}); @override __LogoutButtonState createState() => __LogoutButtonState(); }
+
+class _LogoutButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  _LogoutButton({required this.onPressed});
+
+  @override
+  __LogoutButtonState createState() => __LogoutButtonState();
+}
+
 class __LogoutButtonState extends State<_LogoutButton> {
   bool _focused = false;
-  @override Widget build(BuildContext context) {
+
+  @override
+  Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) { widget.onPressed(); return KeyEventResult.handled; }
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            widget.onPressed();
+            return KeyEventResult.handled;
+          }
+        }
         return KeyEventResult.ignored;
       },
-      child: OutlinedButton(onPressed: widget.onPressed, style: OutlinedButton.styleFrom(side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: Text('LOG OUT', style: TextStyle(color: Colors.white70))),
+      child: OutlinedButton(
+        onPressed: widget.onPressed,
+        style: OutlinedButton.styleFrom(side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+        child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
+      ),
     );
   }
 }
