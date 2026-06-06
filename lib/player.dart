@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:async';
-import 'favorites.dart'; // تم التعديل
+import 'favorites.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String url;
@@ -12,7 +12,13 @@ class PlayerScreen extends StatefulWidget {
   final List? channelList;
   final int? currentIndex;
 
-  PlayerScreen({required this.url, required this.title, this.logo, this.channelList, this.currentIndex});
+  PlayerScreen({
+    required this.url,
+    required this.title,
+    this.logo,
+    this.channelList,
+    this.currentIndex,
+  });
 
   @override
   _PlayerScreenState createState() => _PlayerScreenState();
@@ -28,7 +34,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Timer? _controlsTimer;
   Timer? _updateTimer;
   final ScrollController _channelScroll = ScrollController();
-  Map<String, bool> _favs = {}; // تم التعديل: نحفظو حالة القلب
+  Map<String, bool> _favs = {};
+  DateTime? _okDownTime;
 
   bool get isLive => widget.channelList!= null;
 
@@ -40,7 +47,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _listIndex = widget.currentIndex?? 0;
     _initPlayer();
     _showInfoTemporarily();
-    _loadFavs(); // تم التعديل
+    _loadFavs();
     _updateTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
       if ((_showControls || _showChannelList) && mounted) setState(() {});
     });
@@ -56,7 +63,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   String _getId(Map ch) {
-    // نجيبو الـ id من الـ URL
     try {
       return ch['url'].split('/').last.split('.').first;
     } catch (_) {
@@ -67,10 +73,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Future<void> _toggleFav(int idx) async {
     final ch = widget.channelList![idx];
     final id = _getId(ch);
-    bool added = await Fav.toggle('live', {'id': id, 'name': ch['name'], 'logo': ch['logo']});
+    bool added = await Fav.toggle('live', {
+      'id': id,
+      'name': ch['name'],
+      'logo': ch['logo']
+    });
     setState(() => _favs[id] = added);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(added? 'أضيف للمفضلة' : 'حذف من المفضلة'), duration: Duration(seconds: 1), backgroundColor: Colors.cyan),
+      SnackBar(
+        content: Text(added? 'أضيف للمفضلة' : 'حذف من المفضلة'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.cyan,
+      ),
     );
   }
 
@@ -104,7 +118,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _togglePlay() {
     if (_exo == null) return;
-    if (_exo!.value.isPlaying) _exo!.pause(); else _exo!.play();
+    if (_exo!.value.isPlaying) {
+      _exo!.pause();
+    } else {
+      _exo!.play();
+    }
     setState(() {});
   }
 
@@ -125,18 +143,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _playChannel(int idx) {
     final next = widget.channelList![idx];
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PlayerScreen(
-      url: next['url'],
-      title: next['name'],
-      logo: next['logo'],
-      channelList: widget.channelList,
-      currentIndex: idx,
-    )));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerScreen(
+          url: next['url'],
+          title: next['name'],
+          logo: next['logo'],
+          channelList: widget.channelList,
+          currentIndex: idx,
+        ),
+      ),
+    );
   }
 
   void _scrollToIndex() {
     if (_channelScroll.hasClients) {
-      _channelScroll.animateTo(_listIndex * 56.0, duration: Duration(milliseconds: 150), curve: Curves.easeOut);
+      _channelScroll.animateTo(
+        _listIndex * 56.0,
+        duration: Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -155,7 +182,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final timeStr = "${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}";
+    final timeStr = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
@@ -173,44 +200,68 @@ class _PlayerScreenState extends State<PlayerScreen> {
       body: Focus(
         autofocus: true,
         onKeyEvent: (node, event) {
+          final key = event.logicalKey;
+          final isOk = key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter;
+
+          if (event is KeyDownEvent && isOk) {
+            _okDownTime = DateTime.now();
+            return KeyEventResult.handled;
+          }
+
+          if (event is KeyUpEvent && isOk) {
+            _showInfoTemporarily();
+            final dur = _okDownTime!= null? DateTime.now().difference(_okDownTime!).inMilliseconds : 0;
+            _okDownTime = null;
+
+            if (isLive && _showChannelList) {
+              if (dur > 500) {
+                _toggleFav(_listIndex);
+              } else {
+                _playChannel(_listIndex);
+              }
+              return KeyEventResult.handled;
+            }
+            if (isLive &&!_showChannelList) {
+              setState(() {
+                _showChannelList = true;
+                _listIndex = widget.currentIndex?? 0;
+              });
+              WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
+              return KeyEventResult.handled;
+            }
+            if (!isLive) {
+              _togglePlay();
+              _showControlsTemporarily();
+              return KeyEventResult.handled;
+            }
+          }
+
           if (event is KeyDownEvent) {
             _showInfoTemporarily();
-            final key = event.logicalKey;
-
-            if (isLive) {
-              if (_showChannelList) {
-                if (key == LogicalKeyboardKey.arrowUp) {
-                  setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
-                  _scrollToIndex();
-                } else if (key == LogicalKeyboardKey.arrowDown) {
-                  setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
-                  _scrollToIndex();
-                } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  _playChannel(_listIndex);
-                } else if (key == LogicalKeyboardKey.contextMenu || key == LogicalKeyboardKey.f1) {
-                  // تم التعديل: زر المينو = مفضلة
-                  _toggleFav(_listIndex);
-                } else if (key == LogicalKeyboardKey.goBack) {
-                  setState(() => _showChannelList = false);
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.handled;
-              } else {
-                if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
-                else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
-                else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
-                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
-                } else if (key == LogicalKeyboardKey.goBack) {
-                  return KeyEventResult.ignored;
-                }
+            if (isLive && _showChannelList) {
+              if (key == LogicalKeyboardKey.arrowUp) {
+                setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
+                _scrollToIndex();
+              } else if (key == LogicalKeyboardKey.arrowDown) {
+                setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
+                _scrollToIndex();
+              } else if (key == LogicalKeyboardKey.goBack) {
+                setState(() => _showChannelList = false);
                 return KeyEventResult.handled;
               }
+              return KeyEventResult.handled;
+            } else if (isLive) {
+              if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
+              else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
+              else if (key == LogicalKeyboardKey.goBack) return KeyEventResult.ignored;
+              return KeyEventResult.handled;
             } else {
-              if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
-              else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
-              else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
-                _togglePlay(); _showControlsTemporarily();
+              if (key == LogicalKeyboardKey.arrowLeft) {
+                _seek(-10);
+                _showControlsTemporarily();
+              } else if (key == LogicalKeyboardKey.arrowRight) {
+                _seek(10);
+                _showControlsTemporarily();
               } else if (key == LogicalKeyboardKey.goBack) {
                 return KeyEventResult.ignored;
               }
@@ -223,31 +274,35 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Positioned.fill(
               child: _exo!= null && _exo!.value.isInitialized
-               ? FittedBox(
-                    fit: isLive? BoxFit.fill : BoxFit.contain,
-                    child: SizedBox(
-                      width: _exo!.value.size.width,
-                      height: _exo!.value.size.height,
-                      child: VideoPlayer(_exo!),
-                    ),
-                  )
-                : Center(child: CircularProgressIndicator(color: Colors.cyan)),
+                 ? FittedBox(
+                      fit: isLive? BoxFit.fill : BoxFit.contain,
+                      child: SizedBox(
+                        width: _exo!.value.size.width,
+                        height: _exo!.value.size.height,
+                        child: VideoPlayer(_exo!),
+                      ),
+                    )
+                  : Center(child: CircularProgressIndicator(color: Colors.cyan)),
             ),
             if (_showInfo)
               Positioned(
-                top: 30, left: 30, right: 30,
+                top: 30,
+                left: 30,
+                right: 30,
                 child: Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
                   child: Row(
                     children: [
-                      if (widget.logo!= null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
+                      if (widget.logo!= null)
+                        Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_, __, ___) => SizedBox()),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (channelNum!= null) Text('قناة $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
+                            if (channelNum!= null)
+                              Text('قناة $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
                             Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -265,10 +320,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ),
             if (!isLive && _showControls)
               Positioned(
-                bottom: 0, left: 0, right: 0,
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
                   padding: EdgeInsets.fromLTRB(20, 12, 20, 30),
-                  decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87])),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black87],
+                    ),
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -278,15 +341,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         activeColor: Colors.red,
                         inactiveColor: Colors.white30,
                         onChanged: (v) async {
-                          final newPos = Duration(seconds: v.toInt());
-                          await _exo!.seekTo(newPos);
+                          await _exo!.seekTo(Duration(seconds: v.toInt()));
                         },
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(_formatDuration(position), style: TextStyle(color: Colors.white)),
-                          IconButton(iconSize: 48, icon: Icon(isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white), onPressed: _togglePlay),
+                          IconButton(
+                            iconSize: 48,
+                            icon: Icon(isPlaying? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white),
+                            onPressed: _togglePlay,
+                          ),
                           Text(_formatDuration(duration), style: TextStyle(color: Colors.white)),
                         ],
                       ),
@@ -296,12 +362,22 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ),
             if (isLive && _showChannelList)
               Positioned(
-                right: 30, top: 80, bottom: 80, width: 380,
+                right: 30,
+                top: 80,
+                bottom: 80,
+                width: 380,
                 child: Container(
-                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.92), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.cyan, width: 2)),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.cyan, width: 2),
+                  ),
                   child: Column(
                     children: [
-                      Padding(padding: EdgeInsets.all(14), child: Text('القنوات', style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))),
+                      Padding(
+                        padding: EdgeInsets.all(14),
+                        child: Text('القنوات', style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold)),
+                      ),
                       Expanded(
                         child: ListView.builder(
                           controller: _channelScroll,
@@ -320,12 +396,41 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
-                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
+                                  SizedBox(
+                                    width: 28,
+                                    child: Text(
+                                      '${i + 1}',
+                                      style: TextStyle(
+                                        color: active? Colors.black : Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  if (ch['logo']!= null)
+                                    Image.network(
+                                      ch['logo'],
+                                      width: 30,
+                                      height: 30,
+                                      errorBuilder: (_, __, ___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24),
+                                    ),
                                   SizedBox(width: 10),
-                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
-                                  // تم التعديل: القلب
-                                  Icon(isFav? Icons.favorite : Icons.favorite_border, size: 18, color: isFav? Colors.red : (active? Colors.black54 : Colors.white38)),
+                                  Expanded(
+                                    child: Text(
+                                      ch['name']?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: active? Colors.black : Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: active? FontWeight.bold : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    isFav? Icons.favorite : Icons.favorite_border,
+                                    size: 18,
+                                    color: isFav? Colors.red : (active? Colors.black54 : Colors.white38),
+                                  ),
                                 ],
                               ),
                             );
