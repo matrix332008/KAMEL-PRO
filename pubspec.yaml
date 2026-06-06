@@ -16,6 +16,8 @@ dependencies:
   cupertino_icons: ^1.0.6
   intl: ^0.19.0
   font_awesome_flutter: 10.8.0
+  xml: ^6.3.0
+  chewie: ^1.7.5
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +34,5 @@ flutter:
     - assets/epg.png
     - assets/filmes.png
     - assets/series.png
+    - assets/favorites.png
+    - assets/ajustes.png
