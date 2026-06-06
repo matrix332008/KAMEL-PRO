@@ -43,7 +43,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text('SERIES')),
       body: loading
-        ? Center(child: CircularProgressIndicator(color: Colors.orange))
+       ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
                 Container(
@@ -53,7 +53,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('All', 'الكل'),
-                    ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                   ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -94,7 +94,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                          ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                         ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -144,33 +144,37 @@ class _SeriesScreenState extends State<SeriesScreen> {
     final res = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_series_info&series_id=${s['series_id']}'));
     final data = json.decode(res.body);
     final episodes = data['episodes'];
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Color(0xFF111111),
+
+    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
         title: Text(s['name'], style: TextStyle(color: Colors.white)),
-        content: Container(
-          width: 500,
-          height: 450,
-          child: ListView(
-            children: episodes.keys.map<Widget>((season) {
-              return ExpansionTile(
-                title: Text('الموسم $season', style: TextStyle(color: Colors.orange)),
-                children: (episodes[season] as List).map((ep) {
-                  return ListTile(
-                    title: Text(ep['title'], style: TextStyle(color: Colors.white)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      String url = '$server/series/$user/$pass/${ep['id']}.${ep['container_extension']}';
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: s['cover'])));
-                    },
-                  );
-                }).toList(),
+        iconTheme: IconThemeData(color: Colors.orange),
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: episodes.keys.map<Widget>((season) {
+          return ExpansionTile(
+            initiallyExpanded: true,
+            title: Text('الموسم $season', style: TextStyle(color: Colors.orange, fontSize: 20, fontWeight: FontWeight.bold)),
+            iconColor: Colors.orange,
+            collapsedIconColor: Colors.orange,
+            children: (episodes[season] as List).map((ep) {
+              return ListTile(
+                autofocus: false,
+                leading: Icon(Icons.play_circle_outline, color: Colors.white70),
+                title: Text(ep['title'], style: TextStyle(color: Colors.white, fontSize: 16)),
+                focusColor: Colors.orange.withOpacity(0.2),
+                onTap: () {
+                  String url = '$server/series/$user/$pass/${ep['id']}.${ep['container_extension']}';
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: s['cover'])));
+                },
               );
             }).toList(),
-          ),
-        ),
+          );
+        }).toList(),
       ),
-    );
+    )));
   }
 }
