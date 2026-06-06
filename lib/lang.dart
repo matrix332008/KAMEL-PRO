@@ -16,6 +16,11 @@ class Lang {
       'removed': 'حذف من المفضلة',
       'lang': 'اللغة',
       'player': 'المشغل',
+      // --- جديد: للـ logout ---
+      'logout_title': 'تسجيل الخروج',
+      'logout_msg': 'هل تريد تسجيل الخروج من الحساب؟',
+      'yes': 'نعم',
+      'no': 'لا',
     },
     'fr': {
       'live': 'DIRECT',
@@ -30,6 +35,11 @@ class Lang {
       'removed': 'Retiré',
       'lang': 'Langue',
       'player': 'Lecteur',
+      // --- جديد ---
+      'logout_title': 'Déconnexion',
+      'logout_msg': 'Voulez-vous vous déconnecter?',
+      'yes': 'Oui',
+      'no': 'Non',
     },
     'cs': {
       'live': 'ŽIVĚ',
@@ -44,14 +54,21 @@ class Lang {
       'removed': 'Odebráno',
       'lang': 'Jazyk',
       'player': 'Přehrávač',
+      // --- جديد ---
+      'logout_title': 'Odhlásit se',
+      'logout_msg': 'Chcete se odhlásit?',
+      'yes': 'Ano',
+      'no': 'Ne',
     },
   };
 
   static String get(String key) => t[current]![key]?? key;
+
   static Future load() async {
     final p = await SharedPreferences.getInstance();
     current = p.getString('lang')?? 'ar';
   }
+
   static Future set(String l) async {
     current = l;
     final p = await SharedPreferences.getInstance();
