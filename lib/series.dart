@@ -25,7 +25,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    String server = (p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
+    String server = (p.getString('server_url')?? p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     try {
@@ -44,7 +44,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text(Lang.get('series'))),
       body: loading
-     ? Center(child: CircularProgressIndicator(color: Colors.orange))
+    ? Center(child: CircularProgressIndicator(color: Colors.orange))
         : Column(
             children: [
               Container(
@@ -54,19 +54,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 8),
                   children: [
                     _buildChip('All', Lang.get('all')),
-                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                   ],
                 ),
               ),
               Expanded(
                 child: GridView.builder(
                   padding: EdgeInsets.all(14),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    childAspectRatio: 0.68,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, childAspectRatio: 0.68, mainAxisSpacing: 12, crossAxisSpacing: 12),
                   itemCount: filtered.length,
                   itemBuilder: (context, i) {
                     final s = filtered[i];
@@ -87,29 +82,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
                             onTap: () => _openSeries(s),
                             onLongPress: () => _toggleFav(s),
                             child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: hasFocus? Colors.orange : Colors.transparent, width: 3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Stack(
-                                children: [
-                                  Column(
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                         ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
-                                            : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(s['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11)),
-                                    ],
-                                  ),
-                                  Positioned(top:4,right:4,child: GestureDetector(onTap:()=>_toggleFav(s),child: Icon(favs[id]==true?Icons.favorite:Icons.favorite_border,size:20,color:favs[id]==true?Colors.red:Colors.white70))),
-                                ],
-                              ),
+                              decoration: BoxDecoration(border: Border.all(color: hasFocus? Colors.orange : Colors.transparent, width: 3), borderRadius: BorderRadius.circular(8)),
+                              child: Stack(children: [
+                                Column(children: [Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(6), child: s['cover']!= null && s['cover'].toString().isNotEmpty? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30))) : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))), SizedBox(height: 4), Text(s['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11))]),
+                                Positioned(top:4,right:4,child: GestureDetector(onTap:()=>_toggleFav(s),child: Icon(favs[id]==true?Icons.favorite:Icons.favorite_border,size:20,color:favs[id]==true?Colors.red:Colors.white70))),
+                              ]),
                             ),
                           );
                         },
@@ -125,23 +102,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   Widget _buildChip(String id, String name) {
     final selected = sel == id;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Focus(
-        child: Builder(
-          builder: (ctx) {
-            final hasFocus = Focus.of(ctx).hasFocus;
-            return ChoiceChip(
-              label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)),
-              selected: selected,
-              selectedColor: Colors.orange,
-              backgroundColor: hasFocus? Colors.white24 : Colors.grey[800],
-              onSelected: (_) => setState(() => sel = id),
-            );
-          },
-        ),
-      ),
-    );
+    return Padding(padding: EdgeInsets.symmetric(horizontal: 4), child: Focus(child: Builder(builder: (ctx) { final hasFocus = Focus.of(ctx).hasFocus; return ChoiceChip(label: Text(name, style: TextStyle(color: selected? Colors.black : Colors.white)), selected: selected, selectedColor: Colors.orange, backgroundColor: hasFocus? Colors.white24 : Colors.grey[800], onSelected: (_) => setState(() => sel = id));})));
   }
 
   void _toggleFav(s) async {
@@ -152,7 +113,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   void _openSeries(s) async {
     final p = await SharedPreferences.getInstance();
-    String server = p.getString('server')?? '';
+    String server = p.getString('server_url')?? p.getString('server')?? '';
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     final res = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_series_info&series_id=${s['series_id']}'));
@@ -161,11 +122,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
     Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text(s['name'], style: TextStyle(color: Colors.white)),
-        iconTheme: IconThemeData(color: Colors.orange),
-      ),
+      appBar: AppBar(backgroundColor: Colors.black, title: Text(s['name'], style: TextStyle(color: Colors.white)), iconTheme: IconThemeData(color: Colors.orange)),
       body: ListView(
         padding: EdgeInsets.all(16),
         children: episodes.keys.map<Widget>((season) {
