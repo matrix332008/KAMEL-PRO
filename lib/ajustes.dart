@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'lang.dart';
 
 class AjustesScreen extends StatefulWidget {
-  @override _AjustesScreenState createState() => _AjustesScreenState();
+  @override
+  _AjustesScreenState createState() => _AjustesScreenState();
 }
 
 class _AjustesScreenState extends State<AjustesScreen> {
 
-  @override Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(Lang.get('settings')),
+        title: Text('AJUSTES'),
         leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context))
       ),
       body: Padding(
@@ -21,45 +22,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(Lang.get('player'), style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            Text('إعدادات المشغل', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
             SizedBox(height: 20),
             _infoCard(),
             SizedBox(height: 30),
-            Text(Lang.get('lang'), style: TextStyle(color: Colors.white, fontSize: 18)),
-            SizedBox(height: 12),
-            Row(children:[
-              _langBtn('🇹🇳 العربية','ar'),
-              SizedBox(width:10),
-              _langBtn('🇫🇷 Français','fr'),
-              SizedBox(width:10),
-              _langBtn('🇨🇿 Čeština','cs'),
-            ]),
-            Spacer(),
-            Text('KAMEL PRO v1.1', style: TextStyle(color: Colors.white38, fontSize: 14)),
+            Text('KAMEL PRO v1.0', style: TextStyle(color: Colors.white38, fontSize: 14)),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _langBtn(String label, String code){
-    final sel = Lang.current == code;
-    return Focus(
-      child: Builder(builder: (ctx){
-        final has = Focus.of(ctx).hasFocus;
-        return ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: sel? Colors.cyan : (has? Colors.white24: Color(0xFF1A1A1A)),
-            side: BorderSide(color: has? Colors.cyan: Colors.transparent, width: 2),
-          ),
-          // تم التعديل: نحفظو ونخرجو طول باش main.dart يعمل restart
-          onPressed: () async { 
-            await Lang.set(code); 
-            if (mounted) Navigator.pop(context);
-          },
-          child: Text(label, style: TextStyle(color: Colors.white)),
-        );
-      }),
     );
   }
 

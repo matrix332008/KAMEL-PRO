@@ -134,16 +134,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
   @override
   void initState() {
     super.initState();
-    _loadSaved(); // تم التعديل: نعمرو الحقول تلقائيا
     WidgetsBinding.instance.addPostFrameCallback((_) => _serverFocus.requestFocus());
-  }
-
-  // تم التعديل: تحميل البيانات المحفوظة
-  _loadSaved() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _serverController.text = prefs.getString('server_url') ?? '';
-    _userController.text = prefs.getString('username') ?? '';
-    _passController.text = prefs.getString('password') ?? '';
   }
 
   @override
@@ -177,9 +168,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('loginType', 'xtream');
-          // تم التعديل: نحفظو بنفس الاسم اللي يلوج عليه main.dart
-          await prefs.setString('server_url', server);
-          await prefs.setString('server', server); // للتوافق
+          await prefs.setString('server', server);
           await prefs.setString('username', user);
           await prefs.setString('password', pass);
           await prefs.setString('xtreamData', response.body);
@@ -263,14 +252,7 @@ class _M3ULoginState extends State<M3ULogin> {
   @override
   void initState() {
     super.initState();
-    _loadSaved();
     WidgetsBinding.instance.addPostFrameCallback((_) => _urlFocus.requestFocus());
-  }
-
-  _loadSaved() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _urlController.text = prefs.getString('m3uUrl') ?? '';
-    _nameController.text = prefs.getString('playlistName') ?? '';
   }
 
   @override
@@ -292,7 +274,6 @@ class _M3ULoginState extends State<M3ULogin> {
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('loginType', 'm3u');
     await prefs.setString('m3uUrl', url);
-    await prefs.setString('server_url', url); // تم التعديل: باش main.dart يلقى حاجة
     await prefs.setString('playlistName', _nameController.text.trim());
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
   }

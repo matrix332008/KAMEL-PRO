@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
-import 'favorites.dart';
-import 'lang.dart';
 
 class LiveTV extends StatefulWidget {
   @override
@@ -17,17 +15,16 @@ class _LiveTVState extends State<LiveTV> {
   List groups = [];
   String sel = 'All';
   bool loading = true;
-  Map<String,bool> favs = {};
 
   @override
   void initState() {
     super.initState();
-    Lang.load().then((_) => _load());
+    _load();
   }
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    String server = (p.getString('server_url') ?? p.getString('server') ?? '').replaceAll(RegExp(r'/$'), '');
+    String server = (p.getString('server') ?? '').replaceAll(RegExp(r'/$'), '');
     String user = p.getString('username') ?? '';
     String pass = p.getString('password') ?? '';
     try {
@@ -36,16 +33,13 @@ class _LiveTVState extends State<LiveTV> {
       if (chRes.statusCode == 200) channels = json.decode(chRes.body);
       if (cRes.statusCode == 200) {
         var cats = json.decode(cRes.body);
-        groups = [{'category_id': 'All', 'category_name': Lang.get('all')}];
+        groups = [{'category_id': 'All', 'category_name': 'الكل'}];
         for (var c in cats) {
           groups.add({'category_id': c['category_id'].toString(), 'category_name': c['category_name']});
         }
       }
-      for (var ch in channels) {
-        favs[ch['stream_id'].toString()] = await Fav.isFav('live', ch['stream_id'].toString());
-      }
     } catch (e) {}
-    if (groups.isEmpty) groups = [{'category_id': 'All', 'category_name': Lang.get('all')}];
+    if (groups.isEmpty) groups = [{'category_id': 'All', 'category_name': 'الكل'}];
     setState(() => loading = false);
   }
 
@@ -58,6 +52,7 @@ class _LiveTVState extends State<LiveTV> {
           ? Center(child: CircularProgressIndicator(color: Colors.cyan))
           : Row(
               children: [
+                // الباقات على اليسار
                 Container(
                   width: 260,
                   color: Colors.black87,
@@ -68,7 +63,7 @@ class _LiveTVState extends State<LiveTV> {
                         child: Row(
                           children: [
                             IconButton(icon: Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                            Text(Lang.get('categories'), style: TextStyle(color: Colors.cyan, fontSize: 20)),
+                            Text('الباقات', style: TextStyle(color: Colors.cyan, fontSize: 20)),
                           ],
                         ),
                       ),
@@ -99,12 +94,13 @@ class _LiveTVState extends State<LiveTV> {
                     ],
                   ),
                 ),
+                // القنوات باللوغو
                 Expanded(
                   child: GridView.builder(
                     padding: EdgeInsets.all(20),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 5,
-                      childAspectRatio: 0.85,
+                      childAspectRatio: 0.85, // مربع كيما التطبيق القديم
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
                     ),
@@ -112,19 +108,12 @@ class _LiveTVState extends State<LiveTV> {
                     itemBuilder: (_, i) {
                       final ch = filtered[i];
                       final logo = ch['stream_icon'] ?? '';
-                      final id = ch['stream_id'].toString();
                       return Focus(
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent) {
-                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-                              _openChannel(ch, filtered, i);
-                              return KeyEventResult.handled;
-                            }
-                            if (event.logicalKey == LogicalKeyboardKey.contextMenu || event.logicalKey == LogicalKeyboardKey.f1) {
-                              _toggleFav(ch);
-                              return KeyEventResult.handled;
-                            }
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _openChannel(ch, filtered, i);
+                            return KeyEventResult.handled;
                           }
                           return KeyEventResult.ignored;
                         },
@@ -133,7 +122,6 @@ class _LiveTVState extends State<LiveTV> {
                             final hasFocus = Focus.of(ctx).hasFocus;
                             return GestureDetector(
                               onTap: () => _openChannel(ch, filtered, i),
-                              onLongPress: () => _toggleFav(ch),
                               child: AnimatedContainer(
                                 duration: Duration(milliseconds: 150),
                                 decoration: BoxDecoration(
@@ -147,9 +135,11 @@ class _LiveTVState extends State<LiveTV> {
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
+                                      // اللوغو
                                       logo.isNotEmpty
                                           ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
                                           : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
+                                      // تدرج من تحت للاسم
                                       Positioned(
                                         bottom: 0,
                                         left: 0,
@@ -168,13 +158,11 @@ class _LiveTVState extends State<LiveTV> {
                                           ),
                                         ),
                                       ),
+                                      // علامة قلب كيما القديم
                                       Positioned(
                                         top: 6,
                                         right: 6,
-                                        child: GestureDetector(
-                                          onTap: () => _toggleFav(ch),
-                                          child: Icon(favs[id] == true ? Icons.favorite : Icons.favorite_border, size: 18, color: favs[id] == true ? Colors.red : Colors.white70),
-                                        ),
+                                        child: Icon(Icons.favorite_border, size: 18, color: Colors.white70),
                                       ),
                                     ],
                                   ),
@@ -192,15 +180,9 @@ class _LiveTVState extends State<LiveTV> {
     );
   }
 
-  void _toggleFav(ch) async {
-    bool added = await Fav.toggle('live', {'id': ch['stream_id'], 'name': ch['name'], 'logo': ch['stream_icon']});
-    setState(() => favs[ch['stream_id'].toString()] = added);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(added ? Lang.get('added') : Lang.get('removed')), duration: Duration(seconds: 1), backgroundColor: Colors.cyan));
-  }
-
   void _openChannel(ch, list, i) async {
     final p = await SharedPreferences.getInstance();
-    String server = p.getString('server_url') ?? p.getString('server') ?? '';
+    String server = p.getString('server') ?? '';
     String user = p.getString('username') ?? '';
     String pass = p.getString('password') ?? '';
     String url = '$server/live/$user/$pass/${ch['stream_id']}.ts';
@@ -218,6 +200,7 @@ class _LiveTVState extends State<LiveTV> {
       channelList: channelList,
       currentIndex: i,
     )));
+    // هذا السطر الوحيد اللي زدته باش يرجع الفوكس
     if (mounted) setState(() {});
   }
 }

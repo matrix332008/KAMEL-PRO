@@ -9,15 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  video_player: 2.7.2      # نزلت من 2.8.2
+  video_player: ^2.8.2
   http: ^1.2.2
   shared_preferences: ^2.2.3
   wakelock_plus: ^1.2.0
   cupertino_icons: ^1.0.6
   intl: ^0.19.0
   font_awesome_flutter: 10.8.0
-  xml: ^6.3.0
-  chewie: 1.7.4            # نحيت الـ ^ وحطيت 1.7.4 بالضبط
 
 dev_dependencies:
   flutter_test:
@@ -34,5 +32,3 @@ flutter:
     - assets/epg.png
     - assets/filmes.png
     - assets/series.png
-    - assets/favorites.png
-    - assets/ajustes.png
