@@ -27,7 +27,8 @@ class _LiveTVState extends State<LiveTV> {
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    String server = (p.getString('server') ?? '').replaceAll(RegExp(r'/$'), '');
+    // تم التعديل: نستعمل server_url اللي حفظناه
+    String server = (p.getString('server_url') ?? p.getString('server') ?? '').replaceAll(RegExp(r'/$'), '');
     String user = p.getString('username') ?? '';
     String pass = p.getString('password') ?? '';
     try {
@@ -115,10 +116,19 @@ class _LiveTVState extends State<LiveTV> {
                       final id = ch['stream_id'].toString();
                       return Focus(
                         autofocus: i == 0,
+                        // تم التعديل: فرقنا بين الضغط العادي والمطول
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _openChannel(ch, filtered, i);
-                            return KeyEventResult.handled;
+                          if (event is KeyDownEvent) {
+                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                              // الضغط العادي = افتح
+                              _openChannel(ch, filtered, i);
+                              return KeyEventResult.handled;
+                            }
+                            // تم التعديل: زر المينو أو الزر الأحمر = مفضلة (للي الريموت ما يدعمش الضغط المطول)
+                            if (event.logicalKey == LogicalKeyboardKey.contextMenu || event.logicalKey == LogicalKeyboardKey.f1) {
+                              _toggleFav(ch);
+                              return KeyEventResult.handled;
+                            }
                           }
                           return KeyEventResult.ignored;
                         },
@@ -127,11 +137,12 @@ class _LiveTVState extends State<LiveTV> {
                             final hasFocus = Focus.of(ctx).hasFocus;
                             return GestureDetector(
                               onTap: () => _openChannel(ch, filtered, i),
+                              // تم التعديل: الضغط المطول = مفضلة
                               onLongPress: () => _toggleFav(ch),
                               child: AnimatedContainer(
                                 duration: Duration(milliseconds: 150),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF1A1A1A),
+                                  color: Color(0xFF1A1A),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
                                   boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
@@ -194,7 +205,7 @@ class _LiveTVState extends State<LiveTV> {
 
   void _openChannel(ch, list, i) async {
     final p = await SharedPreferences.getInstance();
-    String server = p.getString('server') ?? '';
+    String server = p.getString('server_url') ?? p.getString('server') ?? '';
     String user = p.getString('username') ?? '';
     String pass = p.getString('password') ?? '';
     String url = '$server/live/$user/$pass/${ch['stream_id']}.ts';
