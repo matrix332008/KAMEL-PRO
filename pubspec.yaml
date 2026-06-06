@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_vlc_player: ^7.4.1
   video_player: ^2.8.2
   http: ^1.2.2
   shared_preferences: ^2.2.3
