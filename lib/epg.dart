@@ -30,18 +30,17 @@ class _EPGScreenState extends State<EPGScreen> {
 
   _loadEPG() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String server = prefs.getString('server')?? '';
+    // تم التعديل
+    String server = (prefs.getString('server_url')?? prefs.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
     String user = prefs.getString('username')?? '';
     String pass = prefs.getString('password')?? '';
 
     try {
-      // 1. جيب القنوات
       final channelsRes = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_live_streams'));
       if (channelsRes.statusCode == 200) {
         channels = json.decode(channelsRes.body);
-        channels = channels.take(50).toList(); // أول 50 قناة باش ما يثقلش
+        channels = channels.take(50).toList();
 
-        // 2. جيب EPG
         final epgRes = await http.get(Uri.parse('$server/xmltv.php?username=$user&password=$pass')).timeout(Duration(seconds: 15));
         if (epgRes.statusCode == 200) {
           final document = XmlDocument.parse(epgRes.body);
@@ -85,10 +84,9 @@ class _EPGScreenState extends State<EPGScreen> {
         children: [
           Image.asset('assets/background.jpeg', fit: BoxFit.fill),
           loading
-             ? Center(child: CircularProgressIndicator(color: Colors.cyan))
+           ? Center(child: CircularProgressIndicator(color: Colors.cyan))
               : Row(
                   children: [
-                    // القنوات على اليسار
                     Container(
                       width: 300,
                       color: Colors.black.withOpacity(0.7),
@@ -139,7 +137,6 @@ class _EPGScreenState extends State<EPGScreen> {
                         ),
                       ),
                     ),
-                    // البرامج على اليمين
                     Expanded(
                       child: Container(
                         color: Colors.black.withOpacity(0.5),
@@ -185,7 +182,7 @@ class _EPGScreenState extends State<EPGScreen> {
       itemCount: programs.length,
       itemBuilder: (context, index) {
         var prog = programs[index];
-        bool isNow = index == 0; // نبسطوها
+        bool isNow = index == 0;
         return Container(
           margin: EdgeInsets.only(bottom: 15),
           padding: EdgeInsets.all(15),
