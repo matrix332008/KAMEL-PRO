@@ -22,18 +22,14 @@ void main() async {
   runApp(KamelProApp());
 }
 
-// --- جديد: باش نجم نعمل restart للتطبيق كي تتبدل اللغة ---
 class KamelProApp extends StatefulWidget {
   static _KamelProAppState? of(BuildContext context) => context.findAncestorStateOfType<_KamelProAppState>();
-  
   @override _KamelProAppState createState() => _KamelProAppState();
 }
 
 class _KamelProAppState extends State<KamelProApp> {
   void restart() => setState(() {});
-
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
@@ -49,28 +45,21 @@ class _KamelProAppState extends State<KamelProApp> {
   }
 }
 
-// ============= SPLASH SCREEN =============
-class SplashScreen extends StatefulWidget {
-  @override _SplashScreenState createState() => _SplashScreenState();
-}
-
+// SPLASH
+class SplashScreen extends StatefulWidget { @override _SplashScreenState createState() => _SplashScreenState(); }
 class _SplashScreenState extends State<SplashScreen> {
   @override void initState() { super.initState(); _checkLogin(); }
-
   _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    // تم التعديل: نتأكدو اللي البيانات موجودة
     String? url = prefs.getString('server_url');
-    
     if (isLoggedIn && url != null && url.isNotEmpty) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
     }
   }
-
   @override Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(fit: StackFit.expand, children: [
@@ -81,25 +70,18 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// ============= MAIN MENU =============
-class MainMenu extends StatefulWidget {
-  @override _MainMenuState createState() => _MainMenuState();
-}
-
+// MAIN MENU
+class MainMenu extends StatefulWidget { @override _MainMenuState createState() => _MainMenuState(); }
 class _MainMenuState extends State<MainMenu> {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // تم التعديل: نحفظو اللغة قبل ما نمسحو كل شي
     String? savedLang = prefs.getString('lang');
     await prefs.clear();
-    if (savedLang != null) {
-      await prefs.setString('lang', savedLang);
-    }
+    if (savedLang != null) await prefs.setString('lang', savedLang);
     await prefs.setBool('isLoggedIn', false);
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
 
-  // تم التعديل: ديالوج تأكيد الخروج
   Future<bool> _onWillPop() async {
     return await showDialog(
       context: context,
@@ -116,7 +98,6 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   @override Widget build(BuildContext context) {
-    // تم التعديل: WillPopScope باش زر الرجوع يسأل
     return WillPopScope(
       onWillPop: () async {
         bool exit = await _onWillPop();
@@ -124,59 +105,64 @@ class _MainMenuState extends State<MainMenu> {
         return false;
       },
       child: Scaffold(
-        body: Stack(fit: StackFit.expand, children: [
-          Image.asset('assets/background.jpeg', fit: BoxFit.fill),
-          Column(children: [
-            Padding(
-              padding: EdgeInsets.all(20),
-              child: Row(children: [
-                CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
-                SizedBox(width: 20),
-                Image.asset('assets/logo.png', width: 200),
-                Spacer(),
-                _LogoutButton(onPressed: () async {
-                  bool exit = await _onWillPop();
-                  if (exit) _logout(context);
-                }),
-              ]),
-            ),
-            Expanded(
-              child: Center(
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    _MainCard(title: Lang.get('live'), image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
-                    SizedBox(width: 40),
-                    _MainCard(title: Lang.get('epg'), image: 'assets/epg.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset('assets/background.jpeg', fit: BoxFit.fill),
+            Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Row(children: [
+                    CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                    SizedBox(width: 20),
+                    Image.asset('assets/logo.png', width: 200),
+                    Spacer(),
+                    _LogoutButton(onPressed: () async {
+                      bool exit = await _onWillPop();
+                      if (exit) _logout(context);
+                    }),
                   ]),
-                  SizedBox(height: 40),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    _MainCard(title: Lang.get('movies'), image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
-                    SizedBox(width: 40),
-                    _MainCard(title: Lang.get('series'), image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        _MainCard(title: Lang.get('live'), image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
+                        SizedBox(width: 40),
+                        _MainCard(title: Lang.get('epg'), image: 'assets/epg.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
+                      ]),
+                      SizedBox(height: 40),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        _MainCard(title: Lang.get('movies'), image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
+                        SizedBox(width: 40),
+                        _MainCard(title: Lang.get('series'), image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
+                      ]),
+                    ]),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 30, left: 60, right: 60),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    _BottomButton(icon: Icons.favorite, label: Lang.get('fav'), color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                    Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
+                    _LanguageButton(onTap: () async { 
+                      await Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen())); 
+                      KamelProApp.of(context)?.restart();
+                      setState((){});
+                    }),
                   ]),
-                ]),
-              ),
+                ),
+              ],
             ),
-            Padding(
-              padding: EdgeInsets.only(bottom: 30, left: 60, right: 60),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                _BottomButton(icon: Icons.favorite, label: Lang.get('fav'), color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
-                Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
-                _LanguageButton(onTap: () async { 
-                  await Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen())); 
-                  // تم التعديل: نعمل restart للتطبيق باش اللغة تتبدل فورا
-                  KamelProApp.of(context)?.restart();
-                  setState((){});
-                }),
-              ]),
-            ),
-          ]),
+          ], // <-- هذا القوس كان ناقص
         ),
       ),
     );
   }
 }
 
+// باقي الكلاسات نفسهم
 class _MainCard extends StatefulWidget {
   final String title; final String image; final Color color; final VoidCallback onTap; final bool autofocus;
   _MainCard({required this.title, required this.image, required this.color, required this.onTap, this.autofocus = false});
@@ -231,10 +217,7 @@ class __BottomButtonState extends State<_BottomButton> {
   }
 }
 
-class _LanguageButton extends StatefulWidget {
-  final VoidCallback onTap; _LanguageButton({required this.onTap});
-  @override __LanguageButtonState createState() => __LanguageButtonState();
-}
+class _LanguageButton extends StatefulWidget { final VoidCallback onTap; _LanguageButton({required this.onTap}); @override __LanguageButtonState createState() => __LanguageButtonState(); }
 class __LanguageButtonState extends State<_LanguageButton> {
   bool _focused = false;
   @override Widget build(BuildContext context) {
@@ -249,10 +232,7 @@ class __LanguageButtonState extends State<_LanguageButton> {
   }
 }
 
-class _LogoutButton extends StatefulWidget {
-  final VoidCallback onPressed; _LogoutButton({required this.onPressed});
-  @override __LogoutButtonState createState() => __LogoutButtonState();
-}
+class _LogoutButton extends StatefulWidget { final VoidCallback onPressed; _LogoutButton({required this.onPressed}); @override __LogoutButtonState createState() => __LogoutButtonState(); }
 class __LogoutButtonState extends State<_LogoutButton> {
   bool _focused = false;
   @override Widget build(BuildContext context) {
