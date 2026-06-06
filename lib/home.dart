@@ -48,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            // خلفية نظيفة
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
@@ -62,10 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   SizedBox(height: 40),
-                  // الشعار
                   Center(child: Text('KAMEL PRO', style: TextStyle(color: Colors.red, fontSize: 48, fontWeight: FontWeight.bold, letterSpacing: 3, shadows: [Shadow(blurRadius: 20, color: Colors.red.withOpacity(0.5))]))),
                   SizedBox(height: 60),
-                  // الأزرار
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 80),
@@ -79,8 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           _btn(Icons.movie, Lang.get('movies'), Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
                           _btn(Icons.tv, Lang.get('series'), Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
                           _btn(Icons.calendar_today, Lang.get('epg'), Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
-                          _btn(Icons.favorite, Lang.get('fav'), Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
-                          _btn(Icons.settings, Lang.get('settings'), Colors.grey, () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
+                          // القلب الكبير
+                          _btnImg('assets/favorites.png', Lang.get('fav'), Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                          // الترس الذهبي
+                          _btnImg('assets/ajustes.png', Lang.get('settings'), Colors.amber, () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
                         ],
                       ),
                     ),
@@ -113,6 +112,35 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, size: 48, color: has ? color : Colors.white70),
+                SizedBox(height: 8),
+                Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal)),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  // الجديد - للأيقونات بالصور
+  Widget _btnImg(String asset, String label, Color color, VoidCallback onTap) {
+    return Focus(
+      child: Builder(builder: (ctx) {
+        final has = Focus.of(ctx).hasFocus;
+        return GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 150),
+            decoration: BoxDecoration(
+              color: has ? color.withOpacity(0.3) : Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: has ? color : Colors.white24, width: has ? 3 : 1),
+              boxShadow: has ? [BoxShadow(color: color.withOpacity(0.6), blurRadius: 25, spreadRadius: 2)] : [],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(asset, width: 64, height: 64, fit: BoxFit.contain),
                 SizedBox(height: 8),
                 Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal)),
               ],
