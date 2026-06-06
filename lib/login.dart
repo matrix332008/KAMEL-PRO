@@ -134,7 +134,17 @@ class _XtreamLoginState extends State<XtreamLogin> {
   @override
   void initState() {
     super.initState();
+    _loadSaved();
     WidgetsBinding.instance.addPostFrameCallback((_) => _serverFocus.requestFocus());
+  }
+
+  Future<void> _loadSaved() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _serverController.text = prefs.getString('server') ?? 'http://';
+      _userController.text = prefs.getString('username') ?? '';
+      _passController.text = prefs.getString('password') ?? '';
+    });
   }
 
   @override
@@ -153,7 +163,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
     String user = _userController.text.trim();
     String pass = _passController.text.trim();
 
-    if (server.isEmpty || user.isEmpty || pass.isEmpty) {
+    if (server.isEmpty || user.isEmpty || pass.isEmpty || server == 'http://' || server == 'https://') {
       _showError('Please fill all fields');
       setState(() => _loading = false);
       return;
@@ -252,7 +262,16 @@ class _M3ULoginState extends State<M3ULogin> {
   @override
   void initState() {
     super.initState();
+    _loadSaved();
     WidgetsBinding.instance.addPostFrameCallback((_) => _urlFocus.requestFocus());
+  }
+
+  Future<void> _loadSaved() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _urlController.text = prefs.getString('m3uUrl') ?? 'http://';
+      _nameController.text = prefs.getString('playlistName') ?? '';
+    });
   }
 
   @override
@@ -265,7 +284,7 @@ class _M3ULoginState extends State<M3ULogin> {
   _login() async {
     setState(() => _loading = true);
     String url = _urlController.text.trim();
-    if (url.isEmpty) {
+    if (url.isEmpty || url == 'http://' || url == 'https://') {
       _showError('Please enter M3U URL');
       setState(() => _loading = false);
       return;
