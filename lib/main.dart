@@ -45,21 +45,31 @@ class _KamelProAppState extends State<KamelProApp> {
   }
 }
 
-// SPLASH - تم التعديل: يقرا الاشتراك حتى بدون isLoggedIn
+// SPLASH - يقرا Xtream و M3U
 class SplashScreen extends StatefulWidget { @override _SplashScreenState createState() => _SplashScreenState(); }
 class _SplashScreenState extends State<SplashScreen> {
   @override void initState() { super.initState(); _checkLogin(); }
   _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? url = prefs.getString('server_url') ?? prefs.getString('server');
-    String? user = prefs.getString('username');
-    String? pass = prefs.getString('password');
-    if (url != null && url.isNotEmpty && user != null && user.isNotEmpty && pass != null && pass.isNotEmpty) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
+    String? loginType = prefs.getString('loginType');
+    
+    if (loginType == 'm3u') {
+      String? m3u = prefs.getString('m3uUrl');
+      if (m3u != null && m3u.isNotEmpty) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
+        return;
+      }
     } else {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
+      String? url = prefs.getString('server_url') ?? prefs.getString('server');
+      String? user = prefs.getString('username');
+      String? pass = prefs.getString('password');
+      if (url != null && url.isNotEmpty && user != null && user.isNotEmpty && pass != null && pass.isNotEmpty) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
+        return;
+      }
     }
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
   @override Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// MAIN MENU - تم التعديل: الخروج ما يفسخش المعطيات
+// MAIN MENU
 class MainMenu extends StatefulWidget { @override _MainMenuState createState() => _MainMenuState(); }
 class _MainMenuState extends State<MainMenu> {
   
@@ -91,7 +101,7 @@ class _MainMenuState extends State<MainMenu> {
   }
 
   void _exitApp() {
-    SystemNavigator.pop(); // تم التعديل: خروج فقط، ما يمسحش
+    SystemNavigator.pop();
   }
 
   @override Widget build(BuildContext context) {
@@ -159,7 +169,6 @@ class _MainMenuState extends State<MainMenu> {
   }
 }
 
-// باقي الكلاسات نفسهم بدون تغيير
 class _MainCard extends StatefulWidget {
   final String title; final String image; final Color color; final VoidCallback onTap; final bool autofocus;
   _MainCard({required this.title, required this.image, required this.color, required this.onTap, this.autofocus = false});
