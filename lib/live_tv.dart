@@ -34,7 +34,9 @@ class _LiveTVState extends State<LiveTV> {
       if (cRes.statusCode == 200) {
         var cats = json.decode(cRes.body);
         groups = [{'category_id': 'All', 'category_name': 'الكل'}];
-        for (var c in cats) groups.add({'category_id': c['category_id'].toString(), 'category_name': c['category_name']});
+        for (var c in cats) {
+          groups.add({'category_id': c['category_id'].toString(), 'category_name': c['category_name']});
+        }
       }
     } catch (e) {}
     if (groups.isEmpty) groups = [{'category_id': 'All', 'category_name': 'الكل'}];
@@ -50,6 +52,7 @@ class _LiveTVState extends State<LiveTV> {
           ? Center(child: CircularProgressIndicator(color: Colors.cyan))
           : Row(
               children: [
+                // الباقات على اليسار
                 Container(
                   width: 260,
                   color: Colors.black87,
@@ -70,13 +73,20 @@ class _LiveTVState extends State<LiveTV> {
                           itemBuilder: (_, i) {
                             final g = groups[i];
                             final active = g['category_id'] == sel;
-                            return ListTile(
+                            return Focus(
                               autofocus: i == 0,
-                              title: Text(g['category_name'], style: TextStyle(color: active ? Colors.cyan : Colors.white)),
-                              selected: active,
-                              selectedTileColor: Colors.cyan.withOpacity(0.15),
-                              focusColor: Colors.cyan.withOpacity(0.3),
-                              onTap: () => setState(() => sel = g['category_id']),
+                              child: Builder(
+                                builder: (ctx) {
+                                  final hasFocus = Focus.of(ctx).hasFocus;
+                                  return Container(
+                                    color: hasFocus ? Colors.cyan.withOpacity(0.2) : (active ? Colors.cyan.withOpacity(0.1) : Colors.transparent),
+                                    child: ListTile(
+                                      title: Text(g['category_name'], style: TextStyle(color: hasFocus || active ? Colors.cyan : Colors.white)),
+                                      onTap: () => setState(() => sel = g['category_id']),
+                                    ),
+                                  );
+                                },
+                              ),
                             );
                           },
                         ),
@@ -84,47 +94,83 @@ class _LiveTVState extends State<LiveTV> {
                     ],
                   ),
                 ),
+                // القنوات باللوغو
                 Expanded(
                   child: GridView.builder(
                     padding: EdgeInsets.all(20),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, childAspectRatio: 0.85, mainAxisSpacing: 16, crossAxisSpacing: 16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      childAspectRatio: 0.85, // مربع كيما التطبيق القديم
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
                     itemCount: filtered.length,
                     itemBuilder: (_, i) {
                       final ch = filtered[i];
                       final logo = ch['stream_icon'] ?? '';
-                      return Builder(
-                        builder: (ctx) {
-                          return Focus(
-                            onKeyEvent: (node, event) {
-                              if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                                _openChannel(ch, filtered, i);
-                                return KeyEventResult.handled;
-                              }
-                              return KeyEventResult.ignored;
-                            },
-                            child: InkWell(
+                      return Focus(
+                        autofocus: i == 0,
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _openChannel(ch, filtered, i);
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
+                        child: Builder(
+                          builder: (ctx) {
+                            final hasFocus = Focus.of(ctx).hasFocus;
+                            return GestureDetector(
                               onTap: () => _openChannel(ch, filtered, i),
-                              focusColor: Colors.transparent,
-                              child: Container(
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 150),
                                 decoration: BoxDecoration(
                                   color: Color(0xFF1A1A1A),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: Focus.of(ctx).hasFocus ? Colors.cyan : Colors.white12, width: Focus.of(ctx).hasFocus ? 3 : 1),
+                                  border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
+                                  boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Stack(
                                     fit: StackFit.expand,
                                     children: [
-                                      logo.isNotEmpty ? Image.network(logo, fit: BoxFit.cover) : Icon(Icons.tv, size: 50, color: Colors.white24),
-                                      Positioned(bottom: 0, left: 0, right: 0, child: Container(padding: EdgeInsets.all(6), color: Colors.black87, child: Text(ch['name'] ?? '', textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 13)))),
+                                      // اللوغو
+                                      logo.isNotEmpty
+                                          ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
+                                          : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
+                                      // تدرج من تحت للاسم
+                                      Positioned(
+                                        bottom: 0,
+                                        left: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.85)]),
+                                          ),
+                                          child: Text(
+                                            ch['name'] ?? '',
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
+                                          ),
+                                        ),
+                                      ),
+                                      // علامة قلب كيما القديم
+                                      Positioned(
+                                        top: 6,
+                                        right: 6,
+                                        child: Icon(Icons.favorite_border, size: 18, color: Colors.white70),
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -141,8 +187,20 @@ class _LiveTVState extends State<LiveTV> {
     String pass = p.getString('password') ?? '';
     String url = '$server/live/$user/$pass/${ch['stream_id']}.ts';
     
-    final channelList = list.map((e) => {'name': e['name'], 'url': '$server/live/$user/$pass/${e['stream_id']}.ts', 'logo': e['stream_icon']}).toList();
+    final channelList = list.map((e) => {
+      'name': e['name'],
+      'url': '$server/live/$user/$pass/${e['stream_id']}.ts',
+      'logo': e['stream_icon'],
+    }).toList();
 
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ch['name'], logo: ch['stream_icon'], channelList: channelList, currentIndex: i)));
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(
+      url: url,
+      title: ch['name'],
+      logo: ch['stream_icon'],
+      channelList: channelList,
+      currentIndex: i,
+    )));
+    // هذا السطر الوحيد اللي زدته باش يرجع الفوكس
+    if (mounted) setState(() {});
   }
 }
