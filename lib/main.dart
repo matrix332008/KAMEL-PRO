@@ -9,11 +9,11 @@ import 'series.dart';
 import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
-import 'lang.dart'; // <--- جديد
+import 'lang.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Lang.load(); // <--- جديد
+  await Lang.load();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
@@ -22,7 +22,16 @@ void main() async {
   runApp(KamelProApp());
 }
 
-class KamelProApp extends StatelessWidget {
+// --- جديد: باش نجم نعمل restart للتطبيق كي تتبدل اللغة ---
+class KamelProApp extends StatefulWidget {
+  static _KamelProAppState? of(BuildContext context) => context.findAncestorStateOfType<_KamelProAppState>();
+  
+  @override _KamelProAppState createState() => _KamelProAppState();
+}
+
+class _KamelProAppState extends State<KamelProApp> {
+  void restart() => setState(() {});
+
   @override
   Widget build(BuildContext context) {
     return Shortcuts(
@@ -52,7 +61,10 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    if (isLoggedIn) {
+    // تم التعديل: نتأكدو اللي البيانات موجودة
+    String? url = prefs.getString('server_url');
+    
+    if (isLoggedIn && url != null && url.isNotEmpty) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
@@ -77,52 +89,90 @@ class MainMenu extends StatefulWidget {
 class _MainMenuState extends State<MainMenu> {
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    // تم التعديل: نحفظو اللغة قبل ما نمسحو كل شي
+    String? savedLang = prefs.getString('lang');
     await prefs.clear();
+    if (savedLang != null) {
+      await prefs.setString('lang', savedLang);
+    }
+    await prefs.setBool('isLoggedIn', false);
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
 
+  // تم التعديل: ديالوج تأكيد الخروج
+  Future<bool> _onWillPop() async {
+    return await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text(Lang.get('logout_title'), style: TextStyle(color: Colors.white)),
+        content: Text(Lang.get('logout_msg'), style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(Lang.get('no'), style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    ) ?? false;
+  }
+
   @override Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(fit: StackFit.expand, children: [
-        Image.asset('assets/background.jpeg', fit: BoxFit.fill),
-        Column(children: [
-          Padding(
-            padding: EdgeInsets.all(20),
-            child: Row(children: [
-              CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
-              SizedBox(width: 20),
-              Image.asset('assets/logo.png', width: 200),
-              Spacer(),
-              _LogoutButton(onPressed: () => _logout(context)),
-            ]),
-          ),
-          Expanded(
-            child: Center(
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _MainCard(title: Lang.get('live'), image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
-                  SizedBox(width: 40),
-                  _MainCard(title: Lang.get('epg'), image: 'assets/epg.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
-                ]),
-                SizedBox(height: 40),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _MainCard(title: Lang.get('movies'), image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
-                  SizedBox(width: 40),
-                  _MainCard(title: Lang.get('series'), image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
-                ]),
+    // تم التعديل: WillPopScope باش زر الرجوع يسأل
+    return WillPopScope(
+      onWillPop: () async {
+        bool exit = await _onWillPop();
+        if (exit) _logout(context);
+        return false;
+      },
+      child: Scaffold(
+        body: Stack(fit: StackFit.expand, children: [
+          Image.asset('assets/background.jpeg', fit: BoxFit.fill),
+          Column(children: [
+            Padding(
+              padding: EdgeInsets.all(20),
+              child: Row(children: [
+                CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                SizedBox(width: 20),
+                Image.asset('assets/logo.png', width: 200),
+                Spacer(),
+                _LogoutButton(onPressed: () async {
+                  bool exit = await _onWillPop();
+                  if (exit) _logout(context);
+                }),
               ]),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(bottom: 30, left: 60, right: 60),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _BottomButton(icon: Icons.favorite, label: Lang.get('fav'), color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
-              Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
-              _LanguageButton(onTap: () async { await Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen())); setState((){}); }),
-            ]),
-          ),
-        ]),
-      ]),
+            Expanded(
+              child: Center(
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    _MainCard(title: Lang.get('live'), image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
+                    SizedBox(width: 40),
+                    _MainCard(title: Lang.get('epg'), image: 'assets/epg.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
+                  ]),
+                  SizedBox(height: 40),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    _MainCard(title: Lang.get('movies'), image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
+                    SizedBox(width: 40),
+                    _MainCard(title: Lang.get('series'), image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
+                  ]),
+                ]),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(bottom: 30, left: 60, right: 60),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                _BottomButton(icon: Icons.favorite, label: Lang.get('fav'), color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
+                _LanguageButton(onTap: () async { 
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen())); 
+                  // تم التعديل: نعمل restart للتطبيق باش اللغة تتبدل فورا
+                  KamelProApp.of(context)?.restart();
+                  setState((){});
+                }),
+              ]),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }
