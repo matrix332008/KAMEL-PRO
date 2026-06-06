@@ -41,7 +41,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _listIndex = widget.currentIndex ?? 0;
     _initPlayer();
     _showInfoTemporarily();
-    // هنا التغيير المهم
     _favService.getFavoriteUrls().then((set) {
       if (mounted) setState(() => _favIds = set);
     });
@@ -114,7 +113,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final ch = widget.channelList![idx];
     final name = ch['name'] ?? '';
     final url = ch['url'] ?? '';
-    _favService.toggle(name, url); // هنا نبعثو الاسم والرابط
+    final logo = ch['logo'] ?? '';  // <-- هذا السطر المهم
+    _favService.toggle(name, url, logo);
     setState(() {
       if (_favIds.contains(url)) _favIds.remove(url); else _favIds.add(url);
     });
