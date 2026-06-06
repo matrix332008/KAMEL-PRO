@@ -23,8 +23,7 @@ class LoginSelection extends StatelessWidget {
                   children: [
                     CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                     Spacer(),
-                    Image.asset('assets/logo.png', width: 200),
-                    Spacer(),
+                    // نحينا Image.asset('assets/logo.png') باش ما تغطيش الرقم
                     SizedBox(width: 60),
                   ],
                 ),
@@ -212,7 +211,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
             child: Column(
               children: [
                 SizedBox(height: 20),
-                Image.asset('assets/logo.png', width: 200),
+                // نحينا Image.asset('assets/logo.png') من هنا
                 SizedBox(height: 40),
                 Container(
                   width: 500,
@@ -314,7 +313,7 @@ class _M3ULoginState extends State<M3ULogin> {
             child: Column(
               children: [
                 SizedBox(height: 20),
-                Image.asset('assets/logo.png', width: 200),
+                // نحينا Image.asset('assets/logo.png') من هنا
                 SizedBox(height: 40),
                 Container(
                   width: 500,
