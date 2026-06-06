@@ -35,7 +35,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               _langBtn('🇨🇿 Čeština','cs'),
             ]),
             Spacer(),
-            Text('KAMEL PRO v1.0', style: TextStyle(color: Colors.white38, fontSize: 14)),
+            Text('KAMEL PRO v1.1', style: TextStyle(color: Colors.white38, fontSize: 14)),
           ],
         ),
       ),
@@ -52,7 +52,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
             backgroundColor: sel? Colors.cyan : (has? Colors.white24: Color(0xFF1A1A1A)),
             side: BorderSide(color: has? Colors.cyan: Colors.transparent, width: 2),
           ),
-          onPressed: () async { await Lang.set(code); setState((){}); },
+          // تم التعديل: نحفظو ونخرجو طول باش main.dart يعمل restart
+          onPressed: () async { 
+            await Lang.set(code); 
+            if (mounted) Navigator.pop(context);
+          },
           child: Text(label, style: TextStyle(color: Colors.white)),
         );
       }),
