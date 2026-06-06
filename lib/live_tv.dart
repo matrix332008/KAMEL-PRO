@@ -100,7 +100,7 @@ class _LiveTVState extends State<LiveTV> {
                     padding: EdgeInsets.all(20),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 5,
-                      childAspectRatio: 0.85, // مربع كيما التطبيق القديم
+                      childAspectRatio: 0.85,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
                     ),
@@ -158,12 +158,6 @@ class _LiveTVState extends State<LiveTV> {
                                           ),
                                         ),
                                       ),
-                                      // علامة قلب كيما القديم
-                                      Positioned(
-                                        top: 6,
-                                        right: 6,
-                                        child: Icon(Icons.favorite_border, size: 18, color: Colors.white70),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -200,7 +194,6 @@ class _LiveTVState extends State<LiveTV> {
       channelList: channelList,
       currentIndex: i,
     )));
-    // هذا السطر الوحيد اللي زدته باش يرجع الفوكس
     if (mounted) setState(() {});
   }
 }
