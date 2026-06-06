@@ -21,6 +21,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -29,6 +30,15 @@ flutter:
     - assets/logo.png
     - assets/avatar.png
     - assets/live.png
-    - assets/epg.png
     - assets/filmes.png
     - assets/series.png
+    - assets/favorites.png
+    - assets/ajustes.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/avatar.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/avatar.png"
