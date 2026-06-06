@@ -8,6 +8,7 @@ import 'series.dart';
 import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
+import 'lang.dart'; // <-- مهم
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,7 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  await Lang.load(); // <-- يحمل اللغة قبل ما يفتح
   runApp(KamelProApp());
 }
 
@@ -96,11 +98,11 @@ class MainMenu extends StatelessWidget {
       barrierDismissible: false,
       builder: (c) => AlertDialog(
         backgroundColor: Colors.black87,
-        title: Text('تأكيد الخروج', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text('هل تريد الخروج من التطبيق؟', style: TextStyle(color: Colors.white70)),
+        title: Text(Lang.get('logout_title'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(Lang.get('logout_msg'), style: TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('لا', style: TextStyle(color: Colors.white70, fontSize: 18))),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('نعم', style: TextStyle(color: Colors.redAccent, fontSize: 18))),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Lang.get('no'), style: TextStyle(color: Colors.white70, fontSize: 18))),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.redAccent, fontSize: 18))),
         ],
       ),
     ) ?? false;
@@ -137,11 +139,11 @@ class MainMenu extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _MainCard(title: 'LIVE TV', image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
+                        _MainCard(title: Lang.get('live').toUpperCase(), image: 'assets/live.png', color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTV()))),
                         SizedBox(width: 40),
-                        _MainCard(title: 'FILMES', image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
+                        _MainCard(title: Lang.get('movies').toUpperCase(), image: 'assets/filmes.png', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
                         SizedBox(width: 40),
-                        _MainCard(title: 'SERIES', image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
+                        _MainCard(title: Lang.get('series').toUpperCase(), image: 'assets/series.png', color: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
                       ],
                     ),
                   ),
@@ -151,10 +153,8 @@ class MainMenu extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // القلب الكبير الجديد
-                      _BottomButton(imagePath: 'assets/favorites.png', label: 'FAVORITOS', color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
+                      _BottomButton(imagePath: 'assets/favorites.png', label: Lang.get('fav').toUpperCase(), color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
                       Row(children: [FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20), SizedBox(width: 8), Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70))]),
-                      // الترس الذهبي الجديد
                       _LanguageButton(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
                     ],
                   ),
@@ -256,18 +256,18 @@ class __BottomButtonState extends State<_BottomButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _focused ? Colors.black.withOpacity(0.5) : Colors.transparent,
-            border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 2), 
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _focused ? [BoxShadow(color: widget.color.withOpacity(0.6), blurRadius: 15)] : [],
+            color: _focused ? Colors.black.withOpacity(0.6) : Colors.transparent,
+            border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 3), 
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _focused ? [BoxShadow(color: widget.color.withOpacity(0.7), blurRadius: 20)] : [],
           ),
           child: Column(
             children: [
-              Image.asset(widget.imagePath, width: 50, height: 50, fit: BoxFit.contain),
-              SizedBox(height: 6),
-              Text(widget.label, style: TextStyle(color: _focused ? widget.color : Colors.white70, fontSize: 16, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
+              Image.asset(widget.imagePath, width: 70, height: 70, fit: BoxFit.contain),
+              SizedBox(height: 8),
+              Text(widget.label, style: TextStyle(color: _focused ? widget.color : Colors.white70, fontSize: 18, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
@@ -303,18 +303,29 @@ class __LanguageButtonState extends State<_LanguageButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _focused ? Colors.black.withOpacity(0.5) : Colors.transparent,
-            border: Border.all(color: _focused ? Colors.amber : Colors.transparent, width: 2), 
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _focused ? [BoxShadow(color: Colors.amber.withOpacity(0.6), blurRadius: 15)] : [],
+            color: _focused ? Colors.black.withOpacity(0.6) : Colors.transparent,
+            border: Border.all(color: _focused ? Colors.amber : Colors.transparent, width: 3), 
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _focused ? [BoxShadow(color: Colors.amber.withOpacity(0.7), blurRadius: 20)] : [],
           ),
           child: Column(
             children: [
-              Image.asset('assets/ajustes.png', width: 50, height: 50, fit: BoxFit.contain),
+              Image.asset('assets/ajustes.png', width: 70, height: 70, fit: BoxFit.contain),
               SizedBox(height: 6),
-              Text('AJUSTES', style: TextStyle(color: _focused ? Colors.amber : Colors.white70, fontSize: 16, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('🇹🇳', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 4),
+                  Text('🇫🇷', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 4),
+                  Text('🇨🇿', style: TextStyle(fontSize: 20)),
+                ],
+              ),
+              SizedBox(height: 2),
+              Text(Lang.get('settings').toUpperCase(), style: TextStyle(color: _focused ? Colors.amber : Colors.white70, fontSize: 18, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
