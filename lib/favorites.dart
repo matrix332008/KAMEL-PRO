@@ -73,7 +73,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
         return GestureDetector(
           onTap: () async {
             final p = await SharedPreferences.getInstance();
-            String s = p.getString('server')??'';
+            // تم التعديل: نستعمل server_url
+            String s = p.getString('server_url')?? p.getString('server')?? '';
             String u = p.getString('username')??'';
             String pw = p.getString('password')??'';
             String url = type=='live'? '$s/live/$u/$pw/${it['id']}.ts' : '$s/movie/$u/$pw/${it['id']}.${it['ext']??'mp4'}';
