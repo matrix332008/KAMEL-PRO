@@ -2,6 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'player.dart';
 
+class FavoritesService {
+  static const _key = 'favorites';
+
+  Future<List<String>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_key)?? [];
+  }
+
+  Future<Set<String>> getFavoriteUrls() async {
+    final favs = await getFavorites();
+    return favs.map((e) => e.split('|').last).toSet();
+  }
+
+  Future<void> toggle(String name, String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final favs = prefs.getStringList(_key)?? [];
+    final item = '$name|$url';
+    if (favs.contains(item)) {
+      favs.remove(item);
+    } else {
+      favs.add(item);
+    }
+    await prefs.setStringList(_key, favs);
+  }
+
+  Future<bool> isFavorite(String url) async {
+    final urls = await getFavoriteUrls();
+    return urls.contains(url);
+  }
+}
+
 class FavoritesScreen extends StatefulWidget {
   @override
   _FavoritesScreenState createState() => _FavoritesScreenState();
