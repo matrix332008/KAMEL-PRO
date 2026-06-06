@@ -4,10 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
+import 'favorites.dart';
+import 'lang.dart';
 
 class SeriesScreen extends StatefulWidget {
-  @override
-  _SeriesScreenState createState() => _SeriesScreenState();
+  @override _SeriesScreenState createState() => _SeriesScreenState();
 }
 
 class _SeriesScreenState extends State<SeriesScreen> {
@@ -15,9 +16,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
   List cats = [];
   String sel = 'All';
   bool loading = true;
+  Map<String,bool> favs = {};
 
-  @override
-  void initState() {
+  @override void initState() {
     super.initState();
     _load();
   }
@@ -32,86 +33,93 @@ class _SeriesScreenState extends State<SeriesScreen> {
       final sRes = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_series')).timeout(Duration(seconds: 20));
       if (cRes.statusCode == 200) cats = json.decode(cRes.body);
       if (sRes.statusCode == 200) series = json.decode(sRes.body);
+      for(var s in series){ favs[s['series_id'].toString()] = await Fav.isFav('series', s['series_id'].toString()); }
     } catch (e) {}
     setState(() => loading = false);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  @override Widget build(BuildContext context) {
     final filtered = sel == 'All'? series : series.where((s) => s['category_id'].toString() == sel).toList();
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.transparent, title: Text('SERIES')),
+      appBar: AppBar(backgroundColor: Colors.transparent, title: Text(Lang.get('series'))),
       body: loading
-       ? Center(child: CircularProgressIndicator(color: Colors.orange))
-          : Column(
-              children: [
-                Container(
-                  height: 50,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    children: [
-                      _buildChip('All', 'الكل'),
-                   ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
-                    ],
-                  ),
+     ? Center(child: CircularProgressIndicator(color: Colors.orange))
+        : Column(
+            children: [
+              Container(
+                height: 50,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  children: [
+                    _buildChip('All', Lang.get('all')),
+                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                  ],
                 ),
-                Expanded(
-                  child: GridView.builder(
-                    padding: EdgeInsets.all(14),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6,
-                      childAspectRatio: 0.68,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, i) {
-                      final s = filtered[i];
-                      return Focus(
-                        autofocus: i == 0,
-                        onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _openSeries(s);
-                            return KeyEventResult.handled;
-                          }
-                          return KeyEventResult.ignored;
-                        },
-                        child: Builder(
-                          builder: (ctx) {
-                            final hasFocus = Focus.of(ctx).hasFocus;
-                            return GestureDetector(
-                              onTap: () => _openSeries(s),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: hasFocus? Colors.orange : Colors.transparent, width: 3),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: s['cover']!= null && s['cover'].toString().isNotEmpty
+              ),
+              Expanded(
+                child: GridView.builder(
+                  padding: EdgeInsets.all(14),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    childAspectRatio: 0.68,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                  ),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) {
+                    final s = filtered[i];
+                    final id = s['series_id'].toString();
+                    return Focus(
+                      autofocus: i == 0,
+                      onKeyEvent: (node, event) {
+                        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                          _openSeries(s);
+                          return KeyEventResult.handled;
+                        }
+                        return KeyEventResult.ignored;
+                      },
+                      child: Builder(
+                        builder: (ctx) {
+                          final hasFocus = Focus.of(ctx).hasFocus;
+                          return GestureDetector(
+                            onTap: () => _openSeries(s),
+                            onLongPress: () => _toggleFav(s),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: hasFocus? Colors.orange : Colors.transparent, width: 3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Stack(
+                                children: [
+                                  Column(
+                                    children: [
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: s['cover']!= null && s['cover'].toString().isNotEmpty
                                          ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(s['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11)),
-                                  ],
-                                ),
+                                      SizedBox(height: 4),
+                                      Text(s['name']?? '', maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 11)),
+                                    ],
+                                  ),
+                                  Positioned(top:4,right:4,child: GestureDetector(onTap:()=>_toggleFav(s),child: Icon(favs[id]==true?Icons.favorite:Icons.favorite_border,size:20,color:favs[id]==true?Colors.red:Colors.white70))),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
     );
   }
 
@@ -134,6 +142,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
         ),
       ),
     );
+  }
+
+  void _toggleFav(s) async {
+    bool added = await Fav.toggle('series', {'id':s['series_id'],'name':s['name'],'logo':s['cover']});
+    setState(()=>favs[s['series_id'].toString()]=added);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(added?Lang.get('added'):Lang.get('removed')),duration:Duration(seconds:1),backgroundColor:Colors.orange));
   }
 
   void _openSeries(s) async {
@@ -162,10 +176,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
             collapsedIconColor: Colors.orange,
             children: (episodes[season] as List).map((ep) {
               return ListTile(
-                autofocus: false,
                 leading: Icon(Icons.play_circle_outline, color: Colors.white70),
                 title: Text(ep['title'], style: TextStyle(color: Colors.white, fontSize: 16)),
-                focusColor: Colors.orange.withOpacity(0.2),
                 onTap: () {
                   String url = '$server/series/$user/$pass/${ep['id']}.${ep['container_extension']}';
                   Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: s['cover'])));
