@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:async';
 
 class PlayerScreen extends StatefulWidget {
@@ -37,6 +38,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WakelockPlus.enable(); // ما يرقدش
     _listIndex = widget.currentIndex?? 0;
     _initPlayer();
     _showInfoTemporarily();
@@ -47,7 +49,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<void> _initPlayer() async {
     final p = await SharedPreferences.getInstance();
-    // Live ديما Exo باش ما يكراشيش، VOD حسب اختيارك
     _isVlc = isLive? false : (p.getString('player')?? 'vlc') == 'vlc';
     try {
       if (_isVlc) {
@@ -131,6 +132,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controlsTimer?.cancel();
     _updateTimer?.cancel();
     _channelScroll.dispose();
+    WakelockPlus.disable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -163,7 +165,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (event is KeyDownEvent) {
             _showInfoTemporarily();
             final key = event.logicalKey;
-
             if (isLive) {
               if (_showChannelList) {
                 if (key == LogicalKeyboardKey.arrowUp) {
@@ -186,18 +187,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                 } else if (key == LogicalKeyboardKey.goBack) {
-                  return KeyEventResult.ignored; // خلي النظام يرجع للـ LiveTV
+                  return KeyEventResult.ignored;
                 }
                 return KeyEventResult.handled;
               }
             } else {
-              // VOD
               if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                 _togglePlay(); _showControlsTemporarily();
               } else if (key == LogicalKeyboardKey.goBack) {
-                return KeyEventResult.ignored; // يرجع للحلقات/الأفلام
+                return KeyEventResult.ignored;
               }
               return KeyEventResult.handled;
             }
@@ -208,15 +208,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Positioned.fill(
               child: _isVlc
-                ? (_vlc!= null
-                    ? FittedBox(
-                          fit: BoxFit.cover,
+               ? (_vlc!= null
+                   ? FittedBox(
+                          fit: BoxFit.fill, // اللوغو كامل
                           child: SizedBox(width: 1920, height: 1080, child: VlcPlayer(controller: _vlc!, aspectRatio: 16/9)),
                         )
                       : Center(child: CircularProgressIndicator()))
                   : (_exo!= null && _exo!.value.isInitialized
-                    ? FittedBox(
-                          fit: BoxFit.cover,
+                   ? FittedBox(
+                          fit: BoxFit.fill, // اللوغو كامل
                           child: SizedBox(
                             width: _exo!.value.size.width,
                             height: _exo!.value.size.height,
@@ -225,6 +225,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         )
                       : Center(child: CircularProgressIndicator())),
             ),
+            // باقي الكود كيما هو...
             if (_showInfo)
               Positioned(
                 top: 30, left: 30, right: 30,
