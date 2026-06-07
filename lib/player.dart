@@ -27,7 +27,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _listIndex = 0;
   Timer? _hideTimer;
   Timer? _controlsTimer;
-  Timer? _updateTimer;
   final ScrollController _channelScroll = ScrollController();
   final FavoritesService _favService = FavoritesService();
   Set<String> _favIds = {};
@@ -45,9 +44,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _favService.getFavoriteUrls().then((set) {
       if (mounted) setState(() => _favIds = set);
     });
-    _updateTimer = Timer.periodic(Duration(milliseconds: 500), (_) {
-      if ((_showControls || _showChannelList) && mounted) setState(() {});
-    });
+    // نحينا الـ timer اللي كان يخلي الليستة تتحرك وحدها
   }
 
   Future<void> _initPlayer() async {
@@ -132,7 +129,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _exo?.dispose();
     _hideTimer?.cancel();
     _controlsTimer?.cancel();
-    _updateTimer?.cancel();
     _channelScroll.dispose();
     WakelockPlus.disable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -152,12 +148,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
         autofocus: true,
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
-            _showInfoTemporarily();
             final key = event.logicalKey;
+
+            // نوري المعلومات كان كي الليستة مسكرة
+            if (!_showChannelList) {
+              _showInfoTemporarily();
+            }
 
             if (isLive) {
               if (_showChannelList) {
-                // الليستة محلولة
                 if (key == LogicalKeyboardKey.arrowUp) {
                   setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
                   _scrollToIndex();
@@ -168,14 +167,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   _toggleFavorite(_listIndex);
                 } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                   _playChannel(_listIndex);
-                } else if (key == LogicalKeyboardKey.goBack) {
-                  // أول رجوع: سكر الليستة فقط
+                } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
                   setState(() => _showChannelList = false);
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               } else {
-                // نتفرجو بلا ليستة
                 if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
                 else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
                 else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
@@ -184,20 +181,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     _listIndex = widget.currentIndex?? 0;
                   });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
-                } else if (key == LogicalKeyboardKey.goBack) {
-                  // ثاني رجوع: ارجع للقائمة الكبيرة
-                  return KeyEventResult.ignored;
+                } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
+                  Navigator.pop(context);
+                  return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               }
             } else {
-              // أفلام ومسلسلات
               if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                 _togglePlay(); _showControlsTemporarily();
-              } else if (key == LogicalKeyboardKey.goBack) {
-                return KeyEventResult.ignored;
+              } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
+                Navigator.pop(context);
+                return KeyEventResult.handled;
               }
               return KeyEventResult.handled;
             }
@@ -208,8 +205,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Positioned.fill(
               child: _exo!= null && _exo!.value.isInitialized
-               ? FittedBox(
-                    fit: BoxFit.fill, // ديما يملا الشاشة
+              ? FittedBox(
+                    fit: BoxFit.fill,
                     child: SizedBox(
                       width: _exo!.value.size.width,
                       height: _exo!.value.size.height,
