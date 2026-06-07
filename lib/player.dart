@@ -44,7 +44,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _favService.getFavoriteUrls().then((set) {
       if (mounted) setState(() => _favIds = set);
     });
-    // نحينا الـ timer اللي كان يخلي الليستة تتحرك وحدها
   }
 
   Future<void> _initPlayer() async {
@@ -150,7 +149,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (event is KeyDownEvent) {
             final key = event.logicalKey;
 
-            // نوري المعلومات كان كي الليستة مسكرة
             if (!_showChannelList) {
               _showInfoTemporarily();
             }
@@ -179,6 +177,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   setState(() {
                     _showChannelList = true;
                     _listIndex = widget.currentIndex?? 0;
+                    _showInfo = false; // <-- نسكر البار
+                    _hideTimer?.cancel(); // <-- نلغي التايمر
                   });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                 } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
@@ -205,7 +205,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Positioned.fill(
               child: _exo!= null && _exo!.value.isInitialized
-              ? FittedBox(
+             ? FittedBox(
                     fit: BoxFit.fill,
                     child: SizedBox(
                       width: _exo!.value.size.width,
