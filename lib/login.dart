@@ -31,13 +31,26 @@ class _LoginSelectionState extends State<LoginSelection> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        final id = androidInfo.id;
+        
+        // MAC UNIQUE لكل جهاز - مستحيل يتكرر
+        String androidId = androidInfo.androidId ?? '';
+        String serial = androidInfo.serialNumber ?? '';
+        String model = androidInfo.model ?? '';
+        
+        String base = (androidId + serial + model).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+        if (base.length < 12) base = base.padRight(12, '0');
+        
+        int hash = base.hashCode.abs();
+        String hex = hash.toRadixString(16).padLeft(12, '0');
+        hex = (hex + base).substring(0, 12).toUpperCase();
+        
+        String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
+        mac = mac.substring(0, 17);
+        
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = id.hashCode.abs().toString().padLeft(6,'0').substring(0,6);
-          _mac = id.padRight(12,'0').substring(0,12).toUpperCase()
-              .replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:')
-              .replaceAll(RegExp(r':$'), '');
+          _deviceId = androidId.hashCode.abs().toString().padLeft(6,'0').substring(0,6);
+          _mac = mac;
         });
       }
     } catch(e) {
@@ -93,46 +106,47 @@ class _LoginSelectionState extends State<LoginSelection> {
               ),
             ],
           ),
-          // ===== QR + معلومات الجهاز (كبير) =====
+          // QR على اليسار يغطي Kam
           Positioned(
-            bottom: 80,
-            right: 30,
+            bottom: 35,
+            left: 25,
             child: GestureDetector(
               onTap: () {
                 Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId'));
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم نسخ البيانات ✓'), duration: Duration(seconds: 1)));
               },
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.cyan, width: 3),
-                      boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 20, spreadRadius: 2)],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.cyan, width: 2),
+                      boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
                     ),
                     child: QrImageView(
                       data: '$_deviceName|$_mac|$_deviceId',
-                      size: 130,
+                      size: 85,
                       backgroundColor: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: 6),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1),
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
-                        SizedBox(height: 2),
-                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                        SizedBox(height: 1),
+                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -268,6 +282,21 @@ class _XtreamLoginState extends State<XtreamLogin> {
           await prefs.setString('username', user);
           await prefs.setString('password', pass);
           await prefs.setString('xtreamData', response.body);
+          
+          // حفظ التاريخ الحقيقي
+          if (data['user_info'] != null && data['user_info']['exp_date'] != null) {
+            try {
+              int expTimestamp = int.parse(data['user_info']['exp_date'].toString());
+              if (expTimestamp > 0) {
+                DateTime expDate = DateTime.fromMillisecondsSinceEpoch(expTimestamp * 1000);
+                String formatted = '${expDate.day}/${expDate.month}/${expDate.year}';
+                await prefs.setString('expiry', formatted);
+                int daysLeft = expDate.difference(DateTime.now()).inDays;
+                await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
+              }
+            } catch(e) {}
+          }
+          
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
         } else {
           _showError('Invalid credentials');
@@ -379,6 +408,7 @@ class _M3ULoginState extends State<M3ULogin> {
     await prefs.setString('loginType', 'm3u');
     await prefs.setString('m3uUrl', url);
     await prefs.setString('playlistName', _nameController.text.trim());
+    await prefs.remove('expiry');
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
   }
 
