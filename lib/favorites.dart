@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'player.dart';
-import 'lang.dart'; // <-- زدتها
+import 'lang.dart';
 
 class FavoritesService {
   static const _key = 'favorites';
@@ -50,6 +50,36 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     });
   }
 
+  void _openFavorite(int index) {
+    // نحضر الليستة الكل باش الـ Player يخدم كيما LIVE
+    final channelList = favorites.map((e) {
+      var p = e.split('|');
+      return {
+        'name': p[0],
+        'url': p.length > 1? p[1] : '',
+        'logo': p.length > 2? p[2] : '',
+      };
+    }).toList();
+
+    var parts = favorites[index].split('|');
+    var name = parts[0];
+    var url = parts.length > 1? parts[1] : '';
+    var logo = parts.length > 2? parts[2] : '';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerScreen(
+          url: url,
+          title: name,
+          logo: logo,
+          channelList: channelList, // <-- هذا يخلي OK يحل ليستة
+          currentIndex: index, // <-- وهذا يخلي فوق/لوطة يخدمو
+        ),
+      ),
+    ).then((_) => _loadFavorites());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,15 +87,19 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0D1B2A), Colors.black],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0f0c29),
+              Color(0xFF302b63),
+              Color(0xFF24243e),
+            ],
           ),
         ),
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(30, 50, 30, 20),
+              padding: EdgeInsets.fromLTRB(40, 50, 30, 20), // زدت 40 على اليسار
               child: Row(
                 children: [
                   IconButton(
@@ -76,7 +110,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   Image.asset('assets/favorites.png', width: 50, height: 50),
                   SizedBox(width: 15),
                   Text(
-                    Lang.get('fav_title'), // <-- تبدل
+                    Lang.get('fav_title'),
                     style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -84,7 +118,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             ),
             Expanded(
               child: favorites.isEmpty
-                ? Center(child: Text(Lang.get('no_fav'), style: TextStyle(color: Colors.white70, fontSize: 24))) // <-- تبدل
+                 ? Center(child: Text(Lang.get('no_fav'), style: TextStyle(color: Colors.white70, fontSize: 24)))
                   : ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       itemCount: favorites.length,
@@ -97,45 +131,50 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         return Focus(
                           autofocus: index == 0,
                           onKeyEvent: (node, event) {
-                            if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: name, logo: logo)));
+                            if (event is KeyDownEvent &&
+                                (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                              _openFavorite(index);
                               return KeyEventResult.handled;
                             }
                             return KeyEventResult.ignored;
                           },
                           child: Builder(builder: (ctx) {
                             final hasFocus = Focus.of(ctx).hasFocus;
-                            return AnimatedContainer(
-                              duration: Duration(milliseconds: 150),
-                              margin: EdgeInsets.symmetric(vertical: 8),
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: hasFocus? Colors.cyan.withOpacity(0.3) : Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: hasFocus? Colors.cyan : Colors.white24, width: hasFocus? 3 : 1),
-                              ),
-                              child: Row(
-                                children: [
-                                  if (logo.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(logo, width: 80, height: 80, fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.tv, color: Colors.white, size: 50)),
-                                    )
-                                  else
-                                    Icon(Icons.tv, color: Colors.white, size: 50),
-                                  SizedBox(width: 25),
-                                  Expanded(
-                                    child: Text(
-                                      name,
-                                      style: TextStyle(
-                                        color: hasFocus? Colors.cyan : Colors.white,
-                                        fontSize: 26,
-                                        fontWeight: hasFocus? FontWeight.bold : FontWeight.normal,
+                            return GestureDetector(
+                              onTap: () => _openFavorite(index),
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 150),
+                                margin: EdgeInsets.symmetric(vertical: 8),
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: hasFocus? Colors.cyan.withOpacity(0.3) : Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: hasFocus? Colors.cyan : Colors.white24, width: hasFocus? 3 : 1),
+                                ),
+                                child: Row(
+                                  children: [
+                                    if (logo.isNotEmpty)
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(logo, width: 80, height: 80, fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Icon(Icons.tv, color: Colors.white, size: 50)),
+                                      )
+                                    else
+                                      Icon(Icons.tv, color: Colors.white, size: 50),
+                                    SizedBox(width: 25),
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          color: hasFocus? Colors.cyan : Colors.white,
+                                          fontSize: 26,
+                                          fontWeight: hasFocus? FontWeight.bold : FontWeight.normal,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Icon(Icons.play_circle_fill, color: hasFocus? Colors.cyan : Colors.white54, size: 40),
-                                ],
+                                    Icon(Icons.play_circle_fill, color: hasFocus? Colors.cyan : Colors.white54, size: 40),
+                                  ],
+                                ),
                               ),
                             );
                           }),
