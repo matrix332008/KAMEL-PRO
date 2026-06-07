@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:io';
 import 'lang.dart';
 import 'main.dart';
 
@@ -11,6 +15,8 @@ class AjustesScreen extends StatefulWidget {
 
 class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
+  String _mac = '...';
+  String _deviceId = '...';
 
   final List<Map<String, dynamic>> _items = [
     {'icon': Icons.playlist_add, 'title': 'ajouter_liste', 'action': 'playlist'},
@@ -28,18 +34,40 @@ class _AjustesScreenState extends State<AjustesScreen> {
     {'icon': Icons.live_tv, 'title': 'live_format', 'action': 'format'},
     {'icon': Icons.play_circle, 'title': 'select_player', 'action': 'player'},
     {'icon': Icons.extension, 'title': 'acteurs_externes', 'action': 'external'},
-    {'icon': Icons.update, 'title': 'mise_a_jour', 'action': 'update'},
+    {'icon': Icons.qr_code, 'title': 'qr_code', 'action': 'qr'},
   ];
 
   @override
   void initState() {
     super.initState();
     _loadLang();
+    _getDeviceInfo();
   }
 
   _loadLang() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() => _currentLang = prefs.getString('lang')?? 'ar');
+  }
+
+  _getDeviceInfo() async {
+    final deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        final id = androidInfo.id;
+        setState(() {
+          _deviceId = id.hashCode.abs().toString().padLeft(6, '0').substring(0,6);
+          _mac = id.padRight(12,'0').substring(0,12).toUpperCase()
+              .replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:')
+              .replaceAll(RegExp(r':$'), '');
+        });
+      }
+    } catch(e) {
+      setState(() {
+        _mac = '9F:93:6B:11:F3:17';
+        _deviceId = '727828';
+      });
+    }
   }
 
   _changeLang(String lang) async {
@@ -54,12 +82,37 @@ class _AjustesScreenState extends State<AjustesScreen> {
       case 'lang':
         _showLangDialog();
         break;
+      case 'qr':
+        _showQrDialog();
+        break;
       case 'player':
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Exo Player actif ✓')));
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('bientot'))));
     }
+  }
+
+  void _showQrDialog() {
+    final data = 'MAC:$_mac|ID:$_deviceId';
+    showDialog(context: context, builder: (_) => AlertDialog(
+      backgroundColor: Color(0xFF1A1A2E),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('Xel TV', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        SizedBox(height: 20),
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.all(15),
+          child: QrImageView(data: data, size: 200),
+        ),
+        SizedBox(height: 15),
+        Text(_mac, style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('ID: $_deviceId', style: TextStyle(color: Colors.white70)),
+      ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text('Fermer', style: TextStyle(color: Colors.white70)))
+      ],
+    ));
   }
 
   void _showLangDialog() {
@@ -97,7 +150,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         ),
         child: Column(
           children: [
-            // Header
             Padding(
               padding: EdgeInsets.fromLTRB(40, 50, 30, 20),
               child: Row(
@@ -108,7 +160,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ],
               ),
             ),
-            // Grid
             Expanded(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40),
@@ -159,14 +210,50 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ),
               ),
             ),
-            // Footer infos
+            // Footer MAC + QR
             Padding(
-              padding: EdgeInsets.only(bottom: 30),
-              child: Column(
-                children: [
-                  Text('Adresse Mac: 9F:93:6B:11:F3:17', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  Text('Clé de l\'appareil: 727828', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                ],
+              padding: EdgeInsets.only(bottom: 25),
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 40),
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.cyan.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.copy, color: Colors.white70),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم النسخ ✓')));
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.qr_code_2, color: Colors.cyan, size: 28),
+                          onPressed: _showQrDialog,
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.share, color: Colors.cyan),
+                          onPressed: () {
+                            Share.share('Xel TV - بيانات الجهاز:\nMAC: $_mac\nID: $_deviceId');
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
