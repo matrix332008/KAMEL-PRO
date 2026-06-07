@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
   _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    bool isLoggedIn = prefs.getBool('isLoggedIn')?? false;
     if (isLoggedIn) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
     } else {
@@ -87,6 +87,7 @@ class MainMenu extends StatefulWidget {
 
 class _MainMenuState extends State<MainMenu> {
   String _expiry = '';
+  int _daysLeft = 365;
 
   @override
   void initState() {
@@ -96,9 +97,22 @@ class _MainMenuState extends State<MainMenu> {
 
   _loadExpiry() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _expiry = prefs.getString('expiry') ?? '7/6/2027';
-    });
+    String expiry = prefs.getString('expiry')?? '7/6/2027';
+    try {
+      final parts = expiry.split('/');
+      final expDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+      final now = DateTime.now();
+      final diff = expDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+      setState(() {
+        _expiry = expiry;
+        _daysLeft = diff > 0? diff : 0;
+      });
+    } catch (e) {
+      setState(() {
+        _expiry = expiry;
+        _daysLeft = 365;
+      });
+    }
   }
 
   _logout(BuildContext context) async {
@@ -125,11 +139,14 @@ class _MainMenuState extends State<MainMenu> {
           TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.redAccent, fontSize: 18))),
         ],
       ),
-    ) ?? false;
+    )?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    Color expiryColor = _daysLeft > 30? Colors.green : _daysLeft > 7? Colors.orange : Colors.red;
+    String daysText = _daysLeft > 0? '$_daysLeft يوم' : 'انتهى';
+
     return WillPopScope(
       onWillPop: () async {
         if (await _showExitDialog(context)) {
@@ -158,12 +175,20 @@ class _MainMenuState extends State<MainMenu> {
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.75),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange.withOpacity(0.8), width: 1.5),
-                              boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 8)],
+                              border: Border.all(color: expiryColor.withOpacity(0.8), width: 1.5),
+                              boxShadow: [BoxShadow(color: expiryColor.withOpacity(0.3), blurRadius: 8)],
                             ),
-                            child: Text(
-                              'Exp: $_expiry',
-                              style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _expiry,
+                                  style: TextStyle(color: Colors.white70, fontSize: 10),
+                                ),
+                                Text(
+                                  daysText,
+                                  style: TextStyle(color: expiryColor, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -245,8 +270,8 @@ class __MainCardState extends State<_MainCard> {
           height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: widget.color, width: _focused ? 4 : 2),
-            boxShadow: _focused ? [BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)] : [],
+            border: Border.all(color: widget.color, width: _focused? 4 : 2),
+            boxShadow: _focused? [BoxShadow(color: widget.color, blurRadius: 30, spreadRadius: 5)] : [],
             image: DecorationImage(image: AssetImage(widget.image), fit: BoxFit.cover),
           ),
           child: Align(
@@ -297,16 +322,16 @@ class __BottomButtonState extends State<_BottomButton> {
         child: Container(
           padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _focused ? Colors.black.withOpacity(0.6) : Colors.transparent,
-            border: Border.all(color: _focused ? widget.color : Colors.transparent, width: 3), 
+            color: _focused? Colors.black.withOpacity(0.6) : Colors.transparent,
+            border: Border.all(color: _focused? widget.color : Colors.transparent, width: 3),
             borderRadius: BorderRadius.circular(14),
-            boxShadow: _focused ? [BoxShadow(color: widget.color.withOpacity(0.7), blurRadius: 20)] : [],
+            boxShadow: _focused? [BoxShadow(color: widget.color.withOpacity(0.7), blurRadius: 20)] : [],
           ),
           child: Column(
             children: [
               Image.asset(widget.imagePath, width: 70, height: 70, fit: BoxFit.contain),
               SizedBox(height: 8),
-              Text(widget.label, style: TextStyle(color: _focused ? widget.color : Colors.white70, fontSize: 18, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
+              Text(widget.label, style: TextStyle(color: _focused? widget.color : Colors.white70, fontSize: 18, fontWeight: _focused? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
@@ -344,10 +369,10 @@ class __LanguageButtonState extends State<_LanguageButton> {
         child: Container(
           padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: _focused ? Colors.black.withOpacity(0.6) : Colors.transparent,
-            border: Border.all(color: _focused ? Colors.amber : Colors.transparent, width: 3), 
+            color: _focused? Colors.black.withOpacity(0.6) : Colors.transparent,
+            border: Border.all(color: _focused? Colors.amber : Colors.transparent, width: 3),
             borderRadius: BorderRadius.circular(14),
-            boxShadow: _focused ? [BoxShadow(color: Colors.amber.withOpacity(0.7), blurRadius: 20)] : [],
+            boxShadow: _focused? [BoxShadow(color: Colors.amber.withOpacity(0.7), blurRadius: 20)] : [],
           ),
           child: Column(
             children: [
@@ -364,7 +389,7 @@ class __LanguageButtonState extends State<_LanguageButton> {
                 ],
               ),
               SizedBox(height: 2),
-              Text(Lang.get('settings').toUpperCase(), style: TextStyle(color: _focused ? Colors.amber : Colors.white70, fontSize: 18, fontWeight: _focused ? FontWeight.bold : FontWeight.normal)),
+              Text(Lang.get('settings').toUpperCase(), style: TextStyle(color: _focused? Colors.amber : Colors.white70, fontSize: 18, fontWeight: _focused? FontWeight.bold : FontWeight.normal)),
             ],
           ),
         ),
@@ -399,7 +424,7 @@ class __LogoutButtonState extends State<_LogoutButton> {
       },
       child: OutlinedButton(
         onPressed: widget.onPressed,
-        style: OutlinedButton.styleFrom(side: BorderSide(color: _focused ? Colors.white : Colors.white70, width: _focused ? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+        style: OutlinedButton.styleFrom(side: BorderSide(color: _focused? Colors.white : Colors.white70, width: _focused? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
         child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
       ),
     );
