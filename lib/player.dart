@@ -123,6 +123,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
+  // FIX: باش زر الرجوع يخدم صحيح
+  Future<bool> _onWillPop() async {
+    if (_showChannelList) {
+      setState(() {
+        _showChannelList = false;
+        _showInfoTemporarily(); // نرجع نوري المعلومات
+      });
+      return false; // ما نخرجش
+    }
+    return true; // نخرج
+  }
+
   @override
   void dispose() {
     _exo?.dispose();
@@ -141,152 +153,159 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Focus(
-        autofocus: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent) {
-            final key = event.logicalKey;
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Focus(
+          autofocus: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              final key = event.logicalKey;
 
-            if (!_showChannelList) {
-              _showInfoTemporarily();
-            }
+              if (!_showChannelList) {
+                _showInfoTemporarily();
+              }
 
-            if (isLive) {
-              if (_showChannelList) {
-                if (key == LogicalKeyboardKey.arrowUp) {
-                  setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
-                  _scrollToIndex();
-                } else if (key == LogicalKeyboardKey.arrowDown) {
-                  setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
-                  _scrollToIndex();
-                } else if (key == LogicalKeyboardKey.arrowRight) {
-                  _toggleFavorite(_listIndex);
-                } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  _playChannel(_listIndex);
-                } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                  setState(() => _showChannelList = false);
+              if (isLive) {
+                if (_showChannelList) {
+                  if (key == LogicalKeyboardKey.arrowUp) {
+                    setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
+                    _scrollToIndex();
+                  } else if (key == LogicalKeyboardKey.arrowDown) {
+                    setState(() => _listIndex = (_listIndex + 1) % widget.channelList!.length);
+                    _scrollToIndex();
+                  } else if (key == LogicalKeyboardKey.arrowRight) {
+                    _toggleFavorite(_listIndex);
+                  } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+                    _playChannel(_listIndex);
+                  } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
+                    // FIX: نسكر الليستة ونرجع plein écran
+                    setState(() {
+                      _showChannelList = false;
+                      _showInfoTemporarily();
+                    });
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.handled;
+                } else {
+                  if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
+                  else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
+                  else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+                    setState(() {
+                      _showChannelList = true;
+                      _listIndex = widget.currentIndex?? 0;
+                      _showInfo = false;
+                      _hideTimer?.cancel();
+                    });
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
+                  } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
+                    Navigator.pop(context);
+                    return KeyEventResult.handled;
+                  }
                   return KeyEventResult.handled;
                 }
-                return KeyEventResult.handled;
               } else {
-                if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
-                else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
-                else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  setState(() {
-                    _showChannelList = true;
-                    _listIndex = widget.currentIndex?? 0;
-                    _showInfo = false; // <-- نسكر البار
-                    _hideTimer?.cancel(); // <-- نلغي التايمر
-                  });
-                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
+                if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
+                else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
+                else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
+                  _togglePlay(); _showControlsTemporarily();
                 } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
                   Navigator.pop(context);
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               }
-            } else {
-              if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
-              else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
-              else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
-                _togglePlay(); _showControlsTemporarily();
-              } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                Navigator.pop(context);
-                return KeyEventResult.handled;
-              }
-              return KeyEventResult.handled;
             }
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: _exo!= null && _exo!.value.isInitialized
-             ? FittedBox(
-                    fit: BoxFit.fill,
-                    child: SizedBox(
-                      width: _exo!.value.size.width,
-                      height: _exo!.value.size.height,
-                      child: VideoPlayer(_exo!),
-                    ),
-                  )
-                : Center(child: CircularProgressIndicator(color: Colors.cyan)),
-            ),
-            if (_showInfo)
-              Positioned(
-                top: 30, left: 30, right: 30,
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
-                  child: Row(
-                    children: [
-                      if (widget.logo!= null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+            return KeyEventResult.ignored;
+          },
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: _exo!= null && _exo!.value.isInitialized
+              ? FittedBox(
+                      fit: BoxFit.fill,
+                      child: SizedBox(
+                        width: _exo!.value.size.width,
+                        height: _exo!.value.size.height,
+                        child: VideoPlayer(_exo!),
+                      ),
+                    )
+                  : Center(child: CircularProgressIndicator(color: Colors.cyan)),
+              ),
+              if (_showInfo)
+                Positioned(
+                  top: 30, left: 30, right: 30,
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+                    child: Row(
+                      children: [
+                        if (widget.logo!= null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (channelNum!= null) Text('${Lang.get('channel')} $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
+                              Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            if (channelNum!= null) Text('${Lang.get('channel')} $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
-                            Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                            Text(timeStr, style: TextStyle(color: Colors.white, fontSize: 18)),
+                            Text(dateStr, style: TextStyle(color: Colors.white70)),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(timeStr, style: TextStyle(color: Colors.white, fontSize: 18)),
-                          Text(dateStr, style: TextStyle(color: Colors.white70)),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            if (isLive && _showChannelList)
-              Positioned(
-                right: 30, top: 80, bottom: 80, width: 380,
-                child: Container(
-                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.92), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.cyan, width: 2)),
-                  child: Column(
-                    children: [
-                      Padding(padding: EdgeInsets.all(14), child: Text(Lang.get('channels'), style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))),
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _channelScroll,
-                          itemCount: widget.channelList!.length,
-                          itemBuilder: (_, i) {
-                            final ch = widget.channelList![i];
-                            final active = i == _listIndex;
-                            final url = ch['url']?? '';
-                            final isFav = _favIds.contains(url);
-                            return Container(
-                              margin: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: active? Colors.cyan : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
-                                  if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
-                                  SizedBox(width: 10),
-                                  Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
-                                  if (isFav) Image.asset('assets/favorites.png', width: 22, height: 22, color: Colors.red) else Icon(Icons.favorite_border, color: Colors.white24, size: 20),
-                                ],
-                              ),
-                            );
-                          },
+              if (isLive && _showChannelList)
+                Positioned(
+                  right: 30, top: 80, bottom: 80, width: 380,
+                  child: Container(
+                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.92), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.cyan, width: 2)),
+                    child: Column(
+                      children: [
+                        Padding(padding: EdgeInsets.all(14), child: Text(Lang.get('channels'), style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))),
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _channelScroll,
+                            itemCount: widget.channelList!.length,
+                            itemBuilder: (_, i) {
+                              final ch = widget.channelList![i];
+                              final active = i == _listIndex;
+                              final url = ch['url']?? '';
+                              final isFav = _favIds.contains(url);
+                              return Container(
+                                margin: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: active? Colors.cyan : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
+                                    if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
+                                    SizedBox(width: 10),
+                                    Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
+                                    if (isFav) Image.asset('assets/favorites.png', width: 22, height: 22, color: Colors.red) else Icon(Icons.favorite_border, color: Colors.white24, size: 20),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
