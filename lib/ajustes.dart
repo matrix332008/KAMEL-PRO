@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'lang.dart';
+import 'main.dart'; // <-- مهم باش نرجع للـ MainMenu
 
 class AjustesScreen extends StatefulWidget {
   @override
@@ -25,12 +26,16 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   _changeLang(String lang) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('lang', lang);
-    await Lang.load();
+    await Lang.set(lang); // يحفظ + يعمل load
     setState(() => _currentLang = lang);
-    // رجوع للصفحة الرئيسية باش يتبدل كل شي
-    Navigator.pop(context);
+    
+    // نعاود نبني التطبيق من الأول باللغة الجديدة
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => MainMenu()),
+      (route) => false,
+    );
   }
 
   @override
@@ -109,6 +114,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
   Widget _langBtn(String flag, String name, String code) {
     bool selected = _currentLang == code;
     return Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+          _changeLang(code);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       child: Builder(
         builder: (ctx) {
           final hasFocus = Focus.of(ctx).hasFocus;
