@@ -4,10 +4,51 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:io';
 import 'main.dart';
 
 // ============= LOGIN SELECTION =============
-class LoginSelection extends StatelessWidget {
+class LoginSelection extends StatefulWidget {
+  @override
+  _LoginSelectionState createState() => _LoginSelectionState();
+}
+
+class _LoginSelectionState extends State<LoginSelection> {
+  String _mac = '...';
+  String _deviceId = '...';
+  String _deviceName = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getDeviceInfo();
+  }
+
+  _getDeviceInfo() async {
+    final deviceInfo = DeviceInfoPlugin();
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        final id = androidInfo.id;
+        setState(() {
+          _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
+          _deviceId = id.hashCode.abs().toString().padLeft(6,'0').substring(0,6);
+          _mac = id.padRight(12,'0').substring(0,12).toUpperCase()
+              .replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:')
+              .replaceAll(RegExp(r':$'), '');
+        });
+      }
+    } catch(e) {
+      setState(() {
+        _deviceName = 'ANDROID TV';
+        _mac = '00:11:22:33:44:55';
+        _deviceId = '000000';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,6 +92,53 @@ class LoginSelection extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          // ===== QR + معلومات الجهاز (كبير) =====
+          Positioned(
+            bottom: 80,
+            right: 30,
+            child: GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId'));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم نسخ البيانات ✓'), duration: Duration(seconds: 1)));
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.cyan, width: 3),
+                      boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 20, spreadRadius: 2)],
+                    ),
+                    child: QrImageView(
+                      data: '$_deviceName|$_mac|$_deviceId',
+                      size: 130,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1.5),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500)),
+                        SizedBox(height: 2),
+                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -174,7 +262,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
         var data = json.decode(response.body);
         if (data['user_info']['auth'] == 1) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isLoggedIn', true); // <--- هذا اللي يحفظ الدخول
+          await prefs.setBool('isLoggedIn', true);
           await prefs.setString('loginType', 'xtream');
           await prefs.setString('server', server);
           await prefs.setString('username', user);
