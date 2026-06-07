@@ -4,7 +4,7 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:async';
 import 'favorites.dart';
-import 'lang.dart'; // <-- زدتها
+import 'lang.dart';
 
 class PlayerScreen extends StatefulWidget {
   final String url;
@@ -146,15 +146,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    Duration duration = Duration.zero;
-    Duration position = Duration.zero;
-    bool isPlaying = false;
-    if (_exo!= null && _exo!.value.isInitialized) {
-      duration = _exo!.value.duration;
-      position = _exo!.value.position;
-      isPlaying = _exo!.value.isPlaying;
-    }
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Focus(
@@ -166,6 +157,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
             if (isLive) {
               if (_showChannelList) {
+                // الليستة محلولة
                 if (key == LogicalKeyboardKey.arrowUp) {
                   setState(() => _listIndex = (_listIndex - 1 + widget.channelList!.length) % widget.channelList!.length);
                   _scrollToIndex();
@@ -177,22 +169,29 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                   _playChannel(_listIndex);
                 } else if (key == LogicalKeyboardKey.goBack) {
+                  // أول رجوع: سكر الليستة فقط
                   setState(() => _showChannelList = false);
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               } else {
+                // نتفرجو بلا ليستة
                 if (key == LogicalKeyboardKey.arrowUp) _nextChannel(-1);
                 else if (key == LogicalKeyboardKey.arrowDown) _nextChannel(1);
                 else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-                  setState(() { _showChannelList = true; _listIndex = widget.currentIndex?? 0; });
+                  setState(() {
+                    _showChannelList = true;
+                    _listIndex = widget.currentIndex?? 0;
+                  });
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                 } else if (key == LogicalKeyboardKey.goBack) {
+                  // ثاني رجوع: ارجع للقائمة الكبيرة
                   return KeyEventResult.ignored;
                 }
                 return KeyEventResult.handled;
               }
             } else {
+              // أفلام ومسلسلات
               if (key == LogicalKeyboardKey.arrowLeft) { _seek(-10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.arrowRight) { _seek(10); _showControlsTemporarily(); }
               else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
@@ -209,8 +208,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
           children: [
             Positioned.fill(
               child: _exo!= null && _exo!.value.isInitialized
-              ? FittedBox(
-                    fit: BoxFit.fill, // <-- كان isLive? fill : contain، تو ديما fill باش ما يبقاش كحل
+               ? FittedBox(
+                    fit: BoxFit.fill, // ديما يملا الشاشة
                     child: SizedBox(
                       width: _exo!.value.size.width,
                       height: _exo!.value.size.height,
@@ -256,7 +255,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   decoration: BoxDecoration(color: Colors.black.withOpacity(0.92), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.cyan, width: 2)),
                   child: Column(
                     children: [
-                      Padding(padding: EdgeInsets.all(14), child: Text(Lang.get('channels'), style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))), // <-- تبدل
+                      Padding(padding: EdgeInsets.all(14), child: Text(Lang.get('channels'), style: TextStyle(color: Colors.cyan, fontSize: 20, fontWeight: FontWeight.bold))),
                       Expanded(
                         child: ListView.builder(
                           controller: _channelScroll,
@@ -294,10 +293,5 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
       ),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return "${two(d.inMinutes.remainder(60))}:${two(d.inSeconds.remainder(60))}";
   }
 }
