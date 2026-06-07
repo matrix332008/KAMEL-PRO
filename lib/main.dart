@@ -8,7 +8,7 @@ import 'series.dart';
 import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
-import 'lang.dart'; // <-- مهم
+import 'lang.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  await Lang.load(); // <-- يحمل اللغة قبل ما يفتح
+  await Lang.load();
   runApp(KamelProApp());
 }
 
@@ -41,7 +41,6 @@ class KamelProApp extends StatelessWidget {
   }
 }
 
-// ============= SPLASH SCREEN =============
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -79,7 +78,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// ============= MAIN MENU =============
 class MainMenu extends StatefulWidget {
   @override
   _MainMenuState createState() => _MainMenuState();
@@ -87,7 +85,7 @@ class MainMenu extends StatefulWidget {
 
 class _MainMenuState extends State<MainMenu> {
   String _expiry = '';
-  int _daysLeft = 365;
+  int _daysLeft = 0;
 
   @override
   void initState() {
@@ -97,20 +95,30 @@ class _MainMenuState extends State<MainMenu> {
 
   _loadExpiry() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String expiry = prefs.getString('expiry')?? '7/6/2027';
-    try {
-      final parts = expiry.split('/');
-      final expDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
-      final now = DateTime.now();
-      final diff = expDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+    // FIX: ما عادش نحط 7/6/2027 - ناخو من السيرفر فقط
+    String expiry = prefs.getString('expiry')?? '';
+    int daysLeft = prefs.getInt('daysLeft')?? 0;
+
+    if (expiry.isNotEmpty) {
+      try {
+        final parts = expiry.split('/');
+        final expDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+        final now = DateTime.now();
+        final diff = expDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+        setState(() {
+          _expiry = expiry;
+          _daysLeft = diff > 0? diff : 0;
+        });
+      } catch (e) {
+        setState(() {
+          _expiry = expiry;
+          _daysLeft = daysLeft;
+        });
+      }
+    } else {
       setState(() {
-        _expiry = expiry;
-        _daysLeft = diff > 0? diff : 0;
-      });
-    } catch (e) {
-      setState(() {
-        _expiry = expiry;
-        _daysLeft = 365;
+        _expiry = '';
+        _daysLeft = 0;
       });
     }
   }
@@ -123,6 +131,8 @@ class _MainMenuState extends State<MainMenu> {
     await prefs.remove('username');
     await prefs.remove('password');
     await prefs.remove('m3uUrl');
+    await prefs.remove('expiry');
+    await prefs.remove('daysLeft');
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginSelection()));
   }
 
@@ -145,7 +155,7 @@ class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {
     Color expiryColor = _daysLeft > 30? Colors.green : _daysLeft > 7? Colors.orange : Colors.red;
-    String daysText = _daysLeft > 0? '$_daysLeft يوم' : 'انتهى';
+    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft يوم' : 'انتهى');
 
     return WillPopScope(
       onWillPop: () async {
@@ -165,11 +175,11 @@ class _MainMenuState extends State<MainMenu> {
                   padding: EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      // ===== تاريخ الانتهاء تحت الصورة =====
                       Column(
                         children: [
                           CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                           SizedBox(height: 5),
+                          if (_expiry.isNotEmpty) // نوريه كان كي يكون موجود
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
