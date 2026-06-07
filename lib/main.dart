@@ -80,7 +80,27 @@ class _SplashScreenState extends State<SplashScreen> {
 }
 
 // ============= MAIN MENU =============
-class MainMenu extends StatelessWidget {
+class MainMenu extends StatefulWidget {
+  @override
+  _MainMenuState createState() => _MainMenuState();
+}
+
+class _MainMenuState extends State<MainMenu> {
+  String _expiry = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpiry();
+  }
+
+  _loadExpiry() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _expiry = prefs.getString('expiry') ?? '7/6/2027';
+    });
+  }
+
   _logout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('isLoggedIn');
@@ -128,7 +148,26 @@ class MainMenu extends StatelessWidget {
                   padding: EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                      // ===== تاريخ الانتهاء تحت الصورة =====
+                      Column(
+                        children: [
+                          CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                          SizedBox(height: 5),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.75),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.orange.withOpacity(0.8), width: 1.5),
+                              boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 8)],
+                            ),
+                            child: Text(
+                              'Exp: $_expiry',
+                              style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
                       Spacer(),
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
