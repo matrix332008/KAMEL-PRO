@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
+import 'lang.dart'; // زدتها باش اللغة تتبدل
 
 class LiveTV extends StatefulWidget {
   @override
@@ -33,56 +34,183 @@ class _LiveTVState extends State<LiveTV> {
       if (chRes.statusCode == 200) channels = json.decode(chRes.body);
       if (cRes.statusCode == 200) {
         var cats = json.decode(cRes.body);
-        groups = [{'category_id': 'All', 'category_name': 'الكل'}];
+        groups = [{'category_id': 'All', 'category_name': Lang.get('all')}];
         for (var c in cats) {
           groups.add({'category_id': c['category_id'].toString(), 'category_name': c['category_name']});
         }
       }
     } catch (e) {}
-    if (groups.isEmpty) groups = [{'category_id': 'All', 'category_name': 'الكل'}];
+    if (groups.isEmpty) groups = [{'category_id': 'All', 'category_name': Lang.get('all')}];
     setState(() => loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final filtered = sel == 'All' ? channels : channels.where((e) => e['category_id'].toString() == sel).toList();
+    
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: loading
-          ? Center(child: CircularProgressIndicator(color: Colors.cyan))
-          : Row(
-              children: [
-                // الباقات على اليسار
-                Container(
-                  width: 260,
-                  color: Colors.black87,
-                  child: Column(
+      body: Container(
+        // خلفية كيف الـ Home - مش أكحل
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0f0c29), // أزرق غامق
+              Color(0xFF302b63), // بنفسجي
+              Color(0xFF24243e), // أزرق
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: loading
+              ? Center(child: CircularProgressIndicator(color: Colors.cyan))
+              : Padding(
+                  padding: EdgeInsets.only(left: 30, right: 20, top: 10, bottom: 10), // زدت 30px على اليسار
+                  child: Row(
                     children: [
-                      Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Row(
+                      // الباقات على اليسار
+                      Container(
+                        width: 280,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Column(
                           children: [
-                            IconButton(icon: Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                            Text('الباقات', style: TextStyle(color: Colors.cyan, fontSize: 20)),
+                            Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.arrow_back, color: Colors.white), 
+                                    onPressed: () => Navigator.pop(context)
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(Lang.get('categories'), style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView.builder(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                itemCount: groups.length,
+                                itemBuilder: (_, i) {
+                                  final g = groups[i];
+                                  final active = g['category_id'] == sel;
+                                  return Focus(
+                                    autofocus: i == 0,
+                                    onKeyEvent: (node, event) {
+                                      if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                                        setState(() => sel = g['category_id']); // هذا اللي كان ناقص
+                                        return KeyEventResult.handled;
+                                      }
+                                      return KeyEventResult.ignored;
+                                    },
+                                    child: Builder(
+                                      builder: (ctx) {
+                                        final hasFocus = Focus.of(ctx).hasFocus;
+                                        return AnimatedContainer(
+                                          duration: Duration(milliseconds: 150),
+                                          margin: EdgeInsets.symmetric(vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: hasFocus ? Colors.cyan.withOpacity(0.3) : (active ? Colors.cyan.withOpacity(0.15) : Colors.transparent),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: hasFocus ? Colors.cyan : (active ? Colors.cyan.withOpacity(0.5) : Colors.transparent),
+                                              width: hasFocus ? 2 : 1,
+                                            ),
+                                          ),
+                                          child: ListTile(
+                                            title: Text(
+                                              g['category_name'], 
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: hasFocus || active ? Colors.cyan : Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: hasFocus || active ? FontWeight.bold : FontWeight.normal,
+                                              )
+                                            ),
+                                            onTap: () => setState(() => sel = g['category_id']),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ],
                         ),
                       ),
+                      SizedBox(width: 20),
+                      // القنوات
                       Expanded(
-                        child: ListView.builder(
-                          itemCount: groups.length,
+                        child: GridView.builder(
+                          padding: EdgeInsets.all(10),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 5,
+                            childAspectRatio: 0.85,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                          ),
+                          itemCount: filtered.length,
                           itemBuilder: (_, i) {
-                            final g = groups[i];
-                            final active = g['category_id'] == sel;
+                            final ch = filtered[i];
+                            final logo = ch['stream_icon'] ?? '';
                             return Focus(
-                              autofocus: i == 0,
+                              autofocus: i == 0 && sel == 'All',
+                              onKeyEvent: (node, event) {
+                                if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                                  _openChannel(ch, filtered, i);
+                                  return KeyEventResult.handled;
+                                }
+                                return KeyEventResult.ignored;
+                              },
                               child: Builder(
                                 builder: (ctx) {
                                   final hasFocus = Focus.of(ctx).hasFocus;
-                                  return Container(
-                                    color: hasFocus ? Colors.cyan.withOpacity(0.2) : (active ? Colors.cyan.withOpacity(0.1) : Colors.transparent),
-                                    child: ListTile(
-                                      title: Text(g['category_name'], style: TextStyle(color: hasFocus || active ? Colors.cyan : Colors.white)),
-                                      onTap: () => setState(() => sel = g['category_id']),
+                                  return GestureDetector(
+                                    onTap: () => _openChannel(ch, filtered, i),
+                                    child: AnimatedContainer(
+                                      duration: Duration(milliseconds: 150),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF1A1A1A).withOpacity(0.8),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
+                                        boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            logo.isNotEmpty
+                                                ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
+                                                : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
+                                            Positioned(
+                                              bottom: 0,
+                                              left: 0,
+                                              right: 0,
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.9)]),
+                                                ),
+                                                child: Text(
+                                                  ch['name'] ?? '',
+                                                  textAlign: TextAlign.center,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },
@@ -94,83 +222,8 @@ class _LiveTVState extends State<LiveTV> {
                     ],
                   ),
                 ),
-                // القنوات باللوغو
-                Expanded(
-                  child: GridView.builder(
-                    padding: EdgeInsets.all(20),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5,
-                      childAspectRatio: 0.85,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) {
-                      final ch = filtered[i];
-                      final logo = ch['stream_icon'] ?? '';
-                      return Focus(
-                        autofocus: i == 0,
-                        onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _openChannel(ch, filtered, i);
-                            return KeyEventResult.handled;
-                          }
-                          return KeyEventResult.ignored;
-                        },
-                        child: Builder(
-                          builder: (ctx) {
-                            final hasFocus = Focus.of(ctx).hasFocus;
-                            return GestureDetector(
-                              onTap: () => _openChannel(ch, filtered, i),
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 150),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFF1A1A1A),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
-                                  boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      // اللوغو
-                                      logo.isNotEmpty
-                                          ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
-                                          : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
-                                      // تدرج من تحت للاسم
-                                      Positioned(
-                                        bottom: 0,
-                                        left: 0,
-                                        right: 0,
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.85)]),
-                                          ),
-                                          child: Text(
-                                            ch['name'] ?? '',
-                                            textAlign: TextAlign.center,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+        ),
+      ),
     );
   }
 
