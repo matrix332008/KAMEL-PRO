@@ -16,11 +16,15 @@ class Lang {
       'removed': 'حذف من المفضلة',
       'lang': 'اللغة',
       'player': 'المشغل',
-      // --- جديد: للـ logout ---
       'logout_title': 'تسجيل الخروج',
       'logout_msg': 'هل تريد تسجيل الخروج من الحساب؟',
       'yes': 'نعم',
       'no': 'لا',
+      // --- جديد ---
+      'fav_title': 'القنوات المفضلة',
+      'no_fav': 'ما فماش قنوات مفضلة',
+      'channel': 'قناة',
+      'channels': 'القنوات',
     },
     'fr': {
       'live': 'DIRECT',
@@ -35,11 +39,15 @@ class Lang {
       'removed': 'Retiré',
       'lang': 'Langue',
       'player': 'Lecteur',
-      // --- جديد ---
       'logout_title': 'Déconnexion',
       'logout_msg': 'Voulez-vous vous déconnecter?',
       'yes': 'Oui',
       'no': 'Non',
+      // --- جديد ---
+      'fav_title': 'Chaînes favorites',
+      'no_fav': 'Aucune chaîne favorite',
+      'channel': 'Chaîne',
+      'channels': 'Chaînes',
     },
     'cs': {
       'live': 'ŽIVĚ',
@@ -54,11 +62,15 @@ class Lang {
       'removed': 'Odebráno',
       'lang': 'Jazyk',
       'player': 'Přehrávač',
-      // --- جديد ---
       'logout_title': 'Odhlásit se',
       'logout_msg': 'Chcete se odhlásit?',
       'yes': 'Ano',
       'no': 'Ne',
+      // --- جديد ---
+      'fav_title': 'Oblíbené kanály',
+      'no_fav': 'Žádné oblíbené kanály',
+      'channel': 'Kanál',
+      'channels': 'Kanály',
     },
   };
 
