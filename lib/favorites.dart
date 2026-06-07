@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'player.dart';
+import 'lang.dart'; // <-- زدتها
 
 class FavoritesService {
   static const _key = 'favorites';
@@ -20,7 +21,6 @@ class FavoritesService {
     final prefs = await SharedPreferences.getInstance();
     final favs = prefs.getStringList(_key)?? [];
     final item = '$name|$url|$logo';
-    // نحي القديم لو موجود
     favs.removeWhere((e) => e.split('|')[1] == url);
     if (!favs.contains(item)) {
       favs.add(item);
@@ -76,7 +76,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   Image.asset('assets/favorites.png', width: 50, height: 50),
                   SizedBox(width: 15),
                   Text(
-                    'القنوات المفضلة',
+                    Lang.get('fav_title'), // <-- تبدل
                     style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -84,7 +84,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             ),
             Expanded(
               child: favorites.isEmpty
-                 ? Center(child: Text('ما فماش قنوات مفضلة', style: TextStyle(color: Colors.white70, fontSize: 24)))
+                ? Center(child: Text(Lang.get('no_fav'), style: TextStyle(color: Colors.white70, fontSize: 24))) // <-- تبدل
                   : ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: 40),
                       itemCount: favorites.length,
