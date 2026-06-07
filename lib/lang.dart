@@ -24,7 +24,6 @@ class Lang {
       'no_fav': 'ما فماش قنوات مفضلة',
       'channel': 'قناة',
       'channels': 'القنوات',
-      // --- Paramètres جديد ---
       'ajouter_liste': 'إضافة قائمة',
       'parental': 'التحكم الأبوي',
       'changer_liste': 'تغيير القائمة',
@@ -43,6 +42,7 @@ class Lang {
       'mise_a_jour': 'تحديث الآن',
       'choisir_langue': 'اختر اللغة',
       'bientot': 'قريباً...',
+      'qr_code': 'رمز QR', // <-- جديد
     },
     'fr': {
       'live': 'DIRECT',
@@ -65,7 +65,6 @@ class Lang {
       'no_fav': 'Aucune chaîne favorite',
       'channel': 'Chaîne',
       'channels': 'Chaînes',
-      // --- Paramètres ---
       'ajouter_liste': 'Ajouter une liste',
       'parental': 'Contrôle parental',
       'changer_liste': 'Changer de liste',
@@ -84,6 +83,7 @@ class Lang {
       'mise_a_jour': 'Mettre à jour',
       'choisir_langue': 'Choisir la langue',
       'bientot': 'Bientôt...',
+      'qr_code': 'Code QR', // <-- جديد
     },
     'cs': {
       'live': 'ŽIVĚ',
@@ -106,7 +106,6 @@ class Lang {
       'no_fav': 'Žádné oblíbené kanály',
       'channel': 'Kanál',
       'channels': 'Kanály',
-      // --- Paramètres ---
       'ajouter_liste': 'Přidat seznam',
       'parental': 'Rodičovská kontrola',
       'changer_liste': 'Změnit seznam',
@@ -125,6 +124,7 @@ class Lang {
       'mise_a_jour': 'Aktualizovat',
       'choisir_langue': 'Vyberte jazyk',
       'bientot': 'Již brzy...',
+      'qr_code': 'QR kód', // <-- جديد
     },
   };
 
