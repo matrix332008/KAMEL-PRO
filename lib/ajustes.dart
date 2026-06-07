@@ -17,6 +17,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
   String _mac = '...';
   String _deviceId = '...';
+  String _deviceName = '...'; // جديد
+  String _expiry = ''; // جديد
 
   final List<Map<String, dynamic>> _items = [
     {'icon': Icons.playlist_add, 'title': 'ajouter_liste', 'action': 'playlist'},
@@ -51,21 +53,31 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
+    final prefs = await SharedPreferences.getInstance();
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
         final id = androidInfo.id;
         setState(() {
+          _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
           _deviceId = id.hashCode.abs().toString().padLeft(6, '0').substring(0,6);
           _mac = id.padRight(12,'0').substring(0,12).toUpperCase()
               .replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:')
               .replaceAll(RegExp(r':$'), '');
         });
       }
+      // تاريخ الانتهاء - أول مرة يعمل سنة
+      if (!prefs.containsKey('expiry')) {
+        final expiry = DateTime.now().add(Duration(days: 365));
+        await prefs.setString('expiry', '${expiry.day}/${expiry.month}/${expiry.year}');
+      }
+      setState(() => _expiry = prefs.getString('expiry') ?? '');
     } catch(e) {
       setState(() {
+        _deviceName = 'ANDROID TV';
         _mac = '9F:93:6B:11:F3:17';
         _deviceId = '727828';
+        _expiry = '7/6/2027';
       });
     }
   }
@@ -94,11 +106,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   void _showQrDialog() {
-    final data = 'MAC:$_mac|ID:$_deviceId';
+    final data = 'DEVICE:$_deviceName|MAC:$_mac|ID:$_deviceId|EXP:$_expiry';
     showDialog(context: context, builder: (_) => AlertDialog(
       backgroundColor: Color(0xFF1A1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Xel TV', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        Text('KAMEL PRO', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
         Container(
           color: Colors.white,
@@ -106,8 +118,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
           child: QrImageView(data: data, size: 200),
         ),
         SizedBox(height: 15),
+        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 14)),
         Text(_mac, style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('ID: $_deviceId', style: TextStyle(color: Colors.white70)),
+        Text('ID: $_deviceId  •  Exp: $_expiry', style: TextStyle(color: Colors.orange, fontSize: 13)),
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text('Fermer', style: TextStyle(color: Colors.white70)))
@@ -210,7 +223,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ),
               ),
             ),
-            // Footer MAC + QR
+            // Footer MAC + QR - محدث
             Padding(
               padding: EdgeInsets.only(bottom: 25),
               child: Container(
@@ -224,19 +237,23 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                          SizedBox(height: 2),
+                          Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text('ID: $_deviceId  •  Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
                     ),
                     Row(
                       children: [
                         IconButton(
                           icon: Icon(Icons.copy, color: Colors.white70),
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
+                            Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId\nExpire: $_expiry'));
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم النسخ ✓')));
                           },
                         ),
@@ -247,7 +264,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                         IconButton(
                           icon: Icon(Icons.share, color: Colors.cyan),
                           onPressed: () {
-                            Share.share('Xel TV - بيانات الجهاز:\nMAC: $_mac\nID: $_deviceId');
+                            Share.share('KAMEL PRO\nDevice: $_deviceName\nMAC: $_mac\nID: $_deviceId\nExpire: $_expiry');
                           },
                         ),
                       ],
