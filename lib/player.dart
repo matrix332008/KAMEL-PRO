@@ -123,7 +123,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  // FIX 1: نسكر الليستة قبل ما نخرج
   void _closeChannelList() {
     setState(() {
       _showChannelList = false;
@@ -149,13 +148,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    // FIX 2: PopScope متوافق مع Flutter 3.22
-    return PopScope(
-      canPop:!_showChannelList, // كان الليستة محلولة، ما تخليش يخرج
-      onPopInvoked: (didPop) {
-        if (!didPop && _showChannelList) {
-          _closeChannelList(); // سكر الليستة وارجع plein écran
+    // ✅ FIX: WillPopScope يخدم على كل إصدارات Flutter
+    return WillPopScope(
+      onWillPop: () async {
+        if (_showChannelList) {
+          _closeChannelList();
+          return false; // ما تخرجش، سكر الليستة فقط
         }
+        return true; // كان الليستة مسكرة، اخرج عادي
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -182,7 +182,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    // FIX 3: ضغطة وحدة ترجع plein écran
                     _closeChannelList();
                     return KeyEventResult.handled;
                   }
@@ -222,7 +221,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-            ? FittedBox(
+           ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
