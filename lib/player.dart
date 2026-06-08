@@ -149,10 +149,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    // FIX 2: PopScope جديد بدل WillPopScope
+    // FIX 2: PopScope متوافق مع Flutter 3.22
     return PopScope(
       canPop:!_showChannelList, // كان الليستة محلولة، ما تخليش يخرج
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop && _showChannelList) {
           _closeChannelList(); // سكر الليستة وارجع plein écran
         }
@@ -222,7 +222,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-             ? FittedBox(
+            ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
