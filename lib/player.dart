@@ -31,6 +31,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final FavoritesService _favService = FavoritesService();
   Set<String> _favIds = {};
 
+  // ✅ نخزنو البيانات هنا باش ما نعملوش push جديد
+  late String _currentUrl;
+  late String _currentTitle;
+  String? _currentLogo;
+  late int _currentIndex;
+
   bool get isLive => widget.channelList!= null;
 
   @override
@@ -38,7 +44,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WakelockPlus.enable();
-    _listIndex = widget.currentIndex?? 0;
+    _currentUrl = widget.url;
+    _currentTitle = widget.title;
+    _currentLogo = widget.logo;
+    _currentIndex = widget.currentIndex?? 0;
+    _listIndex = _currentIndex;
     _initPlayer();
     _showInfoTemporarily();
     _favService.getFavoriteUrls().then((set) {
@@ -47,10 +57,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Future<void> _initPlayer() async {
+    await _exo?.dispose();
     try {
-      _exo = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      _exo = VideoPlayerController.networkUrl(Uri.parse(_currentUrl));
       await _exo!.initialize();
       await _exo!.play();
+      _exo!.addListener(() { if (mounted) setState(() {}); });
     } catch (e) {
       print('Player error: $e');
     }
@@ -90,20 +102,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   void _nextChannel(int step) {
     if (!isLive) return;
-    int idx = (widget.currentIndex! + step) % widget.channelList!.length;
+    int idx = (_currentIndex + step) % widget.channelList!.length;
     if (idx < 0) idx += widget.channelList!.length;
     _playChannel(idx);
   }
 
   void _playChannel(int idx) {
     final next = widget.channelList![idx];
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PlayerScreen(
-      url: next['url'],
-      title: next['name'],
-      logo: next['logo'],
-      channelList: widget.channelList,
-      currentIndex: idx,
-    )));
+    setState(() {
+      _currentUrl = next['url'];
+      _currentTitle = next['name'];
+      _currentLogo = next['logo'];
+      _currentIndex = idx;
+      _listIndex = idx;
+      _showChannelList = false;
+    });
+    _initPlayer();
+    _showInfoTemporarily();
   }
 
   void _toggleFavorite(int idx) {
@@ -123,6 +138,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
+  String _fmt(Duration d) => "${d.inMinutes.remainder(60).toString().padLeft(2,'0')}:${(d.inSeconds.remainder(60)).toString().padLeft(2,'0')}";
+
   @override
   void dispose() {
     _exo?.dispose();
@@ -139,12 +156,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final now = DateTime.now();
     final timeStr = "${now.hour.toString().padLeft(2,'0')}:${now.minute.toString().padLeft(2,'0')}";
     final dateStr = "${now.day}/${now.month}/${now.year}";
-    final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
+    final channelNum = isLive? _currentIndex + 1 : null;
 
-    // ✅ الحل النهائي: نمنع الخروج التلقائي نهائيا
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {},
+    // ✅ بدلنا PopScope بـ WillPopScope
+    return WillPopScope(
+      onWillPop: () async {
+        if (_showChannelList) {
+          setState(() {
+            _showChannelList = false;
+            _showInfoTemporarily();
+          });
+          return false;
+        }
+        if (_showControls) {
+          setState(() => _showControls = false);
+          return false;
+        }
+        return true; // يخرج عادي
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Focus(
@@ -168,7 +197,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    // ضغطة وحدة = سكر الليستة فقط
                     setState(() {
                       _showChannelList = false;
                       _showInfo = true;
@@ -185,13 +213,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     setState(() {
                       _showChannelList = true;
-                      _listIndex = widget.currentIndex?? 0;
+                      _listIndex = _currentIndex;
                       _showInfo = false;
                       _hideTimer?.cancel();
                     });
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    Navigator.pop(context); // اخرج من البلاير
+                    Navigator.pop(context);
                   }
                   return KeyEventResult.handled;
                 }
@@ -212,7 +240,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-          ? FittedBox(
+         ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
@@ -230,14 +258,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
                     child: Row(
                       children: [
-                        if (widget.logo!= null) Image.network(widget.logo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
+                        if (_currentLogo!= null) Image.network(_currentLogo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
                         SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (channelNum!= null) Text('${Lang.get('channel')} $channelNum', style: TextStyle(color: Colors.cyan, fontSize: 14)),
-                              Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                              Text(_currentTitle, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -246,6 +274,31 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           children: [
                             Text(timeStr, style: TextStyle(color: Colors.white, fontSize: 18)),
                             Text(dateStr, style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              // ✅ Bar التحكم للأفلام والمسلسلات رجع
+              if (!isLive && _showControls && _exo!= null && _exo!.value.isInitialized)
+                Positioned(
+                  bottom: 40, left: 40, right: 40,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(10)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        VideoProgressIndicator(_exo!, allowScrubbing: true, colors: VideoProgressColors(playedColor: Colors.cyan, bufferedColor: Colors.white24, backgroundColor: Colors.white10)),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            IconButton(icon: Icon(_exo!.value.isPlaying? Icons.pause : Icons.play_arrow, color: Colors.white, size: 32), onPressed: _togglePlay),
+                            SizedBox(width: 8),
+                            Text(_fmt(_exo!.value.position), style: TextStyle(color: Colors.white)),
+                            Spacer(),
+                            Text(_fmt(_exo!.value.duration), style: TextStyle(color: Colors.white70)),
                           ],
                         ),
                       ],
