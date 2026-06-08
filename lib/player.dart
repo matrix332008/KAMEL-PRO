@@ -123,16 +123,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  // FIX: باش زر الرجوع يخدم صحيح
-  Future<bool> _onWillPop() async {
-    if (_showChannelList) {
-      setState(() {
-        _showChannelList = false;
-        _showInfoTemporarily(); // نرجع نوري المعلومات
-      });
-      return false; // ما نخرجش
-    }
-    return true; // نخرج
+  // FIX 1: نسكر الليستة قبل ما نخرج
+  void _closeChannelList() {
+    setState(() {
+      _showChannelList = false;
+      _showInfoTemporarily();
+    });
   }
 
   @override
@@ -153,8 +149,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    // FIX 2: PopScope جديد بدل WillPopScope
+    return PopScope(
+      canPop:!_showChannelList, // كان الليستة محلولة، ما تخليش يخرج
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _showChannelList) {
+          _closeChannelList(); // سكر الليستة وارجع plein écran
+        }
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Focus(
@@ -180,11 +182,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    // FIX: نسكر الليستة ونرجع plein écran
-                    setState(() {
-                      _showChannelList = false;
-                      _showInfoTemporarily();
-                    });
+                    // FIX 3: ضغطة وحدة ترجع plein écran
+                    _closeChannelList();
                     return KeyEventResult.handled;
                   }
                   return KeyEventResult.handled;
@@ -223,7 +222,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-              ? FittedBox(
+             ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
