@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:crypto/crypto.dart'; // <-- جديد
 import 'dart:io';
 import 'main.dart';
 
@@ -32,25 +33,28 @@ class _LoginSelectionState extends State<LoginSelection> {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
         
-        // MAC UNIQUE لكل جهاز - مستحيل يتكرر
-        String androidId = androidInfo.id ?? ''; // ✅ تصلح
-        String serial = ''; // serialNumber ما عادش موجود
+        // ✅ FIX: MAC ثابت ومستحيل يتكرر
+        String androidId = androidInfo.id ?? '';
         String model = androidInfo.model ?? '';
+        String manufacturer = androidInfo.manufacturer ?? '';
         
-        String base = (androidId + serial + model).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-        if (base.length < 12) base = base.padRight(12, '0');
+        // نعمل hash ثابت بـ SHA1
+        String base = '$androidId-$model-$manufacturer-${androidInfo.device}';
+        var bytes = utf8.encode(base);
+        var digest = sha1.convert(bytes);
+        String hex = digest.toString().substring(0, 12).toUpperCase();
         
-        int hash = base.hashCode.abs();
-        String hex = hash.toRadixString(16).padLeft(12, '0');
-        hex = (hex + base).substring(0, 12).toUpperCase();
-        
+        // نفرمتوه كيما MAC: AA:BB:CC:DD:EE:FF
         String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
         mac = mac.substring(0, 17);
         
+        // ID قصير (6 أرقام)
+        String deviceId = digest.toString().substring(0, 6).toUpperCase();
+        
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = androidId.hashCode.abs().toString().padLeft(6,'0').substring(0,6);
-          _mac = mac;
+          _deviceId = deviceId;
+          _mac = mac; // مثلا: A4:5C:2B:11:22:F3 - ديما نفسو
         });
       }
     } catch(e) {
@@ -106,7 +110,6 @@ class _LoginSelectionState extends State<LoginSelection> {
               ),
             ],
           ),
-          // QR على اليسار يغطي Kam
           Positioned(
             bottom: 35,
             left: 25,
@@ -283,7 +286,6 @@ class _XtreamLoginState extends State<XtreamLogin> {
           await prefs.setString('password', pass);
           await prefs.setString('xtreamData', response.body);
           
-          // حفظ التاريخ الحقيقي
           if (data['user_info'] != null && data['user_info']['exp_date'] != null) {
             try {
               int expTimestamp = int.parse(data['user_info']['exp_date'].toString());
