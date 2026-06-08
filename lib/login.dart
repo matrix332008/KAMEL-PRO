@@ -33,8 +33,8 @@ class _LoginSelectionState extends State<LoginSelection> {
         final androidInfo = await deviceInfo.androidInfo;
         
         // MAC UNIQUE لكل جهاز - مستحيل يتكرر
-        String androidId = androidInfo.androidId ?? '';
-        String serial = androidInfo.serialNumber ?? '';
+        String androidId = androidInfo.id ?? ''; // ✅ تصلح
+        String serial = ''; // serialNumber ما عادش موجود
         String model = androidInfo.model ?? '';
         
         String base = (androidId + serial + model).replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
