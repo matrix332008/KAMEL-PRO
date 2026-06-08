@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:crypto/crypto.dart'; // جديد
+import 'dart:convert'; // جديد
 import 'dart:io';
 import 'lang.dart';
 import 'main.dart';
@@ -17,8 +19,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
   String _mac = '...';
   String _deviceId = '...';
-  String _deviceName = '...'; // جديد
-  String _expiry = ''; // جديد
+  String _deviceName = '...';
+  String _expiry = '';
 
   final List<Map<String, dynamic>> _items = [
     {'icon': Icons.playlist_add, 'title': 'ajouter_liste', 'action': 'playlist'},
@@ -57,16 +59,28 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        final id = androidInfo.id;
+        
+        // ✅ FIX: نفس الكود متاع login.dart - MAC ثابت
+        String androidId = androidInfo.id ?? '';
+        String model = androidInfo.model ?? '';
+        String manufacturer = androidInfo.manufacturer ?? '';
+        
+        String base = '$androidId-$model-$manufacturer-${androidInfo.device}';
+        var bytes = utf8.encode(base);
+        var digest = sha1.convert(bytes);
+        String hex = digest.toString().substring(0, 12).toUpperCase();
+        
+        String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
+        mac = mac.substring(0, 17);
+        
+        String deviceId = digest.toString().substring(0, 6).toUpperCase();
+        
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = id.hashCode.abs().toString().padLeft(6, '0').substring(0,6);
-          _mac = id.padRight(12,'0').substring(0,12).toUpperCase()
-              .replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:')
-              .replaceAll(RegExp(r':$'), '');
+          _deviceId = deviceId;
+          _mac = mac;
         });
       }
-      // تاريخ الانتهاء - أول مرة يعمل سنة
       if (!prefs.containsKey('expiry')) {
         final expiry = DateTime.now().add(Duration(days: 365));
         await prefs.setString('expiry', '${expiry.day}/${expiry.month}/${expiry.year}');
@@ -75,8 +89,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
     } catch(e) {
       setState(() {
         _deviceName = 'ANDROID TV';
-        _mac = '9F:93:6B:11:F3:17';
-        _deviceId = '727828';
+        _mac = '00:11:22:33:44:55';
+        _deviceId = '000000';
         _expiry = '7/6/2027';
       });
     }
@@ -223,7 +237,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 ),
               ),
             ),
-            // Footer MAC + QR - محدث
             Padding(
               padding: EdgeInsets.only(bottom: 25),
               child: Container(
