@@ -57,6 +57,50 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            // KAMEL PRO الأخضر يغطي القديم
+            Positioned(
+              left: 40,
+              bottom: 85,
+              child: Transform.rotate(
+                angle: -0.08,
+                child: Text(
+                  'KAMEL PRO',
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF00E676),
+                    shadows: [
+                      Shadow(blurRadius: 12, color: Colors.black87, offset: Offset(3,3)),
+                      Shadow(blurRadius: 20, color: Colors.greenAccent.withOpacity(0.4)),
+                    ],
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+            ),
+            // واتساب + الرقم مهبطين 30px
+            Positioned(
+              bottom: 45,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.phone, color: Colors.white70, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '+420 777099379',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 18,
+                        shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             SafeArea(
               child: Column(
                 children: [
@@ -76,9 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _btn(Icons.movie, Lang.get('movies'), Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FilmesScreen()))),
                           _btn(Icons.tv, Lang.get('series'), Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesScreen()))),
                           _btn(Icons.calendar_today, Lang.get('epg'), Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (_) => EPGScreen()))),
-                          // القلب الكبير
                           _btnImg('assets/favorites.png', Lang.get('fav'), Colors.pink, () => Navigator.push(context, MaterialPageRoute(builder: (_) => FavoritesScreen()))),
-                          // الترس الذهبي
                           _btnImg('assets/ajustes.png', Lang.get('settings'), Colors.amber, () => Navigator.push(context, MaterialPageRoute(builder: (_) => AjustesScreen()))),
                         ],
                       ),
@@ -113,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(icon, size: 48, color: has ? color : Colors.white70),
                 SizedBox(height: 8),
-                Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal)),
+                Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal, shadows: [Shadow(blurRadius: 4, color: Colors.black54)])),
               ],
             ),
           ),
@@ -122,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // الجديد - للأيقونات بالصور
   Widget _btnImg(String asset, String label, Color color, VoidCallback onTap) {
     return Focus(
       child: Builder(builder: (ctx) {
@@ -142,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Image.asset(asset, width: 64, height: 64, fit: BoxFit.contain),
                 SizedBox(height: 8),
-                Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal)),
+                Text(label, style: TextStyle(color: has ? Colors.white : Colors.white70, fontSize: 18, fontWeight: has ? FontWeight.bold : FontWeight.normal, shadows: [Shadow(blurRadius: 4, color: Colors.black54)])),
               ],
             ),
           ),
