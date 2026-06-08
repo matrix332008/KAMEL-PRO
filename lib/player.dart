@@ -123,13 +123,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  void _closeChannelList() {
-    setState(() {
-      _showChannelList = false;
-      _showInfoTemporarily();
-    });
-  }
-
   @override
   void dispose() {
     _exo?.dispose();
@@ -148,15 +141,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = widget.currentIndex!= null? widget.currentIndex! + 1 : null;
 
-    // ✅ FIX: WillPopScope يخدم على كل إصدارات Flutter
-    return WillPopScope(
-      onWillPop: () async {
-        if (_showChannelList) {
-          _closeChannelList();
-          return false; // ما تخرجش، سكر الليستة فقط
-        }
-        return true; // كان الليستة مسكرة، اخرج عادي
-      },
+    // ✅ الحل النهائي: نمنع الخروج التلقائي نهائيا
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {},
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Focus(
@@ -165,9 +153,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             if (event is KeyDownEvent) {
               final key = event.logicalKey;
 
-              if (!_showChannelList) {
-                _showInfoTemporarily();
-              }
+              if (!_showChannelList) _showInfoTemporarily();
 
               if (isLive) {
                 if (_showChannelList) {
@@ -182,8 +168,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    _closeChannelList();
-                    return KeyEventResult.handled;
+                    // ضغطة وحدة = سكر الليستة فقط
+                    setState(() {
+                      _showChannelList = false;
+                      _showInfo = true;
+                    });
+                    _hideTimer?.cancel();
+                    _hideTimer = Timer(Duration(seconds: 3), () {
+                      if (mounted) setState(() => _showInfo = false);
+                    });
                   }
                   return KeyEventResult.handled;
                 } else {
@@ -198,8 +191,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     });
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    Navigator.pop(context);
-                    return KeyEventResult.handled;
+                    Navigator.pop(context); // اخرج من البلاير
                   }
                   return KeyEventResult.handled;
                 }
@@ -210,7 +202,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   _togglePlay(); _showControlsTemporarily();
                 } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
                   Navigator.pop(context);
-                  return KeyEventResult.handled;
                 }
                 return KeyEventResult.handled;
               }
@@ -221,7 +212,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-           ? FittedBox(
+          ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
