@@ -31,7 +31,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final FavoritesService _favService = FavoritesService();
   Set<String> _favIds = {};
 
-  // ✅ نخزنو البيانات هنا باش ما نعملوش push جديد
   late String _currentUrl;
   late String _currentTitle;
   String? _currentLogo;
@@ -158,7 +157,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final dateStr = "${now.day}/${now.month}/${now.year}";
     final channelNum = isLive? _currentIndex + 1 : null;
 
-    // ✅ بدلنا PopScope بـ WillPopScope
     return WillPopScope(
       onWillPop: () async {
         if (_showChannelList) {
@@ -172,7 +170,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           setState(() => _showControls = false);
           return false;
         }
-        return true; // يخرج عادي
+        return true;
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -181,7 +179,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
               final key = event.logicalKey;
-
               if (!_showChannelList) _showInfoTemporarily();
 
               if (isLive) {
@@ -219,7 +216,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     });
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    Navigator.pop(context);
+                    // ✅ خلي WillPop يخدم، ما نعملوش pop هنا
+                    return KeyEventResult.ignored;
                   }
                   return KeyEventResult.handled;
                 }
@@ -229,7 +227,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                   _togglePlay(); _showControlsTemporarily();
                 } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                  Navigator.pop(context);
+                  // ✅ خلي WillPop يخدم
+                  return KeyEventResult.ignored;
                 }
                 return KeyEventResult.handled;
               }
@@ -240,7 +239,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-         ? FittedBox(
+        ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
@@ -280,7 +279,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                   ),
                 ),
-              // ✅ Bar التحكم للأفلام والمسلسلات رجع
               if (!isLive && _showControls && _exo!= null && _exo!.value.isInitialized)
                 Positioned(
                   bottom: 40, left: 40, right: 40,
