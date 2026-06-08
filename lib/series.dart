@@ -43,7 +43,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text('SERIES')),
       body: loading
-       ? Center(child: CircularProgressIndicator(color: Colors.orange))
+      ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
                 Container(
@@ -53,7 +53,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('All', 'الكل'),
-                   ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                  ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -94,7 +94,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                         ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                        ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -138,43 +138,180 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   void _openSeries(s) async {
     final p = await SharedPreferences.getInstance();
-    String server = p.getString('server')?? '';
+    String server = (p.getString('server')?? '').replaceAll(RegExp(r'/$'), '');
     String user = p.getString('username')?? '';
     String pass = p.getString('password')?? '';
     final res = await http.get(Uri.parse('$server/player_api.php?username=$user&password=$pass&action=get_series_info&series_id=${s['series_id']}'));
     final data = json.decode(res.body);
-    final episodes = data['episodes'];
 
-    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(
+    Navigator.push(context, MaterialPageRoute(builder: (_) => SeriesDetailScreen(
+      series: s,
+      data: data,
+      server: server,
+      user: user,
+      pass: pass,
+    )));
+  }
+}
+
+// الشاشة الجديدة المزيانة
+class SeriesDetailScreen extends StatefulWidget {
+  final dynamic series;
+  final dynamic data;
+  final String server;
+  final String user;
+  final String pass;
+
+  SeriesDetailScreen({required this.series, required this.data, required this.server, required this.user, required this.pass});
+
+  @override
+  _SeriesDetailScreenState createState() => _SeriesDetailScreenState();
+}
+
+class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
+  late String selectedSeason;
+  late List<String> seasons;
+
+  @override
+  void initState() {
+    super.initState();
+    seasons = widget.data['episodes'].keys.toList()..sort((a,b) => int.parse(a).compareTo(int.parse(b)));
+    selectedSeason = seasons.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final episodes = widget.data['episodes'][selectedSeason] as List;
+
+    return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(s['name'], style: TextStyle(color: Colors.white)),
+        title: Text(widget.series['name'], style: TextStyle(color: Colors.white)),
         iconTheme: IconThemeData(color: Colors.orange),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: episodes.keys.map<Widget>((season) {
-          return ExpansionTile(
-            initiallyExpanded: true,
-            title: Text('الموسم $season', style: TextStyle(color: Colors.orange, fontSize: 20, fontWeight: FontWeight.bold)),
-            iconColor: Colors.orange,
-            collapsedIconColor: Colors.orange,
-            children: (episodes[season] as List).map((ep) {
-              return ListTile(
-                autofocus: false,
-                leading: Icon(Icons.play_circle_outline, color: Colors.white70),
-                title: Text(ep['title'], style: TextStyle(color: Colors.white, fontSize: 16)),
-                focusColor: Colors.orange.withOpacity(0.2),
-                onTap: () {
-                  String url = '$server/series/$user/$pass/${ep['id']}.${ep['container_extension']}';
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: s['cover'])));
-                },
-              );
-            }).toList(),
-          );
-        }).toList(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // المواسم مربعات
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('المواسم', style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
+          ),
+          Container(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              itemCount: seasons.length,
+              itemBuilder: (ctx, i) {
+                final season = seasons[i];
+                final isSel = season == selectedSeason;
+                return Focus(
+                  autofocus: i == 0,
+                  onKeyEvent: (node, event) {
+                    if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                      setState(() => selectedSeason = season);
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: Builder(
+                    builder: (ctx2) {
+                      final hasFocus = Focus.of(ctx2).hasFocus;
+                      return GestureDetector(
+                        onTap: () => setState(() => selectedSeason = season),
+                        child: Container(
+                          width: 140,
+                          margin: EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            color: isSel? Colors.orange : Colors.grey[900],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: hasFocus? Colors.white : Colors.transparent, width: 3),
+                          ),
+                          child: Center(
+                            child: Text('الموسم $season', style: TextStyle(
+                              color: isSel? Colors.black : Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold
+                            )),
+                          ),
+                        ),
+                      );
+                    }
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // الحلقات مربعات
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Text('الحلقات - الموسم $selectedSeason', style: TextStyle(color: Colors.white70, fontSize: 16)),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 3.2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
+              itemCount: episodes.length,
+              itemBuilder: (ctx, i) {
+                final ep = episodes[i];
+                return Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                      _playEpisode(ep);
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: Builder(
+                    builder: (ctx2) {
+                      final hasFocus = Focus.of(ctx2).hasFocus;
+                      return GestureDetector(
+                        onTap: () => _playEpisode(ep),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: hasFocus? Colors.orange.withOpacity(0.3) : Colors.grey[850],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: hasFocus? Colors.orange : Colors.grey[700]!, width: 2),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.play_arrow, color: hasFocus? Colors.orange : Colors.white70, size: 24),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'الحلقة ${i+1}',
+                                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: hasFocus? FontWeight.bold : FontWeight.normal),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
-    )));
+    );
+  }
+
+  void _playEpisode(ep) {
+    String url = '${widget.server}/series/${widget.user}/${widget.pass}/${ep['id']}.${ep['container_extension']}';
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => PlayerScreen(url: url, title: ep['title'], logo: widget.series['cover'])
+    ));
   }
 }
