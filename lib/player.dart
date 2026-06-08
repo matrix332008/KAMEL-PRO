@@ -162,8 +162,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
         if (_showChannelList) {
           setState(() {
             _showChannelList = false;
-            _showInfoTemporarily();
           });
+          _showInfoTemporarily();
           return false;
         }
         if (_showControls) {
@@ -194,14 +194,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    setState(() {
-                      _showChannelList = false;
-                      _showInfo = true;
-                    });
-                    _hideTimer?.cancel();
-                    _hideTimer = Timer(Duration(seconds: 3), () {
-                      if (mounted) setState(() => _showInfo = false);
-                    });
+                    // ✅ نخلي WillPop هو اللي يسكر
+                    return KeyEventResult.ignored;
                   }
                   return KeyEventResult.handled;
                 } else {
@@ -216,7 +210,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     });
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex());
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    // ✅ خلي WillPop يخدم، ما نعملوش pop هنا
                     return KeyEventResult.ignored;
                   }
                   return KeyEventResult.handled;
@@ -227,7 +220,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.mediaPlayPause) {
                   _togglePlay(); _showControlsTemporarily();
                 } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                  // ✅ خلي WillPop يخدم
                   return KeyEventResult.ignored;
                 }
                 return KeyEventResult.handled;
@@ -239,7 +231,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-        ? FittedBox(
+       ? FittedBox(
                       fit: BoxFit.fill,
                       child: SizedBox(
                         width: _exo!.value.size.width,
