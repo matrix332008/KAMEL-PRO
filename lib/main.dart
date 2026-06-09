@@ -37,7 +37,8 @@ Future<String> getMacAddress() async {
     if (Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
       String id = androidInfo.id + androidInfo.model;
-      return sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
+      String hex = sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
+      return hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
     }
     return 'UNKNOWN';
   } catch (e) {
