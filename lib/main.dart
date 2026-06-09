@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:math';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'live_tv.dart';
 import 'filmes.dart';
 import 'series.dart';
@@ -17,8 +20,46 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  
+  // --- KAMEL PRO: تهيئة Supabase ---
+  await Supabase.initialize(
+    url: 'https://pmgdzroirlegkpqzcyra.supabase.co',
+    anonKey: 'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj',
+  );
+  
   await Lang.load();
   runApp(KamelProApp());
+}
+
+// --- دالة جديدة: تسجيل الجهاز في Supabase ---
+Future<void> registerDevice() async {
+  try {
+    final deviceInfo = DeviceInfoPlugin();
+    final androidInfo = await deviceInfo.androidInfo;
+    
+    // نعمل MAC ثابت من ID الجهاز
+    String id = androidInfo.id;
+    final hash = id.hashCode.abs().toRadixString(16).padLeft(12,'0').substring(0,12).toUpperCase();
+    String mac = '${hash.substring(0,2)}:${hash.substring(2,4)}:${hash.substring(4,6)}:${hash.substring(6,8)}:${hash.substring(8,10)}:${hash.substring(10,12)}';
+    
+    // مفتاح 6 أرقام يتبدل كل مرة يتحل التطبيق
+    String key = (Random().nextInt(900000) + 100000).toString();
+    
+    // حفظ محلي باش نوريه في الواجهة
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('device_mac', mac);
+    await prefs.setString('device_key', key);
+    
+    // بعث لـ Supabase
+    final supabase = Supabase.instance.client;
+    await supabase.from('activations').upsert({
+      'mac': mac,
+      'device_id': key,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  } catch (e) {
+    print('Register error: $e');
+  }
 }
 
 class KamelProApp extends StatelessWidget {
@@ -50,11 +91,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _registerAndCheck(); // بدل _checkLogin
+  }
+
+  _registerAndCheck() async {
+    await registerDevice(); // <-- يسجل الجهاز أولا
+    await Future.delayed(Duration(seconds: 2));
     _checkLogin();
   }
 
   _checkLogin() async {
-    await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn')?? false;
     if (isLoggedIn) {
@@ -86,11 +132,22 @@ class MainMenu extends StatefulWidget {
 class _MainMenuState extends State<MainMenu> {
   String _expiry = '';
   int _daysLeft = 0;
+  String _mac = '';
+  String _key = '';
 
   @override
   void initState() {
     super.initState();
     _loadExpiry();
+    _loadDevice(); // جديد
+  }
+
+  _loadDevice() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _mac = prefs.getString('device_mac') ?? '';
+      _key = prefs.getString('device_key') ?? '';
+    });
   }
 
   _loadExpiry() async {
@@ -204,6 +261,15 @@ class _MainMenuState extends State<MainMenu> {
                         ],
                       ),
                       Spacer(),
+                      // --- عرض MAC و KEY ---
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('MAC: $_mac', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                          Text('KEY: $_key', style: TextStyle(color: Colors.greenAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      SizedBox(width: 15),
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
