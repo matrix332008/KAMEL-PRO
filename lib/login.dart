@@ -29,9 +29,23 @@ class _LoginSelectionState extends State<LoginSelection> {
 
   _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
+    final prefs = await SharedPreferences.getInstance();
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
+        
+        // نقراو أولاً من main.dart (Supabase)
+        String savedMac = prefs.getString('device_mac') ?? '';
+        String savedKey = prefs.getString('device_key') ?? '';
+        
+        if (savedMac.isNotEmpty && savedKey.isNotEmpty) {
+          setState(() {
+            _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
+            _deviceId = savedKey;
+            _mac = savedMac;
+          });
+          return;
+        }
         
         // ✅ FIX: MAC ثابت ومستحيل يتكرر
         String androidId = androidInfo.id ?? '';
