@@ -19,7 +19,8 @@ dependencies:
   device_info_plus: ^10.1.0
   share_plus: ^7.2.1
   qr_flutter: ^4.1.0
-  crypto: ^3.0.3  # <-- زدتها للـ MAC الثابت
+  crypto: ^3.0.3
+  supabase_flutter: ^2.5.0   # <-- هذا الجديد
 
 dev_dependencies:
   flutter_test:
