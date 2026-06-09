@@ -1,119 +1,73 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KAMEL PRO - Manage Your Playlists</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KAMEL PRO</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-:root{--bg:#0f0f1a;--card:#1a1a2e;--purple:#6c4df5;--red:#ff3b5c;--text:#fff}
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text)}
-.header{background:linear-gradient(135deg,#5a3df5,#8a5df5);padding:20px;display:flex;align-items:center;justify-content:space-between}
-.header-left{display:flex;align-items:center;gap:12px}
-.avatar{width:56px;height:56px;border-radius:50%;border:3px solid #fff;object-fit:cover}
-.logo{font-size:32px;font-weight:900;color:#ff3b5c;line-height:1}
-.subtitle{font-size:14px;opacity:.9}
-.lang{background:rgba(0,0,0,.3);border:none;color:#fff;padding:8px 12px;border-radius:20px}
-.container{max-width:480px;margin:-30px auto 40px;background:var(--card);border-radius:24px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-h2{text-align:center;margin:0 0 8px}
-input{width:100%;padding:14px;background:#0f0f1a;border:1px solid #333;border-radius:12px;color:#fff;margin:8px 0;font-size:16px;box-sizing:border-box}
-.btn{width:100%;padding:15px;background:var(--red);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:16px;cursor:pointer;margin-top:12px}
-.btn-secondary{background:#333;display:flex;align-items:center;justify-content:space-between}
-.download-icon{background:var(--red);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.qr-link{display:block;text-align:center;margin-top:12px;color:#5aa9ff;text-decoration:none;font-size:14px}
+:root{--purple:#6c4df5;--dark:#0b0b1a;--card:#15152b;--red:#ff3b5c}
+*{box-sizing:border-box}body{margin:0;background:var(--dark);color:#fff;font-family:system-ui}
+.header{background:linear-gradient(135deg,#5a3df5,#8a5df5);padding:18px 16px 40px;display:flex;justify-content:space-between}
+.logo{color:var(--red);font-weight:900;font-size:34px;line-height:.9}
+.top-right{display:flex;gap:10px;align-items:center}
+.lang{background:rgba(0,0,0,.25);border:none;color:#fff;padding:8px 14px;border-radius:20px}
+.avatar{width:58px;height:58px;border-radius:50%;border:3px solid #fff;object-fit:cover}
+.container{max-width:460px;margin:-28px auto 80px;background:var(--card);border-radius:28px;padding:26px 20px}
+.input{width:100%;padding:16px;background:#0f0f1f;border:1px solid #2a2a4a;border-radius:14px;color:#fff;font-size:16px;margin:10px 0;text-align:right}
+.input::placeholder{color:#8a8ab0}
+.btn{width:100%;padding:16px;background:var(--red);border:none;border-radius:14px;color:#fff;font-weight:700;font-size:17px;margin-top:14px;cursor:pointer}
+.btn-dl{background:#2a2a3f;display:flex;justify-content:space-between;align-items:center}
+.qr-link{display:block;text-align:center;margin:14px 0;color:#7aa7ff;text-decoration:none}
+#reader{width:100%;margin-top:10px;display:none}
 .page{display:none}.page.active{display:block}
-.playlist-item{background:#0f0f1a;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
-.badge{background:#333;padding:4px 10px;border-radius:12px;font-size:12px}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
-.info-box{background:#0f0f1a;padding:12px;border-radius:10px;text-align:center}
+.item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between}
+.whatsapp{position:fixed;bottom:20px;left:20px;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;z-index:99}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="header-left">
+  <div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9">إدارة اشتراكاتك</div></div>
+  <div class="top-right">
+    <select class="lang" onchange="setLang(this.value)"><option value="ar">عربي 🇹🇳</option><option value="fr">FR</option><option value="cs">CS</option><option value="en">EN</option></select>
     <img src="https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/assets/avatar.png" class="avatar">
-    <select class="lang" id="lang" onchange="setLang(this.value)">
-      <option value="ar">🇹🇳 عربي</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="cs">🇨🇿 Čeština</option>
-      <option value="en">🇬🇧 English</option>
-    </select>
-  </div>
-  <div>
-    <div class="logo">KAMEL<br>PRO</div>
-    <div class="subtitle" data-i="subtitle">إدارة اشتراكاتك</div>
   </div>
 </div>
 
 <div class="container">
-  <div id="page1" class="page active">
-    <h2 data-i="activate">فعّل جهازك</h2>
-    <p style="text-align:center;opacity:.7" data-i="enterData">أدخل بيانات التلفاز</p>
-    <label data-i="mac">عنوان MAC</label>
-    <input id="mac" placeholder="F9:8C:E2:08:42:2B">
-    <label data-i="key">مفتاح الجهاز</label>
-    <input id="key" placeholder="642306">
-    <button class="btn" onclick="login()" data-i="login">تسجيل الدخول →</button>
-    <button class="btn btn-secondary" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file','_blank')">
-      <span data-i="download">تحميل التطبيق من هنا</span>
-      <span class="download-icon">↓</span>
-    </button>
-    <a href="#" class="qr-link" data-i="scan">📷 امسح QR من التلفاز</a>
-  </div>
-
-  <div id="page2" class="page">
-    <h2 data-i="playlists">My Playlists</h2>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span id="deviceMac" style="opacity:.7"></span>
-      <span class="badge" id="count">0/5</span>
-    </div>
-    <div id="info" class="info-grid" style="display:none">
-      <div class="info-box"><div data-i="expiry">الصلاحية</div><strong id="expiry">-</strong></div>
-      <div class="info-box"><div data-i="conn">المتصلين</div><strong id="conn">-</strong></div>
-    </div>
-    <div class="playlist-item" onclick="showForm('m3u')">
-      <div>📄 <strong data-i="addM3u">Add M3U URL</strong><br><small style="opacity:.6" data-i="playlistLink">Playlist link</small></div><span>+</span>
-    </div>
-    <div class="playlist-item" onclick="showForm('xtream')">
-      <div>#️⃣ <strong data-i="addXtream">Add Xtream Codes</strong><br><small style="opacity:.6" data-i="serverLogin">Server login</small></div><span>+</span>
-    </div>
-    <div id="formM3u" style="display:none;margin-top:15px">
-      <input id="m3u_url" placeholder="http://server.com/playlist.m3u">
-      <button class="btn" onclick="saveM3u()" data-i="save">حفظ</button>
-    </div>
-    <div id="formXtream" style="display:none;margin-top:15px">
-      <input id="xt_server" placeholder="http://server.com:8080">
-      <input id="xt_user" placeholder="Username">
-      <input id="xt_pass" placeholder="Password" type="password">
-      <button class="btn" onclick="saveXtream()" data-i="save">حفظ</button>
-    </div>
-    <div id="current" style="margin-top:20px"></div>
-    <button class="btn" style="margin-top:30px" onclick="sync()" data-i="sync">SYNC TO APP</button>
-    <p style="text-align:center;font-size:12px;opacity:.6" data-i="syncNote">Changes sync instantly • Open Kamel Pro on your TV</p>
-  </div>
+<div id="p1" class="page active">
+  <h2 style="text-align:right">فعّل جهازك</h2>
+  <input id="mac" class="input" placeholder="MAC: F9:8C:E2:08:42:2B">
+  <input id="key" class="input" placeholder="ID: 642306">
+  <button class="btn" onclick="login()">دخول →</button>
+  <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span>تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
+  <a href="#" class="qr-link" onclick="startQR();return false">📷 امسح QR من التلفاز</a>
+  <div id="reader"></div>
 </div>
 
+<div id="p2" class="page">
+  <h2>قوائمي</h2><div id="macShow" style="opacity:.7"></div>
+  <div class="item" onclick="f('m3u')"><div>📄 <b>إضافة M3U</b></div><span>+</span></div>
+  <div class="item" onclick="f('xt')"><div>#️⃣ <b>إضافة Xtream</b></div><span>+</span></div>
+  <div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()">حفظ</button></div>
+  <div id="fx" style="display:none"><input id="xs" class="input" placeholder="Server"><input id="xu" class="input" placeholder="User"><input id="xp" class="input" placeholder="Pass" type="password"><button class="btn" onclick="sx()">حفظ</button></div>
+  <div id="list"></div>
+</div>
+</div>
+
+<a href="https://wa.me/420777099379" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
 <script>
-const SUPABASE_URL = 'https://pmgdzroirlegkpqzcyra.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let currentMac = '';
-const T = {
-  ar:{subtitle:"إدارة اشتراكاتك",activate:"فعّل جهازك",enterData:"أدخل بيانات التلفاز",mac:"عنوان MAC",key:"مفتاح الجهاز",login:"تسجيل الدخول →",download:"تحميل التطبيق من هنا",scan:"📷 امسح QR من التلفاز",playlists:"إدارة القوائم",addM3u:"إضافة رابط M3U",playlistLink:"رابط القائمة",addXtream:"إضافة Xtream",serverLogin:"دخول السيرفر",save:"حفظ",sync:"مزامنة مع التطبيق",syncNote:"التغييرات فورية • افتح Kamel Pro على التلفاز",expiry:"الصلاحية",conn:"المتصلين"},
-  fr:{subtitle:"Gérez vos playlists",activate:"Activez votre appareil",enterData:"Entrez les données TV",mac:"Adresse MAC",key:"Clé appareil",login:"Connexion →",download:"Télécharger l'app ici",scan:"📷 Scanner QR",playlists:"Mes Playlists",addM3u:"Ajouter M3U",playlistLink:"Lien playlist",addXtream:"Ajouter Xtream",serverLogin:"Login serveur",save:"Enregistrer",sync:"SYNCHRONISER",syncNote:"Sync instantanée",expiry:"Expiration",conn:"Connexions"},
-  cs:{subtitle:"Spravujte playlisty",activate:"Aktivujte zařízení",enterData:"Zadejte údaje TV",mac:"MAC adresa",key:"Klíč zařízení",login:"Přihlásit →",download:"Stáhnout aplikaci zde",scan:"📷 Naskenovat QR",playlists:"Moje Playlisty",addM3u:"Přidat M3U",playlistLink:"Odkaz",addXtream:"Přidat Xtream",serverLogin:"Přihlášení",save:"Uložit",sync:"SYNCHRONIZOVAT",syncNote:"Okamžitá synchronizace",expiry:"Platnost",conn:"Připojení"},
-  en:{subtitle:"Manage Your Playlists",activate:"Activate Device",enterData:"Enter TV details",mac:"MAC Address",key:"Device Key",login:"Login →",download:"Download App Here",scan:"📷 Scan QR",playlists:"My Playlists",addM3u:"Add M3U URL",playlistLink:"Playlist link",addXtream:"Add Xtream Codes",serverLogin:"Server login",save:"Save",sync:"SYNC TO APP",syncNote:"Changes sync instantly",expiry:"Expiry",conn:"Connections"}
-};
-function setLang(l){document.querySelectorAll('[data-i]').forEach(el=>{const k=el.getAttribute('data-i');if(T[l][k])el.textContent=T[l][k];});}
-async function login(){const mac=document.getElementById('mac').value.trim().toUpperCase();const key=document.getElementById('key').value.trim();if(!mac||!key)return alert('أدخل MAC و المفتاح');const {data,error}=await supabase.from('devices').select('*').eq('mac_address',mac).eq('activation_key',key).single();if(error||!data)return alert('MAC أو المفتاح غالط');currentMac=mac;document.getElementById('page1').classList.remove('active');document.getElementById('page2').classList.add('active');document.getElementById('deviceMac').textContent=mac;loadSubscription();}
-async function loadSubscription(){const {data}=await supabase.from('subscriptions').select('*').eq('mac_address',currentMac).single();const cur=document.getElementById('current');if(data){document.getElementById('info').style.display='grid';document.getElementById('expiry').textContent=data.expiry_date||'-';document.getElementById('conn').textContent=data.max_connections||'-';document.getElementById('count').textContent='1/5';cur.innerHTML=`<div class="playlist-item"><div>✅ ${data.type.toUpperCase()}<br><small>${data.server_url||data.m3u_url}</small></div><button onclick="editSub()">✏️</button> <button onclick="delSub()">🗑️</button></div></div>`;}else{cur.innerHTML='<p style="text-align:center;opacity:.6;margin:30px 0">No playlists yet</p>';}}
-function showForm(t){document.getElementById('formM3u').style.display=t==='m3u'?'block':'none';document.getElementById('formXtream').style.display=t==='xtream'?'block':'none';}
-async function saveM3u(){const url=document.getElementById('m3u_url').value;await supabase.from('subscriptions').upsert({mac_address:currentMac,type:'m3u',m3u_url:url,updated_at:new Date()});alert('تم الحفظ');loadSubscription();}
-async function saveXtream(){const s=document.getElementById('xt_server').value;const u=document.getElementById('xt_user').value;const p=document.getElementById('xt_pass').value;await supabase.from('subscriptions').upsert({mac_address:currentMac,type:'xtream',server_url:s,username:u,password:p,updated_at:new Date()});alert('تم الحفظ');loadSubscription();}
-async function delSub(){if(!confirm('حذف؟'))return;await supabase.from('subscriptions').delete().eq('mac_address',currentMac);loadSubscription();}
-function editSub(){showForm('xtream');}
-function sync(){alert('تمت المزامنة! افتح التطبيق على التلفاز');}
-setLang('ar');
+const supa=window.supabase.createClient('https://pmgdzroirlegkpqzcyra.supabase.co','sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj');
+let mac='';let html5Qr;
+function setLang(l){}
+async function login(){mac=document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();const key=document.getElementById('key').value.replace('ID:','').trim();if(!mac||!key)return alert('أدخل البيانات');let {data}=await supa.from('devices').select().eq('mac',mac).single();if(!data){await supa.from('devices').insert({mac,activation_key:key})}else if(data.activation_key!==key){return alert('المفتاح غالط')}document.getElementById('p1').classList.remove('active');document.getElementById('p2').classList.add('active');document.getElementById('macShow').textContent=mac;load()}
+function f(t){document.getElementById('fm').style.display=t==='m3u'?'block':'none';document.getElementById('fx').style.display=t==='xt'?'block':'none'}
+async function sm(){await supa.from('playlists').insert({mac,type:'m3u',url:mu.value,name:'M3U'});load()}
+async function sx(){await supa.from('playlists').insert({mac,type:'xtream',server_url:xs.value,username:xu.value,password:xp.value,name:'Xtream'});load()}
+async function load(){const {data}=await supa.from('playlists').select().eq('mac',mac).order('created_at',{ascending:false});list.innerHTML=data.map(p=>`<div class=item><div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div><button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c">🗑️</button></div>`).join('')}
+async function del(id){await supa.from('playlists').delete().eq('id',id);load()}
+function startQR(){reader.style.display='block';html5Qr=new Html5Qrcode("reader");html5Qr.start({facingMode:"environment"},{fps:10,qrbox:250},txt=>{html5Qr.stop();reader.style.display='none';try{const d=JSON.parse(txt);mac.value=d.mac||'';key.value=d.id||'';login()}catch(e){const p=txt.split('|');if(p.length===2){mac.value=p[0];key.value=p[1];login()}}},err=>{}).catch(e=>alert('الكاميرا مرفوضة'))}
 </script>
-</body>
-</html>
+</body></html>
