@@ -61,6 +61,76 @@ class _LoginSelectionState extends State<LoginSelection> {
       _mac = mac;
       _deviceId = key;
     });
+
+    // ✅ جديد: جرّب دخول أوتوماتيك من السحابة
+    await _tryAutoLoginFromCloud(mac);
+  }
+
+  // ✅ دالة جديدة: تقرا من Supabase
+  Future<void> _tryAutoLoginFromCloud(String mac) async {
+    try {
+      final data = await Supabase.instance.client
+          .from('playlists')
+          .select()
+          .eq('mac', mac)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (data == null) return;
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      if (data['type'] == 'xtream' && data['server_url'] != null) {
+        String server = (data['server_url'] as String).trim().replaceAll(RegExp(r'/$'), '');
+        String user = data['username'] ?? '';
+        String pass = data['password'] ?? '';
+
+        try {
+          String url = '$server/player_api.php?username=$user&password=$pass';
+          final response = await http.get(Uri.parse(url)).timeout(Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            var d = json.decode(response.body);
+            if (d['user_info']?['auth'] == 1) {
+              await prefs.setBool('isLoggedIn', true);
+              await prefs.setString('loginType', 'xtream');
+              await prefs.setString('server', server);
+              await prefs.setString('username', user);
+              await prefs.setString('password', pass);
+              await prefs.setString('xtreamData', response.body);
+
+              if (d['user_info']?['exp_date'] != null) {
+                try {
+                  int exp = int.parse(d['user_info']['exp_date'].toString());
+                  if (exp > 0) {
+                    DateTime expDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+                    await prefs.setString('expiry', '${expDate.day}/${expDate.month}/${expDate.year}');
+                    await prefs.setInt('daysLeft', expDate.difference(DateTime.now()).inDays);
+                  }
+                } catch (_) {}
+              }
+
+              if (mounted) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
+              }
+              return;
+            }
+          }
+        } catch (_) {}
+      } else if (data['type'] == 'm3u' && data['url'] != null) {
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('loginType', 'm3u');
+        await prefs.setString('m3uUrl', data['url']);
+        await prefs.setString('playlistName', data['name'] ?? '');
+        await prefs.remove('expiry');
+
+        if (mounted) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
+        }
+      }
+    } catch (e) {
+      // نتجاهل الخطأ ونخلي المستخدم يدخل يدوي
+    }
   }
 
   @override
