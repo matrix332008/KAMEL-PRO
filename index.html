@@ -22,7 +22,7 @@
 .qr-link{display:block;text-align:center;margin:14px 0;color:#7aa7ff;text-decoration:none}
 #reader{width:100%;margin-top:10px;display:none}
 .page{display:none}.page.active{display:block}
-.item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between}
+.item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
 .whatsapp{position:fixed;bottom:20px;left:20px;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;z-index:99}
 </style>
 </head>
@@ -47,7 +47,7 @@
 </div>
 
 <div id="p2" class="page">
-  <h2>قوائمي</h2><div id="macShow" style="opacity:.7"></div>
+  <h2>قوائمي</h2><div id="macShow" style="opacity:.7;margin-bottom:10px"></div>
   <div class="item" onclick="f('m3u')"><div>📄 <b>إضافة M3U</b></div><span>+</span></div>
   <div class="item" onclick="f('xt')"><div>#️⃣ <b>إضافة Xtream</b></div><span>+</span></div>
   <div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()">حفظ</button></div>
@@ -59,7 +59,6 @@
 <a href="https://wa.me/420777099379" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
 <script>
-// ✅ نفس Supabase اللي في التطبيق
 const supa = window.supabase.createClient(
   'https://pmgdzroirlegkpqzcyra.supabase.co',
   'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj'
@@ -73,15 +72,13 @@ function setLang(l){}
 async function login(){
   const macInput = document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();
   const key = document.getElementById('key').value.replace('ID:','').trim();
-
   if(!macInput ||!key) return alert('أدخل البيانات');
 
-  // ✅ ما عادش يخلق جهاز - لازم يكون مسجل من التطبيق
   let {data, error} = await supa.from('devices')
-  .select('mac_address,activation_key')
-  .eq('mac_address', macInput)
-  .eq('activation_key', key)
-  .maybeSingle();
+   .select('mac_address,activation_key')
+   .eq('mac_address', macInput)
+   .eq('activation_key', key)
+   .maybeSingle();
 
   if(error ||!data){
     return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
@@ -101,21 +98,48 @@ function f(t){
   document.getElementById('fx').style.display = t==='xt'? 'block' : 'none';
 }
 
+// ✅ منع التكرار M3U
 async function sm(){
-  const url = document.getElementById('mu').value;
+  const url = document.getElementById('mu').value.trim();
+  if(!url) return alert('أدخل الرابط');
+
+  let {data:exists} = await supa.from('playlists')
+   .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
+
+  if(exists) return alert('هذا الرابط موجود مسبقاً');
+
   await supa.from('playlists').insert({mac: currentMac, type:'m3u', url, name:'M3U'});
+  document.getElementById('mu').value = '';
+  alert('تم الحفظ ✓');
   load();
 }
 
+// ✅ منع التكرار Xtream
 async function sx(){
-  await supa.from('playlists').insert({
-    mac: currentMac,
-    type:'xtream',
-    server_url: document.getElementById('xs').value,
-    username: document.getElementById('xu').value,
-    password: document.getElementById('xp').value,
-    name:'Xtream'
-  });
+  const server = document.getElementById('xs').value.trim();
+  const user = document.getElementById('xu').value.trim();
+  const pass = document.getElementById('xp').value;
+
+  if(!server ||!user) return alert('أدخل البيانات');
+
+  let {data:exists} = await supa.from('playlists')
+   .select('id').eq('mac', currentMac).eq('type','xtream')
+   .eq('server_url', server).eq('username', user).maybeSingle();
+
+  if(exists){
+    await supa.from('playlists').update({password: pass, created_at: new Date().toISOString()}).eq('id', exists.id);
+    alert('تم تحديث الاشتراك ✓');
+  } else {
+    await supa.from('playlists').insert({
+      mac: currentMac,
+      type:'xtream',
+      server_url: server,
+      username: user,
+      password: pass,
+      name:'Xtream'
+    });
+    alert('تم الحفظ ✓');
+  }
   load();
 }
 
@@ -124,13 +148,15 @@ async function load(){
   document.getElementById('list').innerHTML = (data||[]).map(p=>`
     <div class="item">
       <div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div>
-      <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c">🗑️</button>
+      <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c;font-size:20px">🗑️</button>
     </div>`).join('');
 }
 
 async function del(id){
-  await supa.from('playlists').delete().eq('id',id);
-  load();
+  if(confirm('حذف الاشتراك؟')){
+    await supa.from('playlists').delete().eq('id',id);
+    load();
+  }
 }
 
 function startQR(){
@@ -153,7 +179,7 @@ function startQR(){
         login();
       }
     }
-  }, err=>{}).catch(e=>alert('الكاميرا مرفوضة'));
+  }).catch(e=>alert('الكاميرا مرفوضة'));
 }
 </script>
 </body>
