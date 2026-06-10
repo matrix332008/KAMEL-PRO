@@ -38,8 +38,8 @@
 <div class="container">
 <div id="p1" class="page active">
   <h2 style="text-align:right">فعّل جهازك</h2>
-  <input id="mac" class="input" placeholder="MAC: F9:8C:E2:08:42:2B">
-  <input id="key" class="input" placeholder="ID: 642306">
+  <input id="mac" class="input" placeholder="MAC: AA:BB:CC:DD:EE:FF">
+  <input id="key" class="input" placeholder="ID: 123456">
   <button class="btn" onclick="login()">دخول →</button>
   <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span>تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
   <a href="#" class="qr-link" onclick="startQR();return false">📷 امسح QR من التلفاز</a>
@@ -59,15 +59,102 @@
 <a href="https://wa.me/420777099379" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
 <script>
-const supa=window.supabase.createClient('https://pmgdzroirlegkpqzcyra.supabase.co','sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj');
-let mac='';let html5Qr;
+// ✅ نفس Supabase اللي في التطبيق
+const supa = window.supabase.createClient(
+  'https://jzusqopbxyltavjrxmuc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dXNxb3BieHlsdGF2anJ4bXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTMwMjAsImV4cCI6MjA2ODEyOTAyMH0.nW-0RJSdQg_GSHTlOJTP-9w-PRQfH5hgxq-hF_gQpGU'
+);
+
+let currentMac = '';
+let html5Qr;
+
 function setLang(l){}
-async function login(){mac=document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();const key=document.getElementById('key').value.replace('ID:','').trim();if(!mac||!key)return alert('أدخل البيانات');let {data}=await supa.from('devices').select().eq('mac',mac).single();if(!data){await supa.from('devices').insert({mac,activation_key:key})}else if(data.activation_key!==key){return alert('المفتاح غالط')}document.getElementById('p1').classList.remove('active');document.getElementById('p2').classList.add('active');document.getElementById('macShow').textContent=mac;load()}
-function f(t){document.getElementById('fm').style.display=t==='m3u'?'block':'none';document.getElementById('fx').style.display=t==='xt'?'block':'none'}
-async function sm(){await supa.from('playlists').insert({mac,type:'m3u',url:mu.value,name:'M3U'});load()}
-async function sx(){await supa.from('playlists').insert({mac,type:'xtream',server_url:xs.value,username:xu.value,password:xp.value,name:'Xtream'});load()}
-async function load(){const {data}=await supa.from('playlists').select().eq('mac',mac).order('created_at',{ascending:false});list.innerHTML=data.map(p=>`<div class=item><div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div><button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c">🗑️</button></div>`).join('')}
-async function del(id){await supa.from('playlists').delete().eq('id',id);load()}
-function startQR(){reader.style.display='block';html5Qr=new Html5Qrcode("reader");html5Qr.start({facingMode:"environment"},{fps:10,qrbox:250},txt=>{html5Qr.stop();reader.style.display='none';try{const d=JSON.parse(txt);mac.value=d.mac||'';key.value=d.id||'';login()}catch(e){const p=txt.split('|');if(p.length===2){mac.value=p[0];key.value=p[1];login()}}},err=>{}).catch(e=>alert('الكاميرا مرفوضة'))}
+
+async function login(){
+  const macInput = document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();
+  const key = document.getElementById('key').value.replace('ID:','').trim();
+
+  if(!macInput ||!key) return alert('أدخل البيانات');
+
+  // ✅ ما عادش نخلق جهاز جديد - لازم يكون موجود من التطبيق
+  let {data, error} = await supa.from('devices')
+   .select('mac_address,activation_key')
+   .eq('mac_address', macInput)
+   .eq('activation_key', key)
+   .maybeSingle();
+
+  if(error ||!data){
+    return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
+  }
+
+  currentMac = macInput;
+  await supa.from('devices').update({last_seen: new Date().toISOString()}).eq('mac_address', currentMac);
+
+  document.getElementById('p1').classList.remove('active');
+  document.getElementById('p2').classList.add('active');
+  document.getElementById('macShow').textContent = currentMac;
+  load();
+}
+
+function f(t){
+  document.getElementById('fm').style.display = t==='m3u'? 'block' : 'none';
+  document.getElementById('fx').style.display = t==='xt'? 'block' : 'none';
+}
+
+async function sm(){
+  const url = document.getElementById('mu').value;
+  await supa.from('playlists').insert({mac: currentMac, type:'m3u', url, name:'M3U'});
+  load();
+}
+
+async function sx(){
+  await supa.from('playlists').insert({
+    mac: currentMac,
+    type:'xtream',
+    server_url: document.getElementById('xs').value,
+    username: document.getElementById('xu').value,
+    password: document.getElementById('xp').value,
+    name:'Xtream'
+  });
+  load();
+}
+
+async function load(){
+  const {data} = await supa.from('playlists').select().eq('mac', currentMac).order('created_at',{ascending:false});
+  document.getElementById('list').innerHTML = (data||[]).map(p=>`
+    <div class="item">
+      <div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div>
+      <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c">🗑️</button>
+    </div>`).join('');
+}
+
+async function del(id){
+  await supa.from('playlists').delete().eq('id',id);
+  load();
+}
+
+function startQR(){
+  const reader = document.getElementById('reader');
+  reader.style.display='block';
+  html5Qr = new Html5Qrcode("reader");
+  html5Qr.start({facingMode:"environment"},{fps:10,qrbox:250}, txt=>{
+    html5Qr.stop();
+    reader.style.display='none';
+    try{
+      const d = JSON.parse(txt);
+      document.getElementById('mac').value = d.mac || '';
+      document.getElementById('key').value = d.id || '';
+      login();
+    }catch(e){
+      const p = txt.split('|');
+      if(p.length >= 3){
+        document.getElementById('mac').value = p[1];
+        document.getElementById('key').value = p[2];
+        login();
+      }
+    }
+  }, err=>{}).catch(e=>alert('الكاميرا مرفوضة'));
+}
 </script>
-</body></html>
+</body>
+</html>
