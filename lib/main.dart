@@ -32,13 +32,19 @@ void main() async {
 }
 
 Future<String> getMacAddress() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? saved = prefs.getString('device_mac');
+  if (saved!= null) return saved;
+
   try {
     final deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
       String id = androidInfo.id + androidInfo.model;
       String hex = sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
-      return hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
+      String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
+      await prefs.setString('device_mac', mac);
+      return mac;
     }
     return 'UNKNOWN';
   } catch (e) {
@@ -143,7 +149,6 @@ class _MainMenuState extends State<MainMenu> {
 
   _loadExpiry() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // FIX: ما عادش نحط 7/6/2027 - ناخو من السيرفر فقط
     String expiry = prefs.getString('expiry')?? '';
     int daysLeft = prefs.getInt('daysLeft')?? 0;
 
@@ -227,7 +232,7 @@ class _MainMenuState extends State<MainMenu> {
                         children: [
                           CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
                           SizedBox(height: 5),
-                          if (_expiry.isNotEmpty) // نوريه كان كي يكون موجود
+                          if (_expiry.isNotEmpty)
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
@@ -238,14 +243,8 @@ class _MainMenuState extends State<MainMenu> {
                             ),
                             child: Column(
                               children: [
-                                Text(
-                                  _expiry,
-                                  style: TextStyle(color: Colors.white70, fontSize: 10),
-                                ),
-                                Text(
-                                  daysText,
-                                  style: TextStyle(color: expiryColor, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                                ),
+                                Text(_expiry, style: TextStyle(color: Colors.white70, fontSize: 10)),
+                                Text(daysText, style: TextStyle(color: expiryColor, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                               ],
                             ),
                           ),
