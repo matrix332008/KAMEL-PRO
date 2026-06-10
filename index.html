@@ -61,8 +61,8 @@
 <script>
 // ✅ نفس Supabase اللي في التطبيق
 const supa = window.supabase.createClient(
-  'https://jzusqopbxyltavjrxmuc.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dXNxb3BieHlsdGF2anJ4bXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTMwMjAsImV4cCI6MjA2ODEyOTAyMH0.nW-0RJSdQg_GSHTlOJTP-9w-PRQfH5hgxq-hF_gQpGU'
+  'https://pmgdzroirlegkpqzcyra.supabase.co',
+  'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj'
 );
 
 let currentMac = '';
@@ -76,12 +76,12 @@ async function login(){
 
   if(!macInput ||!key) return alert('أدخل البيانات');
 
-  // ✅ ما عادش نخلق جهاز جديد - لازم يكون موجود من التطبيق
+  // ✅ ما عادش يخلق جهاز - لازم يكون مسجل من التطبيق
   let {data, error} = await supa.from('devices')
-   .select('mac_address,activation_key')
-   .eq('mac_address', macInput)
-   .eq('activation_key', key)
-   .maybeSingle();
+  .select('mac_address,activation_key')
+  .eq('mac_address', macInput)
+  .eq('activation_key', key)
+  .maybeSingle();
 
   if(error ||!data){
     return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
