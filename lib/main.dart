@@ -23,10 +23,13 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  // ✅ Supabase الصحيح متاعك
   await Supabase.initialize(
-    url: 'https://jzusqopbxyltavjrxmuc.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6dXNxb3BieHlsdGF2anJ4bXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NTMwMjAsImV4cCI6MjA2ODEyOTAyMH0.nW-0RJSdQg_GSHTlOJTP-9w-PRQfH5hgxq-hF_gQpGU',
+    url: 'https://pmgdzroirlegkpqzcyra.supabase.co',
+    anonKey: 'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj',
   );
+
   await Lang.load();
   runApp(KamelProApp());
 }
