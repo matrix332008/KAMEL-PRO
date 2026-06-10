@@ -6,8 +6,9 @@ import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:crypto/crypto.dart'; // <-- جديد
+import 'package:crypto/crypto.dart';
 import 'dart:io';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main.dart';
 
 // ============= LOGIN SELECTION =============
@@ -28,60 +29,44 @@ class _LoginSelectionState extends State<LoginSelection> {
   }
 
   _getDeviceInfo() async {
-    final deviceInfo = DeviceInfoPlugin();
     final prefs = await SharedPreferences.getInstance();
+    final deviceInfo = DeviceInfoPlugin();
+    
+    String mac = prefs.getString('device_mac') ?? '';
+    String key = prefs.getString('device_key') ?? '';
+    String name = 'ANDROID TV';
+
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        
-        // نقراو أولاً من main.dart (Supabase)
-        String savedMac = prefs.getString('device_mac') ?? '';
-        String savedKey = prefs.getString('device_key') ?? '';
-        
-        if (savedMac.isNotEmpty && savedKey.isNotEmpty) {
-          setState(() {
-            _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-            _deviceId = savedKey;
-            _mac = savedMac;
-          });
-          return;
-        }
-        
-        // ✅ FIX: MAC ثابت ومستحيل يتكرر
-        String androidId = androidInfo.id ?? '';
-        String model = androidInfo.model ?? '';
-        String manufacturer = androidInfo.manufacturer ?? '';
-        
-        // نعمل hash ثابت بـ SHA1
-        String base = '$androidId-$model-$manufacturer-${androidInfo.device}';
-        var bytes = utf8.encode(base);
-        var digest = sha1.convert(bytes);
-        String hex = digest.toString().substring(0, 12).toUpperCase();
-        
-        // نفرمتوه كيما MAC: AA:BB:CC:DD:EE:FF
-        String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
-        mac = mac.substring(0, 17);
-        
-        // ID قصير (6 أرقام)
-        String deviceId = digest.toString().substring(0, 6).toUpperCase();
-        
-        setState(() {
-          _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = deviceId;
-          _mac = mac; // مثلا: A4:5C:2B:11:22:F3 - ديما نفسو
-        });
+        name = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
       }
-    } catch(e) {
-      setState(() {
-        _deviceName = 'ANDROID TV';
-        _mac = '00:11:22:33:44:55';
-        _deviceId = '000000';
-      });
+    } catch(e) {}
+
+    if (mac.isEmpty) {
+      mac = await getMacAddress();
     }
+    if (key.isEmpty) {
+      key = generateKey();
+      await prefs.setString('device_key', key);
+      await Supabase.instance.client.from('devices').upsert({
+        'mac_address': mac,
+        'activation_key': key,
+        'last_seen': DateTime.now().toIso8601String(),
+      }, onConflict: 'mac_address');
+    }
+
+    setState(() {
+      _deviceName = name;
+      _mac = mac;
+      _deviceId = key;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
+    
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -129,7 +114,7 @@ class _LoginSelectionState extends State<LoginSelection> {
             left: 25,
             child: GestureDetector(
               onTap: () {
-                Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId'));
+                Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم نسخ البيانات ✓'), duration: Duration(seconds: 1)));
               },
               child: Column(
@@ -144,7 +129,7 @@ class _LoginSelectionState extends State<LoginSelection> {
                       boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
                     ),
                     child: QrImageView(
-                      data: '$_deviceName|$_mac|$_deviceId',
+                      data: qrData,
                       size: 85,
                       backgroundColor: Colors.white,
                     ),
