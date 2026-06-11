@@ -75,10 +75,10 @@ async function login(){
   if(!macInput ||!key) return alert('أدخل البيانات');
 
   let {data, error} = await supa.from('devices')
-  .select('mac_address,activation_key,device_name,expiry_date')
-  .eq('mac_address', macInput)
-  .eq('activation_key', key)
-  .maybeSingle();
+ .select('mac_address,activation_key,device_name,expiry_date,customer_name')
+ .eq('mac_address', macInput)
+ .eq('activation_key', key)
+ .maybeSingle();
 
   if(error ||!data){
     return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
@@ -90,10 +90,12 @@ async function login(){
   document.getElementById('p1').classList.remove('active');
   document.getElementById('p2').classList.add('active');
 
-  // ✅ يعرض الاسم والتاريخ
+  // ✅ يعرض اسم الحريف + اسم الجهاز والتاريخ
   const expDate = data.expiry_date? new Date(data.expiry_date).toLocaleDateString('ar-TN') : 'غير محدد';
+  const customer = data.customer_name? `<div style="font-size:16px;color:#00ffaa;font-weight:700;margin:3px 0">👤 ${data.customer_name}</div>` : '';
   document.getElementById('macShow').innerHTML = `
     <div style="font-size:18px;font-weight:bold;color:#7aa7ff">${data.device_name || 'جهاز'}</div>
+    ${customer}
     <div style="font-size:14px;opacity:.8">${currentMac}</div>
     <div style="font-size:13px;color:#ffcc00;margin-top:4px">ينتهي: ${expDate}</div>
   `;
@@ -112,7 +114,7 @@ async function sm(){
   if(!url) return alert('أدخل الرابط');
 
   let {data:exists} = await supa.from('playlists')
-  .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
+ .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
 
   if(exists) return alert('هذا الرابط موجود مسبقاً');
 
@@ -131,8 +133,8 @@ async function sx(){
   if(!server ||!user) return alert('أدخل البيانات');
 
   let {data:exists} = await supa.from('playlists')
-  .select('id').eq('mac', currentMac).eq('type','xtream')
-  .eq('server_url', server).eq('username', user).maybeSingle();
+ .select('id').eq('mac', currentMac).eq('type','xtream')
+ .eq('server_url', server).eq('username', user).maybeSingle();
 
   if(exists){
     await supa.from('playlists').update({password: pass, created_at: new Date().toISOString()}).eq('id', exists.id);
