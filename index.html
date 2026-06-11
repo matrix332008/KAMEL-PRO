@@ -75,10 +75,10 @@ async function login(){
   if(!macInput ||!key) return alert('أدخل البيانات');
 
   let {data, error} = await supa.from('devices')
-   .select('mac_address,activation_key')
-   .eq('mac_address', macInput)
-   .eq('activation_key', key)
-   .maybeSingle();
+  .select('mac_address,activation_key')
+  .eq('mac_address', macInput)
+  .eq('activation_key', key)
+  .maybeSingle();
 
   if(error ||!data){
     return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
@@ -104,7 +104,7 @@ async function sm(){
   if(!url) return alert('أدخل الرابط');
 
   let {data:exists} = await supa.from('playlists')
-   .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
+  .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
 
   if(exists) return alert('هذا الرابط موجود مسبقاً');
 
@@ -123,8 +123,8 @@ async function sx(){
   if(!server ||!user) return alert('أدخل البيانات');
 
   let {data:exists} = await supa.from('playlists')
-   .select('id').eq('mac', currentMac).eq('type','xtream')
-   .eq('server_url', server).eq('username', user).maybeSingle();
+  .select('id').eq('mac', currentMac).eq('type','xtream')
+  .eq('server_url', server).eq('username', user).maybeSingle();
 
   if(exists){
     await supa.from('playlists').update({password: pass, created_at: new Date().toISOString()}).eq('id', exists.id);
@@ -148,7 +148,10 @@ async function load(){
   document.getElementById('list').innerHTML = (data||[]).map(p=>`
     <div class="item">
       <div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div>
-      <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c;font-size:20px">🗑️</button>
+      <div style="display:flex;gap:12px">
+        <button onclick="edit(${p.id})" style="background:none;border:none;color:#7aa7ff;font-size:20px">✏️</button>
+        <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c;font-size:20px">🗑️</button>
+      </div>
     </div>`).join('');
 }
 
@@ -157,6 +160,32 @@ async function del(id){
     await supa.from('playlists').delete().eq('id',id);
     load();
   }
+}
+
+// ✅ جديد: تعديل الاشتراك
+async function edit(id){
+  const {data} = await supa.from('playlists').select().eq('id', id).single();
+  if(!data) return alert('خطأ');
+
+  if(data.type === 'm3u'){
+    const url = prompt('عدّل رابط M3U:', data.url || '');
+    if(url === null) return;
+    await supa.from('playlists').update({url: url.trim()}).eq('id', id);
+  } else {
+    const server = prompt('عدّل السرفر:', data.server_url || '');
+    if(server === null) return;
+    const user = prompt('عدّل اليوزر:', data.username || '');
+    if(user === null) return;
+    const pass = prompt('عدّل الباس:', data.password || '');
+    if(pass === null) return;
+    await supa.from('playlists').update({
+      server_url: server.trim(),
+      username: user.trim(),
+      password: pass
+    }).eq('id', id);
+  }
+  alert('تم التعديل ✓');
+  load();
 }
 
 function startQR(){
