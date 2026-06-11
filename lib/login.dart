@@ -57,6 +57,7 @@ class _LoginSelectionState extends State<LoginSelection> {
       'mac_address': mac,
       'activation_key': key,
       'last_seen': DateTime.now().toIso8601String(),
+      'device_name': name, // ✅ زدنا اسم الجهاز
     }, onConflict: 'mac_address');
 
     setState(() {
@@ -109,6 +110,15 @@ class _LoginSelectionState extends State<LoginSelection> {
                     DateTime expDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
                     await prefs.setString('expiry', '${expDate.day}/${expDate.month}/${expDate.year}');
                     await prefs.setInt('daysLeft', expDate.difference(DateTime.now()).inDays);
+                    
+                    // ✅ جديد: ابعث تاريخ الانتهاء لـ Supabase
+                    try {
+                      await Supabase.instance.client.from('devices').update({
+                        'expiry_date': expDate.toIso8601String(),
+                        'last_seen': DateTime.now().toIso8601String(),
+                        'device_name': _deviceName,
+                      }).eq('mac_address', mac);
+                    } catch (_) {}
                   }
                 } catch (_) {}
               }
@@ -367,6 +377,17 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 await prefs.setString('expiry', formatted);
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
+                
+                // ✅ جديد: ابعث تاريخ الانتهاء لـ Supabase
+                String deviceMac = prefs.getString('device_mac') ?? '';
+                if (deviceMac.isNotEmpty) {
+                  try {
+                    await Supabase.instance.client.from('devices').update({
+                      'expiry_date': expDate.toIso8601String(),
+                      'last_seen': DateTime.now().toIso8601String(),
+                    }).eq('mac_address', deviceMac);
+                  } catch (_) {}
+                }
               }
             } catch(e) {}
           }
