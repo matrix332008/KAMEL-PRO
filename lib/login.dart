@@ -45,16 +45,21 @@ class _LoginSelectionState extends State<LoginSelection> {
 
     if (mac.isEmpty) {
       mac = await getMacAddress();
+      await prefs.setString('device_mac', mac); // ✅ يحفظ الماك مرة وحدة
     }
     if (key.isEmpty) {
       key = generateKey();
       await prefs.setString('device_key', key);
-      await Supabase.instance.client.from('devices').upsert({
-        'mac_address': mac,
-        'activation_key': key,
-        'last_seen': DateTime.now().toIso8601String(),
-      }, onConflict: 'mac_address');
     }
+
+    // ✅ ديما نحدث Supabase مع الاسم وتاريخ الانتهاء
+    await Supabase.instance.client.from('devices').upsert({
+      'mac_address': mac,
+      'activation_key': key,
+      'device_name': name,
+      'expiry_date': DateTime.now().add(Duration(days: 365)).toIso8601String(),
+      'last_seen': DateTime.now().toIso8601String(),
+    }, onConflict: 'mac_address');
 
     setState(() {
       _deviceName = name;
