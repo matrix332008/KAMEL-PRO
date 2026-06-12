@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
+import 'lang.dart'; // <-- جديد
 
 class FilmesScreen extends StatefulWidget {
   @override
@@ -13,7 +14,7 @@ class FilmesScreen extends StatefulWidget {
 class _FilmesScreenState extends State<FilmesScreen> {
   List movies = [];
   List cats = [];
-  String sel = 'All';
+  String sel = 'all'; // <-- بدلناها
   bool loading = true;
 
   @override
@@ -38,16 +39,16 @@ class _FilmesScreenState extends State<FilmesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = sel == 'All'? movies : movies.where((m) => m['category_id'].toString() == sel).toList();
+    final filtered = sel == 'all'? movies : movies.where((m) => m['category_id'].toString() == sel).toList();
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text('FILMES'),
-        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length} فيلم', style: TextStyle(color: Colors.white70)))],
+        title: Text(Lang.get('movies').toUpperCase()), // <-- يتغير
+        actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-         ? Center(child: CircularProgressIndicator(color: Colors.red))
+        ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
                 Container(
@@ -56,8 +57,8 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _buildChip('All', 'الكل'),
-                     ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                      _buildChip('all', Lang.get('all')), // <-- هنا السر
+                    ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -98,7 +99,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                           ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                          ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
                                       ),
                                     ),
