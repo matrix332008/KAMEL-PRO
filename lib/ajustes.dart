@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:crypto/crypto.dart'; // جديد
-import 'dart:convert'; // جديد
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'lang.dart';
 import 'main.dart';
@@ -59,22 +59,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        
-        // ✅ FIX: نفس الكود متاع login.dart - MAC ثابت
-        String androidId = androidInfo.id ?? '';
-        String model = androidInfo.model ?? '';
-        String manufacturer = androidInfo.manufacturer ?? '';
-        
-        String base = '$androidId-$model-$manufacturer-${androidInfo.device}';
+
+        // ✅ نفس الكود 100% كيما في main.dart
+        String androidId = androidInfo.id?? '';
+        String base = androidId;
         var bytes = utf8.encode(base);
         var digest = sha1.convert(bytes);
         String hex = digest.toString().substring(0, 12).toUpperCase();
-        
+
         String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
         mac = mac.substring(0, 17);
-        
+
         String deviceId = digest.toString().substring(0, 6).toUpperCase();
-        
+
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
           _deviceId = deviceId;
@@ -85,7 +82,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         final expiry = DateTime.now().add(Duration(days: 365));
         await prefs.setString('expiry', '${expiry.day}/${expiry.month}/${expiry.year}');
       }
-      setState(() => _expiry = prefs.getString('expiry') ?? '');
+      setState(() => _expiry = prefs.getString('expiry')?? '');
     } catch(e) {
       setState(() {
         _deviceName = 'ANDROID TV';
@@ -134,7 +131,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         SizedBox(height: 15),
         Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 14)),
         Text(_mac, style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('ID: $_deviceId  •  Exp: $_expiry', style: TextStyle(color: Colors.orange, fontSize: 13)),
+        Text('ID: $_deviceId • Exp: $_expiry', style: TextStyle(color: Colors.orange, fontSize: 13)),
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text('Fermer', style: TextStyle(color: Colors.white70)))
@@ -150,6 +147,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
         _langOption('🇹🇳', 'عربي', 'ar'),
         _langOption('🇫🇷', 'Français', 'fr'),
         _langOption('🇨🇿', 'Čeština', 'cs'),
+        _langOption('🇬🇧', 'English', 'en'), // جديد
+        _langOption('🇩🇪', 'Deutsch', 'de'), // جديد
       ]),
     ));
   }
@@ -183,7 +182,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                 children: [
                   IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: () => Navigator.pop(context)),
                   SizedBox(width: 15),
-                  Text('Paramètres', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                  Text(Lang.get('settings'), style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -257,7 +256,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                           Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                           SizedBox(height: 2),
                           Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('ID: $_deviceId  •  Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text('ID: $_deviceId • Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ],
                       ),
                     ),
