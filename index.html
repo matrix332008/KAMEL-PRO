@@ -28,36 +28,36 @@
 </head>
 <body>
 <div class="header">
-  <div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9">إدارة اشتراكاتك</div></div>
+  <div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9" id="subtitle">إدارة اشتراكاتك</div></div>
   <div class="top-right">
-    <select class="lang" onchange="setLang(this.value)"><option value="ar">عربي 🇹🇳</option><option value="fr">FR</option><option value="cs">CS</option><option value="en">EN</option></select>
+    <select class="lang" onchange="setLang(this.value)" id="langSel"><option value="ar">عربي 🇹🇳</option><option value="fr">FR</option><option value="cs">CS</option><option value="en">EN</option></select>
     <img src="https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/assets/avatar.png" class="avatar">
   </div>
 </div>
 
 <div class="container">
 <div id="p1" class="page active">
-  <h2 style="text-align:right">فعّل جهازك</h2>
+  <h2 style="text-align:right" id="t-activate">فعّل جهازك</h2>
   <input id="mac" class="input" placeholder="MAC: AA:BB:CC:DD:EE:FF">
   <input id="key" class="input" placeholder="ID: 123456">
-  <button class="btn" onclick="login()">دخول →</button>
-  <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span>تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
-  <a href="#" class="qr-link" onclick="startQR();return false">📷 امسح QR من التلفاز</a>
+  <button class="btn" onclick="login()" id="t-login">دخول →</button>
+  <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span id="t-dl">تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
+  <a href="#" class="qr-link" onclick="startQR();return false" id="t-qr">📷 امسح QR من التلفاز</a>
   <div id="reader"></div>
 </div>
 
 <div id="p2" class="page">
-  <h2>قوائمي</h2><div id="macShow" style="opacity:.7;margin-bottom:10px"></div>
-  <div class="item" onclick="f('m3u')"><div>📄 <b>إضافة M3U</b></div><span>+</span></div>
-  <div class="item" onclick="f('xt')"><div>#️⃣ <b>إضافة Xtream</b></div><span>+</span></div>
-  <div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()">حفظ</button></div>
-  <div id="fx" style="display:none"><input id="xs" class="input" placeholder="Server"><input id="xu" class="input" placeholder="User"><input id="xp" class="input" placeholder="Pass" type="password"><button class="btn" onclick="sx()">حفظ</button></div>
+  <h2 id="t-lists">قوائمي</h2><div id="macShow" style="opacity:.7;margin-bottom:10px"></div>
+  <div class="item" onclick="f('m3u')"><div>📄 <b id="t-addm3u">إضافة M3U</b></div><span>+</span></div>
+  <div class="item" onclick="f('xt')"><div>#️⃣ <b id="t-addxt">إضافة Xtream</b></div><span>+</span></div>
+  <div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()" id="t-save1">حفظ</button></div>
+  <div id="fx" style="display:none"><input id="xs" class="input" placeholder="Server"><input id="xu" class="input" placeholder="User"><input id="xp" class="input" placeholder="Pass" type="password"><button class="btn" onclick="sx()" id="t-save2">حفظ</button></div>
   <div id="list"></div>
 </div>
 
 <!-- صفحة التعديل الجديدة -->
 <div id="p3" class="page">
-  <h2>تعديل الاشتراك</h2>
+  <h2 id="t-edit">تعديل الاشتراك</h2>
   <div id="editM3U" style="display:none">
     <input id="eu" class="input" placeholder="رابط M3U">
   </div>
@@ -66,8 +66,8 @@
     <input id="euser" class="input" placeholder="Username">
     <input id="epass" class="input" placeholder="Password" type="text">
   </div>
-  <button class="btn" onclick="saveEdit()">💾 حفظ التعديل</button>
-  <button class="btn" style="background:#444;margin-top:8px" onclick="backToList()">رجوع</button>
+  <button class="btn" onclick="saveEdit()" id="t-saveEdit">💾 حفظ التعديل</button>
+  <button class="btn" style="background:#444;margin-top:8px" onclick="backToList()" id="t-back">رجوع</button>
 </div>
 
 </div>
@@ -85,21 +85,29 @@ let html5Qr;
 let editId = null;
 let editType = '';
 
-function setLang(l){}
+// === نظام اللغات - زدتو من غير ما نمس شي ===
+const LANGS = {
+  ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl:'تحميل التطبيق',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل الاشتراك',saveEdit:'💾 حفظ التعديل',back:'رجوع',m3uPH:'رابط M3U',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'أدخل البيانات',alert2:'MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً',alert3:'أدخل الرابط',alert4:'هذا الرابط موجود مسبقاً',alert5:'تم الحفظ ✓',alert6:'أدخل البيانات',alert7:'تم تحديث الاشتراك ✓',alert8:'حذف الاشتراك؟',alert9:'تم التعديل ✓',alert10:'الكاميرا مرفوضة'},
+  en:{dir:'ltr',subtitle:'Manage your subscriptions',activate:'Activate your device',login:'Login →',dl:'Download App',qr:'📷 Scan QR from TV',lists:'My Playlists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save Changes',back:'Back',m3uPH:'M3U Link',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'Enter data',alert2:'Wrong MAC or ID',alert3:'Enter link',alert4:'Link already exists',alert5:'Saved ✓',alert6:'Enter data',alert7:'Updated ✓',alert8:'Delete?',alert9:'Edited ✓',alert10:'Camera denied'},
+  fr:{dir:'ltr',subtitle:'Gérez vos abonnements',activate:'Activez votre appareil',login:'Connexion →',dl:'Télécharger',qr:'📷 Scanner QR',lists:'Mes listes',addm3u:'Ajouter M3U',addxt:'Ajouter Xtream',save:'Enregistrer',edit:'Modifier',saveEdit:'💾 Enregistrer',back:'Retour',m3uPH:'Lien M3U',srv:'Serveur',usr:'Utilisateur',ps:'Mot de passe',srvUrl:'URL Serveur',uname:'Nom',pwd:'Mot de passe',alert1:'Entrez données',alert2:'MAC ou ID incorrect',alert3:'Entrez lien',alert4:'Lien existe déjà',alert5:'Enregistré ✓',alert6:'Entrez données',alert7:'Mis à jour ✓',alert8:'Supprimer?',alert9:'Modifié ✓',alert10:'Caméra refusée'},
+  cs:{dir:'ltr',subtitle:'Spravujte předplatné',activate:'Aktivujte zařízení',login:'Přihlásit →',dl:'Stáhnout',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit',saveEdit:'💾 Uložit',back:'Zpět',m3uPH:'M3U odkaz',srv:'Server',usr:'Uživatel',ps:'Heslo',srvUrl:'URL serveru',uname:'Jméno',pwd:'Heslo',alert1:'Zadejte data',alert2:'Špatný MAC/ID',alert3:'Zadejte odkaz',alert4:'Odkaz existuje',alert5:'Uloženo ✓',alert6:'Zadejte data',alert7:'Aktualizováno ✓',alert8:'Smazat?',alert9:'Upraveno ✓',alert10:'Kamera odepřena'}
+};
+let CUR = LANGS.ar;
+function setLang(l){CUR=LANGS[l]||LANGS.ar;localStorage.setItem('lang',l);document.documentElement.lang=l;document.documentElement.dir=CUR.dir;document.getElementById('langSel').value=l;document.getElementById('subtitle').textContent=CUR.subtitle;document.getElementById('t-activate').textContent=CUR.activate;document.getElementById('t-login').textContent=CUR.login;document.getElementById('t-dl').textContent=CUR.dl;document.getElementById('t-qr').textContent=CUR.qr;document.getElementById('t-lists').textContent=CUR.lists;document.getElementById('t-addm3u').textContent=CUR.addm3u;document.getElementById('t-addxt').textContent=CUR.addxt;document.getElementById('t-save1').textContent=CUR.save;document.getElementById('t-save2').textContent=CUR.save;document.getElementById('t-edit').textContent=CUR.edit;document.getElementById('t-saveEdit').textContent=CUR.saveEdit;document.getElementById('t-back').textContent=CUR.back;document.getElementById('eu').placeholder=CUR.m3uPH;document.getElementById('xs').placeholder=CUR.srv;document.getElementById('xu').placeholder=CUR.usr;document.getElementById('xp').placeholder=CUR.ps;document.getElementById('es').placeholder=CUR.srvUrl;document.getElementById('euser').placeholder=CUR.uname;document.getElementById('epass').placeholder=CUR.pwd;document.querySelector('#p1 h2').style.textAlign=CUR.dir==='rtl'?'right':'left';document.querySelectorAll('.input').forEach(i=>i.style.textAlign=CUR.dir==='rtl'?'right':'left')}
 
 async function login(){
   const macInput = document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();
   const key = document.getElementById('key').value.replace('ID:','').trim();
-  if(!macInput ||!key) return alert('أدخل البيانات');
+  if(!macInput ||!key) return alert(CUR.alert1);
 
   let {data, error} = await supa.from('devices')
- .select('mac_address,activation_key')
- .eq('mac_address', macInput)
- .eq('activation_key', key)
- .maybeSingle();
+.select('mac_address,activation_key')
+.eq('mac_address', macInput)
+.eq('activation_key', key)
+.maybeSingle();
 
   if(error ||!data){
-    return alert('MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً');
+    return alert(CUR.alert2);
   }
 
   currentMac = macInput;
@@ -119,16 +127,16 @@ function f(t){
 // ✅ منع التكرار M3U
 async function sm(){
   const url = document.getElementById('mu').value.trim();
-  if(!url) return alert('أدخل الرابط');
+  if(!url) return alert(CUR.alert3);
 
   let {data:exists} = await supa.from('playlists')
- .select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
+.select('id').eq('mac', currentMac).eq('type','m3u').eq('url', url).maybeSingle();
 
-  if(exists) return alert('هذا الرابط موجود مسبقاً');
+  if(exists) return alert(CUR.alert4);
 
   await supa.from('playlists').insert({mac: currentMac, type:'m3u', url, name:'M3U'});
   document.getElementById('mu').value = '';
-  alert('تم الحفظ ✓');
+  alert(CUR.alert5);
   load();
 }
 
@@ -138,15 +146,15 @@ async function sx(){
   const user = document.getElementById('xu').value.trim();
   const pass = document.getElementById('xp').value;
 
-  if(!server ||!user) return alert('أدخل البيانات');
+  if(!server ||!user) return alert(CUR.alert6);
 
   let {data:exists} = await supa.from('playlists')
- .select('id').eq('mac', currentMac).eq('type','xtream')
- .eq('server_url', server).eq('username', user).maybeSingle();
+.select('id').eq('mac', currentMac).eq('type','xtream')
+.eq('server_url', server).eq('username', user).maybeSingle();
 
   if(exists){
     await supa.from('playlists').update({password: pass, created_at: new Date().toISOString()}).eq('id', exists.id);
-    alert('تم تحديث الاشتراك ✓');
+    alert(CUR.alert7);
   } else {
     await supa.from('playlists').insert({
       mac: currentMac,
@@ -156,7 +164,7 @@ async function sx(){
       password: pass,
       name:'Xtream'
     });
-    alert('تم الحفظ ✓');
+    alert(CUR.alert5);
   }
   load();
 }
@@ -174,7 +182,7 @@ async function load(){
 }
 
 async function del(id){
-  if(confirm('حذف الاشتراك؟')){
+  if(confirm(CUR.alert8)){
     await supa.from('playlists').delete().eq('id',id);
     load();
   }
@@ -218,7 +226,7 @@ async function saveEdit(){
     }).eq('id', editId);
   }
 
-  alert('تم التعديل ✓');
+  alert(CUR.alert9);
   backToList();
   load();
 }
@@ -248,8 +256,11 @@ function startQR(){
         login();
       }
     }
-  }).catch(e=>alert('الكاميرا مرفوضة'));
+  }).catch(e=>alert(CUR.alert10));
 }
+
+// تشغيل اللغة المحفوظة
+setLang(localStorage.getItem('lang')||'ar');
 </script>
 </body>
 </html>
