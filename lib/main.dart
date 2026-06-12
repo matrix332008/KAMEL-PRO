@@ -34,8 +34,24 @@ void main() async {
   runApp(KamelProApp());
 }
 
+// ✅ هذا الجديد - قناة باش نكلمو الأندرويد الأصلي
+const _macChannel = MethodChannel('com.kamelpro.iptv/mac');
+
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
+
+  // 1) نحاول نجيب MAC الحقيقي من wlan0 عبر الكود الأصلي
+  try {
+    final String nativeMac = await _macChannel.invokeMethod('getMac');
+    if (nativeMac.isNotEmpty && nativeMac!= '02:00:00:00' && nativeMac!= '02:00:00:00' && nativeMac.length >= 17) {
+      await prefs.setString('device_mac', nativeMac);
+      return nativeMac;
+    }
+  } catch (e) {
+    // نتجاهل ونكمل للطريقة القديمة
+  }
+
+  // 2) الطريقة القديمة متاعك - ما مسيتهاش
   String? saved = prefs.getString('device_mac');
   if (saved!= null) return saved;
 
