@@ -34,32 +34,22 @@ void main() async {
   runApp(KamelProApp());
 }
 
-// ✅ هذا الجديد - قناة باش نكلمو الأندرويد الأصلي
+// ✅ هذا الجديد - قناة باش نكلمو الأندرويد الأصلي (ماعادش نستعملوها، خليناها باش ما نفسدوش الكود)
 const _macChannel = MethodChannel('com.kamelpro.iptv/mac');
 
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
 
-  // 1) نحاول نجيب MAC الحقيقي من wlan0 عبر الكود الأصلي
-  try {
-    final String nativeMac = await _macChannel.invokeMethod('getMac');
-    if (nativeMac.isNotEmpty && nativeMac!= '02:00:00:00' && nativeMac!= '02:00:00:00' && nativeMac.length >= 17) {
-      await prefs.setString('device_mac', nativeMac);
-      return nativeMac;
-    }
-  } catch (e) {
-    // نتجاهل ونكمل للطريقة القديمة
-  }
-
-  // 2) الطريقة القديمة متاعك - ما مسيتهاش
+  // 1) لو الماك محفوظ من قبل، رجعو طول (ثابت للأبد)
   String? saved = prefs.getString('device_mac');
-  if (saved!= null) return saved;
+  if (saved!= null && saved.isNotEmpty) return saved;
 
+  // 2) نولدو ماك ثابت من ANDROID_ID متاع الجهاز (ما يتبدلش لا بوايفاي لا بكابل)
   try {
     final deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
-      String id = androidInfo.id + androidInfo.model;
+      String id = androidInfo.id; // هذا رقم حديدي من المصنع
       String hex = sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
       String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
       await prefs.setString('device_mac', mac);
