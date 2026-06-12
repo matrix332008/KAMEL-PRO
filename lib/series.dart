@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
+import 'lang.dart'; // <-- جديد
 
 class SeriesScreen extends StatefulWidget {
   @override
@@ -13,7 +14,7 @@ class SeriesScreen extends StatefulWidget {
 class _SeriesScreenState extends State<SeriesScreen> {
   List series = [];
   List cats = [];
-  String sel = 'All';
+  String sel = 'all'; // <-- بدلناها
   bool loading = true;
 
   @override
@@ -38,12 +39,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = sel == 'All'? series : series.where((s) => s['category_id'].toString() == sel).toList();
+    final filtered = sel == 'all'? series : series.where((s) => s['category_id'].toString() == sel).toList();
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.transparent, title: Text('SERIES')),
+      appBar: AppBar(backgroundColor: Colors.transparent, title: Text(Lang.get('series').toUpperCase())),
       body: loading
-      ? Center(child: CircularProgressIndicator(color: Colors.orange))
+     ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
                 Container(
@@ -52,8 +53,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _buildChip('All', 'الكل'),
-                  ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                      _buildChip('all', Lang.get('all')), // <-- هنا
+                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -94,7 +95,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                        ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                       ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
