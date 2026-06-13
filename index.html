@@ -41,7 +41,7 @@
   <input id="mac" class="input" placeholder="MAC: AA:BB:CC:DD:EE:FF" maxlength="17" oninput="formatMac(this)">
   <input id="key" class="input" placeholder="ID: 123456">
   <button class="btn" onclick="login()" id="t-login">دخول →</button>
-  <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span id="t-dl">تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
+  <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/12j3phbhrjb2zfg/Kamel_pro.apk/file')"><span id="t-dl">تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
   <a href="#" class="qr-link" onclick="startQR();return false" id="t-qr">📷 امسح QR من التلفاز</a>
   <div id="reader"></div>
 </div>
@@ -84,7 +84,6 @@ let html5Qr;
 let editId = null;
 let editType = '';
 
-// === فورمات الماك الجديد ===
 function formatMac(input) {
   let v = input.value.toUpperCase().replace(/[^A-F0-9]/g, '');
   if (v.length > 12) v = v.substring(0, 12);
