@@ -21,6 +21,7 @@ dependencies:
   qr_flutter: ^4.1.0
   crypto: ^3.0.3
   supabase_flutter: ^2.5.0   # <-- هذا الجديد
+  internet_speed_test: ^1.6.0   # <-- زدتها للـ Speed Test
 
 dev_dependencies:
   flutter_test:
@@ -39,6 +40,7 @@ flutter:
     - assets/series.png
     - assets/favorites.png
     - assets/ajustes.png
+    - assets/speed.png   # <-- زدتها
 
 flutter_launcher_icons:
   android: true
