@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'lang.dart';
 import 'main.dart';
-import 'speed_test.dart'; // الملف الجديد باش نعملوه بعد
+import 'speed_test.dart';
 
 class AjustesScreen extends StatefulWidget {
   @override
@@ -22,23 +22,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
   String _deviceName = '...';
   String _expiry = '';
 
-  final List<Map<String, dynamic>> _items = [
-    {'icon': Icons.playlist_add, 'title': 'ajouter_liste', 'action': 'playlist'},
-    {'icon': Icons.lock, 'title': 'parental', 'action': 'parental'},
-    {'icon': Icons.swap_horiz, 'title': 'changer_liste', 'action': 'change'},
-    {'icon': Icons.grid_view, 'title': 'disposition', 'action': 'layout'},
-    {'icon': Icons.visibility_off, 'title': 'masquer_live', 'action': 'hide_live'},
-    {'icon': Icons.visibility_off, 'title': 'masquer_vod', 'action': 'hide_vod'},
-    {'icon': Icons.visibility_off, 'title': 'masquer_series', 'action': 'hide_series'},
-    {'icon': Icons.history, 'title': 'clear_history', 'action': 'clear'},
-    {'icon': Icons.movie_filter, 'title': 'effacer_films', 'action': 'clear_films'},
-    {'icon': Icons.tv_off, 'title': 'effacer_series', 'action': 'clear_series'},
-    {'icon': Icons.sort_by_alpha, 'title': 'tri_chaines', 'action': 'sort'},
-    {'icon': Icons.live_tv, 'title': 'live_format', 'action': 'format'},
-    {'icon': Icons.play_circle, 'title': 'select_player', 'action': 'player'},
-    {'icon': Icons.extension, 'title': 'acteurs_externes', 'action': 'external'},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -48,7 +31,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   _loadLang() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() => _currentLang = prefs.getString('lang')?? 'ar');
+    setState(() => _currentLang = prefs.getString('lang') ?? 'ar');
   }
 
   _getDeviceInfo() async {
@@ -57,17 +40,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        String androidId = androidInfo.id?? '';
-        var bytes = utf8.encode(androidId);
-        var digest = sha1.convert(bytes);
+        String androidId = androidInfo.id ?? '';
+        var digest = sha1.convert(utf8.encode(androidId));
         String hex = digest.toString().substring(0, 12).toUpperCase();
         String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
         mac = mac.substring(0, 17);
-        String deviceId = digest.toString().substring(0, 6).toUpperCase();
-
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = deviceId;
+          _deviceId = digest.toString().substring(0, 6).toUpperCase();
           _mac = mac;
         });
       }
@@ -75,13 +55,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
         final expiry = DateTime.now().add(Duration(days: 365));
         await prefs.setString('expiry', '${expiry.day}/${expiry.month}/${expiry.year}');
       }
-      setState(() => _expiry = prefs.getString('expiry')?? '');
+      setState(() => _expiry = prefs.getString('expiry') ?? '');
     } catch (e) {
       setState(() {
-        _deviceName = 'ANDROID TV';
-        _mac = '00:11:22:33:44:55';
-        _deviceId = '000000';
-        _expiry = '7/6/2027';
+        _deviceName = 'XIAOMI MITV-AYFR0';
+        _mac = '45:2A:CD:2F:31:17';
+        _deviceId = '452ACD';
+        _expiry = '20/9/2026';
       });
     }
   }
@@ -93,42 +73,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => MainMenu()), (route) => false);
   }
 
-  void _handleAction(String action) {
-    switch (action) {
-      case 'player':
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Exo Player actif ✓')));
-        break;
-      default:
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('bientot'))));
-    }
-  }
-
-  // QR الكبير للموقع
   void _showQrBigDialog() {
-    String title = {
-      'ar': 'امسح للزيارة',
-      'fr': 'Scannez pour visiter',
-      'en': 'Scan to visit',
-      'de': 'Zum Besuchen scannen',
-      'cs': 'Naskenujte pro návštěvu',
-    }[_currentLang]?? 'Scan to visit';
-
+    String title = {'ar':'امسح للزيارة','fr':'Scannez pour visiter','en':'Scan to visit','de':'Scannen','cs':'Naskenujte'}[_currentLang] ?? 'Scan';
     showDialog(context: context, builder: (_) => AlertDialog(
       backgroundColor: Color(0xFF1A1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(12),
-          child: Image.asset('assets/qr_big.png', width: 340, height: 340, fit: BoxFit.contain),
-        ),
+        Container(color: Colors.white, padding: EdgeInsets.all(12),
+          child: Image.asset('assets/qr_big.png', width: 340, height: 340, fit: BoxFit.contain)),
         SizedBox(height: 12),
-        Text('kamelpro.com', style: TextStyle(color: Colors.white70, fontSize: 16, letterSpacing: 1.2)),
+        Text('kamelpro.com', style: TextStyle(color: Colors.white70, fontSize: 16)),
       ]),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))
-      ],
+      actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))],
     ));
   }
 
@@ -137,191 +94,108 @@ class _AjustesScreenState extends State<AjustesScreen> {
       backgroundColor: Color(0xFF1A1A2E),
       title: Text(Lang.get('choisir_langue'), style: TextStyle(color: Colors.white)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        _langOption('🇹🇳', 'عربي', 'ar'),
-        _langOption('🇫🇷', 'Français', 'fr'),
-        _langOption('🇨🇿', 'Čeština', 'cs'),
-        _langOption('🇬🇧', 'English', 'en'),
-        _langOption('🇩🇪', 'Deutsch', 'de'),
+        _langOption('🇹🇳','عربي','ar'), _langOption('🇫🇷','Français','fr'),
+        _langOption('🇨🇿','Čeština','cs'), _langOption('🇬🇧','English','en'),
+        _langOption('🇩🇪','Deutsch','de'),
       ]),
     ));
   }
 
-  Widget _langOption(String flag, String name, String code) {
-    return ListTile(
-      leading: Text(flag, style: TextStyle(fontSize: 28)),
-      title: Text(name, style: TextStyle(color: Colors.white)),
-      trailing: _currentLang == code? Icon(Icons.check, color: Colors.cyan) : null,
-      onTap: () { Navigator.pop(context); _changeLang(code); },
-    );
-  }
+  Widget _langOption(String flag, String name, String code) => ListTile(
+    leading: Text(flag, style: TextStyle(fontSize: 28)),
+    title: Text(name, style: TextStyle(color: Colors.white)),
+    trailing: _currentLang == code ? Icon(Icons.check, color: Colors.cyan) : null,
+    onTap: () { Navigator.pop(context); _changeLang(code); },
+  );
 
   void _showUpdateDialog() {
+    String title = {'ar':'تحديث','fr':'Mise à jour','en':'Update','de':'Update','cs':'Aktualizace'}[_currentLang]!;
     showDialog(context: context, builder: (_) => AlertDialog(
       backgroundColor: Color(0xFF1A1A2E),
-      title: Text('Mise à jour', style: TextStyle(color: Colors.white)),
-      content: Text('Version actuelle: 1.0.0\nDernière version disponible sur kamelpro.com', style: TextStyle(color: Colors.white70)),
-      actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))],
+      title: Text(title, style: TextStyle(color: Colors.white)),
+      content: Text('Version: 1.0.0\nkamelpro.com', style: TextStyle(color: Colors.white70)),
+      actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))],
     ));
   }
 
-  Widget _topIcon(String asset, String label, VoidCallback onTap) {
-    return Column(
-      children: [
-        GestureDetector(
+  Widget _bigCircle(String asset, String label, VoidCallback onTap, {bool autofocus=false}) {
+    return Focus(
+      autofocus: autofocus,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+          onTap(); return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Builder(builder: (ctx) {
+        final hasFocus = Focus.of(ctx).hasFocus;
+        return GestureDetector(
           onTap: onTap,
-          child: Container(
-            width: 78,
-            height: 78,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [Color(0xFF1A1A2E), Color(0xFF16213E)]),
-              border: Border.all(color: Colors.cyan.withOpacity(0.5), width: 2),
-              boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 8)],
-            ),
-            padding: EdgeInsets.all(14),
-            child: Image.asset(asset, fit: BoxFit.contain),
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 150),
+            transform: Matrix4.identity()..scale(hasFocus ? 1.12 : 1.0),
+            child: Column(children: [
+              Container(
+                width: 150, height: 150,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                  boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.7), blurRadius: 30)] : [BoxShadow(color: Colors.black54, blurRadius: 15)]),
+                child: ClipOval(child: Image.asset(asset, fit: BoxFit.cover)),
+              ),
+              SizedBox(height: 16),
+              Text(label, textAlign: TextAlign.center, style: TextStyle(color: hasFocus ? Colors.cyan : Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+            ]),
           ),
-        ),
-        SizedBox(height: 8),
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 13)),
-      ],
+        );
+      }),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final labels = {
+      'langue': {'ar':'اللغة','fr':'Langue','en':'Language','de':'Sprache','cs':'Jazyk'}[_currentLang]!,
+      'qr': 'QR',
+      'update': {'ar':'تحديث','fr':'Mise à jour','en':'Update','de':'Update','cs':'Aktualizace'}[_currentLang]!,
+      'speed': {'ar':'اختبار سرعة الانترنت','fr':'Test vitesse','en':'Speed Test','de':'Speedtest','cs':'Test rychlosti'}[_currentLang]!,
+    };
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
+        decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)])),
+        child: Column(children: [
+          Padding(padding: EdgeInsets.fromLTRB(40,50,30,20),
+            child: Row(children: [
+              IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: ()=>Navigator.pop(context)),
+              SizedBox(width: 15),
+              Text(Lang.get('settings'), style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+            ]),
           ),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(40, 50, 30, 10),
-              child: Row(
-                children: [
-                  IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: () => Navigator.pop(context)),
-                  SizedBox(width: 15),
-                  Text(Lang.get('settings'), style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                ],
-              ),
+          Expanded(child: Center(
+            child: Padding(padding: EdgeInsets.symmetric(horizontal: 60),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                _bigCircle('assets/globe.png', labels['langue']!, _showLangDialog, autofocus: true),
+                _bigCircle('assets/qr.png', labels['qr']!, _showQrBigDialog),
+                _bigCircle('assets/update.png', labels['update']!, _showUpdateDialog),
+                _bigCircle('assets/speed.png', labels['speed']!, ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>SpeedTestScreen()))),
+              ]),
             ),
-            // --- الأيقونات المدورة الأربعة ---
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _topIcon('assets/globe.png', Lang.get('langue'), _showLangDialog),
-                  _topIcon('assets/qr.png', 'QR', _showQrBigDialog),
-                  _topIcon('assets/update.png', 'Update', _showUpdateDialog),
-                  _topIcon('assets/speed.png', 'Speed', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen()))),
-                ],
-              ),
+          )),
+          Padding(padding: EdgeInsets.only(bottom: 35),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.cyan.withOpacity(0.3))),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                SizedBox(height: 8),
+                Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                SizedBox(height: 6),
+                Text('ID: $_deviceId   •   Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 15)),
+              ]),
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 2.8,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                  ),
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return Focus(
-                      autofocus: index == 0,
-                      onKeyEvent: (node, event) {
-                        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                          _handleAction(item['action']);
-                          return KeyEventResult.handled;
-                        }
-                        return KeyEventResult.ignored;
-                      },
-                      child: Builder(builder: (ctx) {
-                        final hasFocus = Focus.of(ctx).hasFocus;
-                        return GestureDetector(
-                          onTap: () => _handleAction(item['action']),
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 150),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: hasFocus? [Colors.cyan.withOpacity(0.8), Colors.blue.withOpacity(0.8)] : [Color(0xFF1A1A2E), Color(0xFF16213E)]),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: hasFocus? Colors.cyan : Colors.white24, width: hasFocus? 3 : 1),
-                              boxShadow: hasFocus? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
-                            ),
-                            child: Row(
-                              children: [
-                                SizedBox(width: 15),
-                                Icon(item['icon'], color: hasFocus? Colors.black : Colors.cyan, size: 28),
-                                SizedBox(width: 12),
-                                Expanded(child: Text(Lang.get(item['title']), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: hasFocus? Colors.black : Colors.white, fontSize: 15, fontWeight: FontWeight.w600))),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(bottom: 25),
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 40),
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.cyan.withOpacity(0.3)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                          SizedBox(height: 2),
-                          Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('ID: $_deviceId • Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.copy, color: Colors.white70),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId\nExpire: $_expiry'));
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم النسخ ✓')));
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.share, color: Colors.cyan),
-                          onPressed: () {
-                            Share.share('KAMEL PRO\nDevice: $_deviceName\nMAC: $_mac\nID: $_deviceId\nExpire: $_expiry');
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
