@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'favorites.dart';
 import 'lang.dart';
 
@@ -27,6 +30,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   int _listIndex = 0;
   Timer? _hideTimer;
   Timer? _controlsTimer;
+  Timer? _saveTimer;
   final ScrollController _channelScroll = ScrollController();
   final FavoritesService _favService = FavoritesService();
   Set<String> _favIds = {};
@@ -35,6 +39,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
   late String _currentTitle;
   String? _currentLogo;
   late int _currentIndex;
+
+  String _deviceMac = '';
+  bool _isFavCloud = false;
+
+  // Supabase
+  final String supaUrl = 'https://pmgdzroirlegkpqzcyra.supabase.co';
+  final String supaKey = 'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj';
 
   bool get isLive => widget.channelList!= null;
 
@@ -48,11 +59,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _currentLogo = widget.logo;
     _currentIndex = widget.currentIndex?? 0;
     _listIndex = _currentIndex;
-    _initPlayer();
+    _loadMac().then((_) {
+      _initPlayer();
+      if (!isLive) _checkResume();
+      _checkFavorite();
+    });
     _showInfoTemporarily();
     _favService.getFavoriteUrls().then((set) {
       if (mounted) setState(() => _favIds = set);
     });
+  }
+
+  Future<void> _loadMac() async {
+    final p = await SharedPreferences.getInstance();
+    _deviceMac = p.getString('device_mac')?? '';
   }
 
   Future<void> _initPlayer() async {
@@ -62,10 +82,129 @@ class _PlayerScreenState extends State<PlayerScreen> {
       await _exo!.initialize();
       await _exo!.play();
       _exo!.addListener(() { if (mounted) setState(() {}); });
+      if (!isLive) _startSaveTimer();
     } catch (e) {
       print('Player error: $e');
     }
     if (mounted) setState(() {});
+  }
+
+  // === متابعة المشاهدة ===
+  Future<void> _checkResume() async {
+    if (_deviceMac.isEmpty) return;
+    try {
+      final res = await http.get(
+        Uri.parse('$supaUrl/rest/v1/watch_progress?mac=eq.$_deviceMac&stream_url=eq.${Uri.encodeComponent(_currentUrl)}&select=position'),
+        headers: {'apikey': supaKey, 'Authorization': 'Bearer $supaKey'},
+      );
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        if (data.isNotEmpty) {
+          final pos = data[0]['position']?? 0;
+          if (pos > 15) {
+            await Future.delayed(Duration(milliseconds: 500));
+            _showResumeDialog(pos);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  void _showResumeDialog(int seconds) {
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text('متابعة المشاهدة', style: TextStyle(color: Colors.white)),
+        content: Text('تحب تكمل من $m:$s ؟', style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('من الأول', style: TextStyle(color: Colors.white70))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context);
+              _exo?.seekTo(Duration(seconds: seconds));
+            },
+            child: Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startSaveTimer() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer.periodic(Duration(seconds: 5), (_) => _saveProgress());
+  }
+
+  Future<void> _saveProgress() async {
+    if (_exo == null ||!_exo!.value.isInitialized || isLive || _deviceMac.isEmpty) return;
+    final pos = _exo!.value.position.inSeconds;
+    final dur = _exo!.value.duration.inSeconds;
+    if (pos < 5) return;
+
+    try {
+      await http.post(
+        Uri.parse('$supaUrl/rest/v1/watch_progress?on_conflict=mac,stream_url'),
+        headers: {
+          'apikey': supaKey,
+          'Authorization': 'Bearer $supaKey',
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: json.encode({
+          'mac': _deviceMac,
+          'stream_url': _currentUrl,
+          'title': _currentTitle,
+          'position': pos,
+          'duration': dur,
+          'updated_at': DateTime.now().toIso8601String(),
+          'type': 'vod'
+        }),
+      );
+    } catch (e) {}
+  }
+
+  // === المفضلة السحابية ===
+  Future<void> _checkFavorite() async {
+    if (_deviceMac.isEmpty || isLive) return;
+    try {
+      final res = await http.get(
+        Uri.parse('$supaUrl/rest/v1/favorites?mac=eq.$_deviceMac&stream_url=eq.${Uri.encodeComponent(_currentUrl)}&select=id'),
+        headers: {'apikey': supaKey, 'Authorization': 'Bearer $supaKey'},
+      );
+      if (res.statusCode == 200 && json.decode(res.body).isNotEmpty) {
+        setState(() => _isFavCloud = true);
+      }
+    } catch (e) {}
+  }
+
+  Future<void> _toggleFavCloud() async {
+    if (_deviceMac.isEmpty) return;
+    setState(() => _isFavCloud =!_isFavCloud);
+    try {
+      if (_isFavCloud) {
+        await http.post(
+          Uri.parse('$supaUrl/rest/v1/favorites'),
+          headers: {'apikey': supaKey, 'Authorization': 'Bearer $supaKey', 'Content-Type': 'application/json'},
+          body: json.encode({
+            'mac': _deviceMac,
+            'stream_url': _currentUrl,
+            'title': _currentTitle,
+            'logo': _currentLogo?? '',
+            'type': isLive? 'live' : 'vod'
+          }),
+        );
+      } else {
+        await http.delete(
+          Uri.parse('$supaUrl/rest/v1/favorites?mac=eq.$_deviceMac&stream_url=eq.${Uri.encodeComponent(_currentUrl)}'),
+          headers: {'apikey': supaKey, 'Authorization': 'Bearer $supaKey'},
+        );
+      }
+    } catch (e) {}
   }
 
   void _showInfoTemporarily() {
@@ -141,9 +280,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    _saveProgress();
     _exo?.dispose();
     _hideTimer?.cancel();
     _controlsTimer?.cancel();
+    _saveTimer?.cancel();
     _channelScroll.dispose();
     WakelockPlus.disable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -160,9 +301,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     return WillPopScope(
       onWillPop: () async {
         if (_showChannelList) {
-          setState(() {
-            _showChannelList = false;
-          });
+          setState(() => _showChannelList = false);
           _showInfoTemporarily();
           return false;
         }
@@ -194,7 +333,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   } else if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
                     _playChannel(_listIndex);
                   } else if (key == LogicalKeyboardKey.goBack || key == LogicalKeyboardKey.escape) {
-                    // ✅ نخلي WillPop هو اللي يسكر
                     return KeyEventResult.ignored;
                   }
                   return KeyEventResult.handled;
@@ -231,15 +369,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
             children: [
               Positioned.fill(
                 child: _exo!= null && _exo!.value.isInitialized
-       ? FittedBox(
-                      fit: BoxFit.fill,
-                      child: SizedBox(
-                        width: _exo!.value.size.width,
-                        height: _exo!.value.size.height,
-                        child: VideoPlayer(_exo!),
-                      ),
-                    )
-                  : Center(child: CircularProgressIndicator(color: Colors.cyan)),
+                   ? FittedBox(
+                        fit: BoxFit.fill,
+                        child: SizedBox(
+                          width: _exo!.value.size.width,
+                          height: _exo!.value.size.height,
+                          child: VideoPlayer(_exo!),
+                        ),
+                      )
+                    : Center(child: CircularProgressIndicator(color: Colors.cyan)),
               ),
               if (_showInfo)
                 Positioned(
@@ -249,7 +387,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
                     child: Row(
                       children: [
-                        if (_currentLogo!= null) Image.network(_currentLogo!, width: 50, height: 50, errorBuilder: (_,__,___) => SizedBox()),
+                        if (_currentLogo!= null) Image.network(_currentLogo!, width: 50, height: 50, errorBuilder: (_, __, ___) => SizedBox()),
                         SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -259,6 +397,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               Text(_currentTitle, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                             ],
                           ),
+                        ),
+                        if (!isLive) IconButton(
+                          icon: Icon(_isFavCloud? Icons.favorite : Icons.favorite_border, color: _isFavCloud? Colors.red : Colors.white, size: 28),
+                          onPressed: _toggleFavCloud,
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -322,7 +464,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                 child: Row(
                                   children: [
                                     SizedBox(width: 28, child: Text('${i + 1}', style: TextStyle(color: active? Colors.black : Colors.white70, fontWeight: FontWeight.bold))),
-                                    if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_,__,___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
+                                    if (ch['logo']!= null) Image.network(ch['logo'], width: 30, height: 30, errorBuilder: (_, __, ___) => Icon(Icons.tv, color: active? Colors.black54 : Colors.white30, size: 24)),
                                     SizedBox(width: 10),
                                     Expanded(child: Text(ch['name']?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: active? Colors.black : Colors.white, fontSize: 16, fontWeight: active? FontWeight.bold : FontWeight.normal))),
                                     if (isFav) Image.asset('assets/favorites.png', width: 22, height: 22, color: Colors.red) else Icon(Icons.favorite_border, color: Colors.white24, size: 20),
