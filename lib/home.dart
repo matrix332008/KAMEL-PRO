@@ -7,7 +7,6 @@ import 'favorites.dart';
 import 'ajustes.dart';
 import 'epg.dart';
 import 'lang.dart';
-import 'speed_test.dart'; // <-- هذا السطر الوحيد اللي زدتو فوق
 
 class HomeScreen extends StatefulWidget {
   @override _HomeScreenState createState() => _HomeScreenState();
@@ -58,34 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // === SPEED TEST - هذا الجزء الوحيد اللي زدتو ===
-            Positioned(
-              top: 78,
-              right: 20,
-              child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen())),
-                child: Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    image: DecorationImage(
-                      image: AssetImage('assets/speed.png'),
-                      fit: BoxFit.cover,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.redAccent.withOpacity(0.5),
-                        blurRadius: 14,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // === نهاية الإضافة ===
-            // KAMEL PRO الأخضر يغطي القديم
+            // KAMEL PRO الأخضر
             Positioned(
               left: 40,
               bottom: 85,
@@ -106,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // واتساب + الرقم مهبطين 30px
+            // واتساب + الرقم
             Positioned(
               bottom: 45,
               left: 0,
