@@ -38,7 +38,7 @@
 <div class="container">
 <div id="p1" class="page active">
   <h2 style="text-align:right" id="t-activate">فعّل جهازك</h2>
-  <input id="mac" class="input" placeholder="MAC: AA:BB:CC:DD:EE:FF">
+  <input id="mac" class="input" placeholder="MAC: AA:BB:CC:DD:EE:FF" maxlength="17" oninput="formatMac(this)">
   <input id="key" class="input" placeholder="ID: 123456">
   <button class="btn" onclick="login()" id="t-login">دخول →</button>
   <button class="btn btn-dl" onclick="window.open('https://www.mediafire.com/file/4j27apkiah1qd6e/Kamel_pro.apk/file')"><span id="t-dl">تحميل التطبيق</span><i class="fa-solid fa-download"></i></button>
@@ -55,7 +55,6 @@
   <div id="list"></div>
 </div>
 
-<!-- صفحة التعديل الجديدة -->
 <div id="p3" class="page">
   <h2 id="t-edit">تعديل الاشتراك</h2>
   <div id="editM3U" style="display:none">
@@ -85,7 +84,18 @@ let html5Qr;
 let editId = null;
 let editType = '';
 
-// === نظام اللغات - زدتو من غير ما نمس شي ===
+// === فورمات الماك الجديد ===
+function formatMac(input) {
+  let v = input.value.toUpperCase().replace(/[^A-F0-9]/g, '');
+  if (v.length > 12) v = v.substring(0, 12);
+  let out = '';
+  for (let i = 0; i < v.length; i++) {
+    out += v[i];
+    if (i % 2 === 1 && i < v.length - 1) out += ':';
+  }
+  input.value = out;
+}
+
 const LANGS = {
   ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl:'تحميل التطبيق',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل الاشتراك',saveEdit:'💾 حفظ التعديل',back:'رجوع',m3uPH:'رابط M3U',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'أدخل البيانات',alert2:'MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً',alert3:'أدخل الرابط',alert4:'هذا الرابط موجود مسبقاً',alert5:'تم الحفظ ✓',alert6:'أدخل البيانات',alert7:'تم تحديث الاشتراك ✓',alert8:'حذف الاشتراك؟',alert9:'تم التعديل ✓',alert10:'الكاميرا مرفوضة'},
   en:{dir:'ltr',subtitle:'Manage your subscriptions',activate:'Activate your device',login:'Login →',dl:'Download App',qr:'📷 Scan QR from TV',lists:'My Playlists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save Changes',back:'Back',m3uPH:'M3U Link',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'Enter data',alert2:'Wrong MAC or ID',alert3:'Enter link',alert4:'Link already exists',alert5:'Saved ✓',alert6:'Enter data',alert7:'Updated ✓',alert8:'Delete?',alert9:'Edited ✓',alert10:'Camera denied'},
@@ -124,7 +134,6 @@ function f(t){
   document.getElementById('fx').style.display = t==='xt'? 'block' : 'none';
 }
 
-// ✅ منع التكرار M3U
 async function sm(){
   const url = document.getElementById('mu').value.trim();
   if(!url) return alert(CUR.alert3);
@@ -140,7 +149,6 @@ async function sm(){
   load();
 }
 
-// ✅ منع التكرار Xtream
 async function sx(){
   const server = document.getElementById('xs').value.trim();
   const user = document.getElementById('xu').value.trim();
@@ -188,7 +196,6 @@ async function del(id){
   }
 }
 
-// ✅ تعديل بصفحة كاملة
 async function edit(id){
   const {data} = await supa.from('playlists').select().eq('id', id).single();
   if(!data) return alert('خطأ');
@@ -246,12 +253,14 @@ function startQR(){
     try{
       const d = JSON.parse(txt);
       document.getElementById('mac').value = d.mac || '';
+      formatMac(document.getElementById('mac'));
       document.getElementById('key').value = d.id || '';
       login();
     }catch(e){
       const p = txt.split('|');
       if(p.length >= 3){
         document.getElementById('mac').value = p[1];
+        formatMac(document.getElementById('mac'));
         document.getElementById('key').value = p[2];
         login();
       }
@@ -259,7 +268,6 @@ function startQR(){
   }).catch(e=>alert(CUR.alert10));
 }
 
-// تشغيل اللغة المحفوظة
 setLang(localStorage.getItem('lang')||'ar');
 </script>
 </body>
