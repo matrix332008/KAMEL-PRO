@@ -15,6 +15,7 @@ import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
 import 'lang.dart';
+import 'speed_test.dart'; // <-- زدتها
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -260,7 +261,25 @@ class _MainMenuState extends State<MainMenu> {
                         ],
                       ),
                       Spacer(),
-                      _LogoutButton(onPressed: () => _logout(context)),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _LogoutButton(onPressed: () => _logout(context)),
+                          SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen())),
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                image: DecorationImage(image: AssetImage('assets/speed.png'), fit: BoxFit.cover),
+                                boxShadow: [BoxShadow(color: Colors.redAccent.withOpacity(0.5), blurRadius: 12)],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
