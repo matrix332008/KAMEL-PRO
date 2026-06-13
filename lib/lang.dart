@@ -43,6 +43,7 @@ class Lang {
       'choisir_langue': 'اختر اللغة',
       'bientot': 'قريباً...',
       'qr_code': 'رمز QR',
+      'speed_test': 'اختبار سرعة الانترنات',
     },
     'fr': {
       'live': 'DIRECT',
@@ -84,6 +85,7 @@ class Lang {
       'choisir_langue': 'Choisir la langue',
       'bientot': 'Bientôt...',
       'qr_code': 'Code QR',
+      'speed_test': 'Test vitesse',
     },
     'cs': {
       'live': 'ŽIVĚ',
@@ -125,6 +127,7 @@ class Lang {
       'choisir_langue': 'Vyberte jazyk',
       'bientot': 'Již brzy...',
       'qr_code': 'QR kód',
+      'speed_test': 'Test rychlosti',
     },
     'en': {
       'live': 'LIVE',
@@ -166,6 +169,7 @@ class Lang {
       'choisir_langue': 'Choose language',
       'bientot': 'Coming soon...',
       'qr_code': 'QR Code',
+      'speed_test': 'Speed Test',
     },
     'de': {
       'live': 'LIVE',
@@ -207,6 +211,7 @@ class Lang {
       'choisir_langue': 'Sprache wählen',
       'bientot': 'Bald verfügbar...',
       'qr_code': 'QR-Code',
+      'speed_test': 'Speedtest',
     },
   };
 
