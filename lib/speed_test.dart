@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -150,9 +151,32 @@ class _SpeedTestScreenState extends State<SpeedTestScreen> with SingleTickerProv
     );
   }
 
-  Widget _go()=>GestureDetector(onTap:_start, child:Container(width:250,height:250,
-    decoration:BoxDecoration(shape:BoxShape.circle, border:Border.all(color:Color(0xFF00FF94).withOpacity(0.5),width:12)),
-    child:Center(child:Text('GO',style:TextStyle(color:Colors.white,fontSize:64,fontWeight:FontWeight.w200)))));
+  // زر GO يخدم بالريموت
+  Widget _go() => Focus(
+    autofocus: true,
+    onKeyEvent: (node, event) {
+      if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+        _start(); return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    },
+    child: Builder(builder: (ctx) {
+      final hasFocus = Focus.of(ctx).hasFocus;
+      return GestureDetector(
+        onTap: _start,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          width: 260, height: 260,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: hasFocus ? Colors.white : Color(0xFF00FF94).withOpacity(0.5), width: hasFocus ? 16 : 12),
+            boxShadow: hasFocus ? [BoxShadow(color: Color(0xFF00FF94).withOpacity(0.6), blurRadius: 30)] : [],
+          ),
+          child: Center(child: Text('GO', style: TextStyle(color: Colors.white, fontSize: 68, fontWeight: FontWeight.w200))),
+        ),
+      );
+    }),
+  );
 
   Widget _cards()=>Padding(padding:EdgeInsets.all(20), child:Row(children:[
     _card('DOWNLOAD',download,Color(0xFF00FF94)),SizedBox(width:12),
