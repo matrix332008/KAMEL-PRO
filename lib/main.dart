@@ -15,7 +15,7 @@ import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
 import 'lang.dart';
-import 'speed_test.dart'; // <-- زدتها
+import 'speed_test.dart'; // <-- خليتها
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -261,14 +261,8 @@ class _MainMenuState extends State<MainMenu> {
                         ],
                       ),
                       Spacer(),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _LogoutButton(onPressed: () => _logout(context)),
-                          SizedBox(height: 12),
-                          _SpeedButton(),
-                        ],
-                      ),
+                      // ✅ هنا نحيت _SpeedButton
+                      _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
                 ),
