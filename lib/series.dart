@@ -16,6 +16,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
   List cats = [];
   String sel = 'all'; // <-- بدلناها
   bool loading = true;
+  String _search = ''; // <-- جديد
+  final _searchController = TextEditingController(); // <-- جديد
 
   @override
   void initState() {
@@ -39,14 +41,56 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = sel == 'all'? series : series.where((s) => s['category_id'].toString() == sel).toList();
+    var filtered = sel == 'all'? series : series.where((s) => s['category_id'].toString() == sel).toList();
+    // فلترة البحث
+    if (_search.isNotEmpty) {
+      filtered = filtered.where((s) => (s['name']?? '').toString().toLowerCase().contains(_search.toLowerCase())).toList();
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text(Lang.get('series').toUpperCase())),
       body: loading
-     ? Center(child: CircularProgressIndicator(color: Colors.orange))
+   ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
+                // --- SEARCH BAR جديد ---
+                Container(
+                  height: 48,
+                  margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
+                  padding: EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.orange, size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _search = v),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'بحث عن مسلسل...',
+                            hintStyle: TextStyle(color: Colors.white54),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      if (_search.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.clear, color: Colors.white54, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _search = '');
+                          },
+                        ),
+                    ],
+                  ),
+                ),
                 Container(
                   height: 50,
                   child: ListView(
@@ -54,7 +98,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')), // <-- هنا
-                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+               ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -95,7 +139,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                       ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                     ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
