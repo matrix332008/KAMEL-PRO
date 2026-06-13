@@ -12,7 +12,7 @@
 .header{background:linear-gradient(135deg,#5a3df5,#8a5df5);padding:18px 16px 40px;display:flex;justify-content:space-between}
 .logo{color:var(--red);font-weight:900;font-size:34px;line-height:.9}
 .top-right{display:flex;gap:10px;align-items:center}
-.lang{background:rgba(0,0,0,.25);border:none;color:#fff;padding:8px 14px;border-radius:20px}
+.lang{background:rgba(0,0,0,.25);border:none;color:#fff;padding:8px 14px;border-radius:20px;cursor:pointer}
 .avatar{width:58px;height:58px;border-radius:50%;border:3px solid #fff;object-fit:cover}
 .container{max-width:460px;margin:-28px auto 80px;background:var(--card);border-radius:28px;padding:26px 20px}
 .input{width:100%;padding:16px;background:#0f0f1f;border:1px solid #2a2a4a;border-radius:14px;color:#fff;font-size:16px;margin:10px 0;text-align:right}
@@ -53,7 +53,13 @@
 <div class="header">
   <div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9" id="subtitle">إدارة اشتراكاتك</div></div>
   <div class="top-right">
-    <select class="lang" onchange="setLang(this.value)" id="langSel"><option value="ar">عربي 🇹🇳</option><option value="fr">FR</option><option value="cs">CS</option><option value="en">EN</option></select>
+    <select class="lang" onchange="setLang(this.value)" id="langSel">
+      <option value="ar">🇹🇳 عربي</option>
+      <option value="cs">🇨🇿 Čeština</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="de">🇩🇪 Deutsch</option>
+    </select>
     <img src="https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/assets/avatar.png" class="avatar">
   </div>
 </div>
@@ -141,6 +147,11 @@ const LANGS = {
     termsBody:`<p><b>KAMEL PRO</b> هو <b>مشغل وسائط فقط</b>. التطبيق لا يحتوي، لا يوفر، لا يستضيف، لا يبيع، ولا يروج لأي محتوى وسائط، خوادم بث، أو اشتراكات. KAMEL PRO لا يوفر الوصول لأي مواد محمية بحقوق الطبع والنشر.</p>
     <p>جميع المحتويات التي يتم تشغيلها داخل التطبيق يجب أن يتم توفيرها فقط من قبل المستخدم، وهو المسؤول الوحيد عن التأكد من أن هذا المحتوى تم الحصول عليه بشكل قانوني ومصرح به للاستخدام الشخصي. أي سوء استخدام للتطبيق للوصول إلى محتوى غير مصرح به أو محمي بحقوق الطبع والنشر محظور تماماً ويقع على عاتق المستخدم وحده.</p>
     <p>باستخدام KAMEL PRO، فإنك توافق على الامتثال لجميع قوانين حقوق النشر والملكية الفكرية المعمول بها.</p>`},
+  cs:{dir:'ltr',subtitle:'Spravujte předplatné',activate:'Aktivujte zařízení',login:'Přihlásit →',dl:'Stáhnout aplikaci',qr:'📷 Naskenovat QR z TV',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit předplatné',saveEdit:'💾 Uložit změny',back:'Zpět',m3uPH:'M3U odkaz',srv:'Server',usr:'Uživatel',ps:'Heslo',srvUrl:'URL serveru',uname:'Jméno',pwd:'Heslo',alert1:'Zadejte data',alert2:'Špatný MAC/ID - nejprve spusťte aplikaci v TV',alert3:'Zadejte odkaz',alert4:'Odkaz již existuje',alert5:'Uloženo ✓',alert6:'Zadejte data',alert7:'Aktualizováno ✓',alert8:'Smazat?',alert9:'Upraveno ✓',alert10:'Kamera odepřena',
+    termsTitle:'Podmínky použití',termsAgree:'Souhlasím',
+    termsBody:`<p><b>KAMEL PRO</b> je <b>pouze přehrávač médií</b>. Aplikace neobsahuje, neposkytuje, nehostuje, neprodává ani nepropaguje žádný mediální obsah, streamovací servery nebo předplatné. KAMEL PRO nenabízí přístup k žádnému materiálu chráněnému autorskými právy.</p>
+    <p>Veškerý obsah přehrávaný v aplikaci musí být dodán výhradně uživatelem, který je plně odpovědný za zajištění, že takový obsah je získán legálně a je autorizován pro osobní použití. Jakékoli zneužití aplikace k přístupu k neautorizovanému nebo chráněnému obsahu je přísně zakázáno a je výhradní odpovědností uživatele.</p>
+    <p>Používáním KAMEL PRO souhlasíte s dodržováním všech platných zákonů o autorských právech a duševním vlastnictví.</p>`},
   en:{dir:'ltr',subtitle:'Manage your subscriptions',activate:'Activate your device',login:'Login →',dl:'Download App',qr:'📷 Scan QR from TV',lists:'My Playlists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save Changes',back:'Back',m3uPH:'M3U Link',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'Enter data',alert2:'Wrong MAC or ID',alert3:'Enter link',alert4:'Link already exists',alert5:'Saved ✓',alert6:'Enter data',alert7:'Updated ✓',alert8:'Delete?',alert9:'Edited ✓',alert10:'Camera denied',
     termsTitle:'Terms of Use',termsAgree:'I Agree',
     termsBody:`<p><b>KAMEL PRO</b> is a <b>media player only</b>. The application does not contain, provide, host, sell, or promote any media content, streaming servers, or subscriptions. KAMEL PRO does not offer access to any copyrighted material.</p>
@@ -151,11 +162,11 @@ const LANGS = {
     termsBody:`<p><b>KAMEL PRO</b> est un <b>lecteur multimédia uniquement</b>. L'application ne contient, ne fournit, n'héberge, ne vend ni ne promeut aucun contenu multimédia, serveurs de streaming ou abonnements. KAMEL PRO n'offre pas d'accès à du matériel protégé par des droits d'auteur.</p>
     <p>Tout contenu lu dans l'application doit être fourni uniquement par l'utilisateur, qui est entièrement responsable de s'assurer que ce contenu est obtenu légalement et autorisé pour un usage personnel. Toute mauvaise utilisation de l'application pour accéder à du contenu non autorisé ou protégé est strictement interdite et relève de la seule responsabilité de l'utilisateur.</p>
     <p>En utilisant KAMEL PRO, vous acceptez de vous conformer à toutes les lois applicables sur les droits d'auteur et la propriété intellectuelle.</p>`},
-  cs:{dir:'ltr',subtitle:'Spravujte předplatné',activate:'Aktivujte zařízení',login:'Přihlásit →',dl:'Stáhnout',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit',saveEdit:'💾 Uložit',back:'Zpět',m3uPH:'M3U odkaz',srv:'Server',usr:'Uživatel',ps:'Heslo',srvUrl:'URL serveru',uname:'Jméno',pwd:'Heslo',alert1:'Zadejte data',alert2:'Špatný MAC/ID',alert3:'Zadejte odkaz',alert4:'Odkaz existuje',alert5:'Uloženo ✓',alert6:'Zadejte data',alert7:'Aktualizováno ✓',alert8:'Smazat?',alert9:'Upraveno ✓',alert10:'Kamera odepřena',
-    termsTitle:'Podmínky použití',termsAgree:'Souhlasím',
-    termsBody:`<p><b>KAMEL PRO</b> je <b>pouze přehrávač médií</b>. Aplikace neobsahuje, neposkytuje, nehostuje, neprodává ani nepropaguje žádný mediální obsah, streamovací servery nebo předplatné. KAMEL PRO nenabízí přístup k žádnému materiálu chráněnému autorskými právy.</p>
-    <p>Veškerý obsah přehrávaný v aplikaci musí být dodán výhradně uživatelem, který je plně odpovědný za zajištění, že takový obsah je získán legálně a je autorizován pro osobní použití. Jakékoli zneužití aplikace k přístupu k neautorizovanému nebo chráněnému obsahu je přísně zakázáno a je výhradní odpovědností uživatele.</p>
-    <p>Používáním KAMEL PRO souhlasíte s dodržováním všech platných zákonů o autorských právech a duševním vlastnictví.</p>`}
+  de:{dir:'ltr',subtitle:'Verwalten Sie Ihre Abonnements',activate:'Gerät aktivieren',login:'Anmelden →',dl:'App herunterladen',qr:'📷 QR vom TV scannen',lists:'Meine Playlists',addm3u:'M3U hinzufügen',addxt:'Xtream hinzufügen',save:'Speichern',edit:'Abo bearbeiten',saveEdit:'💾 Änderungen speichern',back:'Zurück',m3uPH:'M3U-Link',srv:'Server',usr:'Benutzer',ps:'Passwort',srvUrl:'Server-URL',uname:'Benutzername',pwd:'Passwort',alert1:'Daten eingeben',alert2:'Falsche MAC oder ID',alert3:'Link eingeben',alert4:'Link existiert bereits',alert5:'Gespeichert ✓',alert6:'Daten eingeben',alert7:'Aktualisiert ✓',alert8:'Löschen?',alert9:'Bearbeitet ✓',alert10:'Kamera verweigert',
+    termsTitle:'Nutzungsbedingungen',termsAgree:'Ich stimme zu',
+    termsBody:`<p><b>KAMEL PRO</b> ist <b>nur ein Media Player</b>. Die Anwendung enthält, bietet, hostet, verkauft oder bewirbt keine Medieninhalte, Streaming-Server oder Abonnements. KAMEL PRO bietet keinen Zugriff auf urheberrechtlich geschütztes Material.</p>
+    <p>Alle in der Anwendung abgespielten Inhalte müssen ausschließlich vom Benutzer bereitgestellt werden, der allein dafür verantwortlich ist, sicherzustellen, dass solche Inhalte legal erworben und für den persönlichen Gebrauch autorisiert sind. Jede missbräuchliche Nutzung der Anwendung für den Zugriff auf nicht autorisierte oder urheberrechtlich geschützte Inhalte ist strengstens untersagt und liegt in der alleinigen Verantwortung des Benutzers.</p>
+    <p>Durch die Nutzung von KAMEL PRO erklären Sie sich damit einverstanden, alle geltenden Urheber- und geistigen Eigentumsrechte einzuhalten.</p>`}
 };
 let CUR = LANGS.ar;
 function setLang(l){
