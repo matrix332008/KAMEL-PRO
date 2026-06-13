@@ -266,18 +266,7 @@ class _MainMenuState extends State<MainMenu> {
                         children: [
                           _LogoutButton(onPressed: () => _logout(context)),
                           SizedBox(height: 12),
-                          GestureDetector(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen())),
-                            child: Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                image: DecorationImage(image: AssetImage('assets/speed.png'), fit: BoxFit.cover),
-                                boxShadow: [BoxShadow(color: Colors.redAccent.withOpacity(0.5), blurRadius: 12)],
-                              ),
-                            ),
-                          ),
+                          _SpeedButton(),
                         ],
                       ),
                     ],
@@ -515,6 +504,53 @@ class __LogoutButtonState extends State<_LogoutButton> {
         onPressed: widget.onPressed,
         style: OutlinedButton.styleFrom(side: BorderSide(color: _focused? Colors.white : Colors.white70, width: _focused? 3 : 1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
         child: Text('LOG OUT', style: TextStyle(color: Colors.white70)),
+      ),
+    );
+  }
+}
+
+class _SpeedButton extends StatefulWidget {
+  @override
+  __SpeedButtonState createState() => __SpeedButtonState();
+}
+
+class __SpeedButtonState extends State<_SpeedButton> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen()));
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen())),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _focused? Colors.redAccent : Colors.transparent, width: 3),
+                image: DecorationImage(image: AssetImage('assets/speed.png'), fit: BoxFit.cover),
+                boxShadow: _focused? [BoxShadow(color: Colors.redAccent.withOpacity(0.7), blurRadius: 15)] : [BoxShadow(color: Colors.redAccent.withOpacity(0.5), blurRadius: 12)],
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              Lang.get('speed_test'),
+              style: TextStyle(color: _focused? Colors.redAccent : Colors.white70, fontSize: 12, fontWeight: _focused? FontWeight.bold : FontWeight.normal),
+            ),
+          ],
+        ),
       ),
     );
   }
