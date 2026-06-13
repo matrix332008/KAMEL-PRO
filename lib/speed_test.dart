@@ -21,10 +21,9 @@ class _SpeedTestScreenState extends State<SpeedTestScreen> with SingleTickerProv
     super.initState();
     _needle = AnimationController(vsync: this, duration: Duration(milliseconds: 400));
     _loadHistory();
-    _detectLocation(); // يتعرف على الشبكة أوتوماتيك
+    _detectLocation();
   }
 
-  // --- يتعرف على البلد والشبكة ---
   Future<void> _detectLocation() async {
     try {
       final res = await http.get(Uri.parse('http://ip-api.com/json/')).timeout(Duration(seconds: 3));
@@ -178,7 +177,7 @@ class _SpeedTestScreenState extends State<SpeedTestScreen> with SingleTickerProv
   ]);
 
   Widget _history()=>Container(margin:EdgeInsets.symmetric(horizontal:30,vertical:10),padding:EdgeInsets.all(12),
-    decoration:BoxDecoration(color:Colors.white5,borderRadius:BorderRadius.circular(12)),
+    decoration:BoxDecoration(color:Colors.white.withOpacity(0.05),borderRadius:BorderRadius.circular(12)),
     child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Text('السجل',style:TextStyle(color:Colors.white54,fontSize:12)),
       ...history.map((h)=>Text(h,style:TextStyle(color:Colors.white70,fontSize:13))).toList(),
