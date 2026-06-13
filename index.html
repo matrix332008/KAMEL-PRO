@@ -24,6 +24,29 @@
 .page{display:none}.page.active{display:block}
 .item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
 .whatsapp{position:fixed;bottom:20px;left:20px;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;z-index:99}
+
+/* Terms of Use Modal */
+.terms-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);
+  z-index:9999;display:none;align-items:center;justify-content:center;padding:20px
+}
+.terms-overlay.show{display:flex}
+.terms-box{
+  background:linear-gradient(135deg,#7a1f3d,#3d1f7a);
+  border-radius:24px;max-width:440px;width:100%;color:#fff;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.7)
+}
+.terms-header{background:rgba(255,255,255,.08);padding:22px;text-align:center}
+.terms-header h2{margin:0;font-size:26px;font-weight:800}
+.terms-body{padding:22px 26px;max-height:55vh;overflow-y:auto;font-size:15px;line-height:1.7}
+.terms-body p{margin:0 0 16px}
+.terms-body b{color:#ffd700;font-weight:700}
+.terms-footer{padding:20px;text-align:center}
+.terms-agree{
+  background:#25D366;border:none;color:#fff;padding:16px 40px;border-radius:14px;
+  font-size:17px;font-weight:800;cursor:pointer;width:100%;transition:.2s
+}
+.terms-agree:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -73,6 +96,23 @@
 
 <a href="https://wa.me/420777099379" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
+<!-- Terms of Use Modal -->
+<div class="terms-overlay" id="termsModal">
+  <div class="terms-box">
+    <div class="terms-header">
+      <h2 id="t-termsTitle">Terms of Use</h2>
+    </div>
+    <div class="terms-body" id="t-termsBody">
+      <p><b>KAMEL PRO</b> is a <b>media player only</b>. The application does not contain, provide, host, sell, or promote any media content, streaming servers, or subscriptions. KAMEL PRO does not offer access to any copyrighted material.</p>
+      <p>All content played within the application must be supplied solely by the user, who is fully responsible for ensuring that such content is legally obtained and authorized for personal use. Any misuse of the application to access unauthorized or copyrighted content is strictly prohibited and is the sole responsibility of the user.</p>
+      <p>By using KAMEL PRO, you agree to comply with all applicable copyright and intellectual property laws.</p>
+    </div>
+    <div class="terms-footer">
+      <button class="terms-agree" onclick="acceptTerms()" id="t-termsAgree">I Agree</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const supa = window.supabase.createClient(
   'https://pmgdzroirlegkpqzcyra.supabase.co',
@@ -96,13 +136,75 @@ function formatMac(input) {
 }
 
 const LANGS = {
-  ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl:'تحميل التطبيق',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل الاشتراك',saveEdit:'💾 حفظ التعديل',back:'رجوع',m3uPH:'رابط M3U',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'أدخل البيانات',alert2:'MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً',alert3:'أدخل الرابط',alert4:'هذا الرابط موجود مسبقاً',alert5:'تم الحفظ ✓',alert6:'أدخل البيانات',alert7:'تم تحديث الاشتراك ✓',alert8:'حذف الاشتراك؟',alert9:'تم التعديل ✓',alert10:'الكاميرا مرفوضة'},
-  en:{dir:'ltr',subtitle:'Manage your subscriptions',activate:'Activate your device',login:'Login →',dl:'Download App',qr:'📷 Scan QR from TV',lists:'My Playlists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save Changes',back:'Back',m3uPH:'M3U Link',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'Enter data',alert2:'Wrong MAC or ID',alert3:'Enter link',alert4:'Link already exists',alert5:'Saved ✓',alert6:'Enter data',alert7:'Updated ✓',alert8:'Delete?',alert9:'Edited ✓',alert10:'Camera denied'},
-  fr:{dir:'ltr',subtitle:'Gérez vos abonnements',activate:'Activez votre appareil',login:'Connexion →',dl:'Télécharger',qr:'📷 Scanner QR',lists:'Mes listes',addm3u:'Ajouter M3U',addxt:'Ajouter Xtream',save:'Enregistrer',edit:'Modifier',saveEdit:'💾 Enregistrer',back:'Retour',m3uPH:'Lien M3U',srv:'Serveur',usr:'Utilisateur',ps:'Mot de passe',srvUrl:'URL Serveur',uname:'Nom',pwd:'Mot de passe',alert1:'Entrez données',alert2:'MAC ou ID incorrect',alert3:'Entrez lien',alert4:'Lien existe déjà',alert5:'Enregistré ✓',alert6:'Entrez données',alert7:'Mis à jour ✓',alert8:'Supprimer?',alert9:'Modifié ✓',alert10:'Caméra refusée'},
-  cs:{dir:'ltr',subtitle:'Spravujte předplatné',activate:'Aktivujte zařízení',login:'Přihlásit →',dl:'Stáhnout',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit',saveEdit:'💾 Uložit',back:'Zpět',m3uPH:'M3U odkaz',srv:'Server',usr:'Uživatel',ps:'Heslo',srvUrl:'URL serveru',uname:'Jméno',pwd:'Heslo',alert1:'Zadejte data',alert2:'Špatný MAC/ID',alert3:'Zadejte odkaz',alert4:'Odkaz existuje',alert5:'Uloženo ✓',alert6:'Zadejte data',alert7:'Aktualizováno ✓',alert8:'Smazat?',alert9:'Upraveno ✓',alert10:'Kamera odepřena'}
+  ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl:'تحميل التطبيق',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل الاشتراك',saveEdit:'💾 حفظ التعديل',back:'رجوع',m3uPH:'رابط M3U',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'أدخل البيانات',alert2:'MAC أو ID غالط - شغّل التطبيق على التلفاز أولاً',alert3:'أدخل الرابط',alert4:'هذا الرابط موجود مسبقاً',alert5:'تم الحفظ ✓',alert6:'أدخل البيانات',alert7:'تم تحديث الاشتراك ✓',alert8:'حذف الاشتراك؟',alert9:'تم التعديل ✓',alert10:'الكاميرا مرفوضة',
+    termsTitle:'شروط الاستخدام',termsAgree:'أوافق',
+    termsBody:`<p><b>KAMEL PRO</b> هو <b>مشغل وسائط فقط</b>. التطبيق لا يحتوي، لا يوفر، لا يستضيف، لا يبيع، ولا يروج لأي محتوى وسائط، خوادم بث، أو اشتراكات. KAMEL PRO لا يوفر الوصول لأي مواد محمية بحقوق الطبع والنشر.</p>
+    <p>جميع المحتويات التي يتم تشغيلها داخل التطبيق يجب أن يتم توفيرها فقط من قبل المستخدم، وهو المسؤول الوحيد عن التأكد من أن هذا المحتوى تم الحصول عليه بشكل قانوني ومصرح به للاستخدام الشخصي. أي سوء استخدام للتطبيق للوصول إلى محتوى غير مصرح به أو محمي بحقوق الطبع والنشر محظور تماماً ويقع على عاتق المستخدم وحده.</p>
+    <p>باستخدام KAMEL PRO، فإنك توافق على الامتثال لجميع قوانين حقوق النشر والملكية الفكرية المعمول بها.</p>`},
+  en:{dir:'ltr',subtitle:'Manage your subscriptions',activate:'Activate your device',login:'Login →',dl:'Download App',qr:'📷 Scan QR from TV',lists:'My Playlists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save Changes',back:'Back',m3uPH:'M3U Link',srv:'Server',usr:'User',ps:'Pass',srvUrl:'Server URL',uname:'Username',pwd:'Password',alert1:'Enter data',alert2:'Wrong MAC or ID',alert3:'Enter link',alert4:'Link already exists',alert5:'Saved ✓',alert6:'Enter data',alert7:'Updated ✓',alert8:'Delete?',alert9:'Edited ✓',alert10:'Camera denied',
+    termsTitle:'Terms of Use',termsAgree:'I Agree',
+    termsBody:`<p><b>KAMEL PRO</b> is a <b>media player only</b>. The application does not contain, provide, host, sell, or promote any media content, streaming servers, or subscriptions. KAMEL PRO does not offer access to any copyrighted material.</p>
+    <p>All content played within the application must be supplied solely by the user, who is fully responsible for ensuring that such content is legally obtained and authorized for personal use. Any misuse of the application to access unauthorized or copyrighted content is strictly prohibited and is the sole responsibility of the user.</p>
+    <p>By using KAMEL PRO, you agree to comply with all applicable copyright and intellectual property laws.</p>`},
+  fr:{dir:'ltr',subtitle:'Gérez vos abonnements',activate:'Activez votre appareil',login:'Connexion →',dl:'Télécharger',qr:'📷 Scanner QR',lists:'Mes listes',addm3u:'Ajouter M3U',addxt:'Ajouter Xtream',save:'Enregistrer',edit:'Modifier',saveEdit:'💾 Enregistrer',back:'Retour',m3uPH:'Lien M3U',srv:'Serveur',usr:'Utilisateur',ps:'Mot de passe',srvUrl:'URL Serveur',uname:'Nom',pwd:'Mot de passe',alert1:'Entrez données',alert2:'MAC ou ID incorrect',alert3:'Entrez lien',alert4:'Lien existe déjà',alert5:'Enregistré ✓',alert6:'Entrez données',alert7:'Mis à jour ✓',alert8:'Supprimer?',alert9:'Modifié ✓',alert10:'Caméra refusée',
+    termsTitle:'Conditions d\'utilisation',termsAgree:'J\'accepte',
+    termsBody:`<p><b>KAMEL PRO</b> est un <b>lecteur multimédia uniquement</b>. L'application ne contient, ne fournit, n'héberge, ne vend ni ne promeut aucun contenu multimédia, serveurs de streaming ou abonnements. KAMEL PRO n'offre pas d'accès à du matériel protégé par des droits d'auteur.</p>
+    <p>Tout contenu lu dans l'application doit être fourni uniquement par l'utilisateur, qui est entièrement responsable de s'assurer que ce contenu est obtenu légalement et autorisé pour un usage personnel. Toute mauvaise utilisation de l'application pour accéder à du contenu non autorisé ou protégé est strictement interdite et relève de la seule responsabilité de l'utilisateur.</p>
+    <p>En utilisant KAMEL PRO, vous acceptez de vous conformer à toutes les lois applicables sur les droits d'auteur et la propriété intellectuelle.</p>`},
+  cs:{dir:'ltr',subtitle:'Spravujte předplatné',activate:'Aktivujte zařízení',login:'Přihlásit →',dl:'Stáhnout',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit',saveEdit:'💾 Uložit',back:'Zpět',m3uPH:'M3U odkaz',srv:'Server',usr:'Uživatel',ps:'Heslo',srvUrl:'URL serveru',uname:'Jméno',pwd:'Heslo',alert1:'Zadejte data',alert2:'Špatný MAC/ID',alert3:'Zadejte odkaz',alert4:'Odkaz existuje',alert5:'Uloženo ✓',alert6:'Zadejte data',alert7:'Aktualizováno ✓',alert8:'Smazat?',alert9:'Upraveno ✓',alert10:'Kamera odepřena',
+    termsTitle:'Podmínky použití',termsAgree:'Souhlasím',
+    termsBody:`<p><b>KAMEL PRO</b> je <b>pouze přehrávač médií</b>. Aplikace neobsahuje, neposkytuje, nehostuje, neprodává ani nepropaguje žádný mediální obsah, streamovací servery nebo předplatné. KAMEL PRO nenabízí přístup k žádnému materiálu chráněnému autorskými právy.</p>
+    <p>Veškerý obsah přehrávaný v aplikaci musí být dodán výhradně uživatelem, který je plně odpovědný za zajištění, že takový obsah je získán legálně a je autorizován pro osobní použití. Jakékoli zneužití aplikace k přístupu k neautorizovanému nebo chráněnému obsahu je přísně zakázáno a je výhradní odpovědností uživatele.</p>
+    <p>Používáním KAMEL PRO souhlasíte s dodržováním všech platných zákonů o autorských právech a duševním vlastnictví.</p>`}
 };
 let CUR = LANGS.ar;
-function setLang(l){CUR=LANGS[l]||LANGS.ar;localStorage.setItem('lang',l);document.documentElement.lang=l;document.documentElement.dir=CUR.dir;document.getElementById('langSel').value=l;document.getElementById('subtitle').textContent=CUR.subtitle;document.getElementById('t-activate').textContent=CUR.activate;document.getElementById('t-login').textContent=CUR.login;document.getElementById('t-dl').textContent=CUR.dl;document.getElementById('t-qr').textContent=CUR.qr;document.getElementById('t-lists').textContent=CUR.lists;document.getElementById('t-addm3u').textContent=CUR.addm3u;document.getElementById('t-addxt').textContent=CUR.addxt;document.getElementById('t-save1').textContent=CUR.save;document.getElementById('t-save2').textContent=CUR.save;document.getElementById('t-edit').textContent=CUR.edit;document.getElementById('t-saveEdit').textContent=CUR.saveEdit;document.getElementById('t-back').textContent=CUR.back;document.getElementById('eu').placeholder=CUR.m3uPH;document.getElementById('xs').placeholder=CUR.srv;document.getElementById('xu').placeholder=CUR.usr;document.getElementById('xp').placeholder=CUR.ps;document.getElementById('es').placeholder=CUR.srvUrl;document.getElementById('euser').placeholder=CUR.uname;document.getElementById('epass').placeholder=CUR.pwd;document.querySelector('#p1 h2').style.textAlign=CUR.dir==='rtl'?'right':'left';document.querySelectorAll('.input').forEach(i=>i.style.textAlign=CUR.dir==='rtl'?'right':'left')}
+function setLang(l){
+  CUR=LANGS[l]||LANGS.ar;
+  localStorage.setItem('lang',l);
+  document.documentElement.lang=l;
+  document.documentElement.dir=CUR.dir;
+  document.getElementById('langSel').value=l;
+  document.getElementById('subtitle').textContent=CUR.subtitle;
+  document.getElementById('t-activate').textContent=CUR.activate;
+  document.getElementById('t-login').textContent=CUR.login;
+  document.getElementById('t-dl').textContent=CUR.dl;
+  document.getElementById('t-qr').textContent=CUR.qr;
+  document.getElementById('t-lists').textContent=CUR.lists;
+  document.getElementById('t-addm3u').textContent=CUR.addm3u;
+  document.getElementById('t-addxt').textContent=CUR.addxt;
+  document.getElementById('t-save1').textContent=CUR.save;
+  document.getElementById('t-save2').textContent=CUR.save;
+  document.getElementById('t-edit').textContent=CUR.edit;
+  document.getElementById('t-saveEdit').textContent=CUR.saveEdit;
+  document.getElementById('t-back').textContent=CUR.back;
+  document.getElementById('eu').placeholder=CUR.m3uPH;
+  document.getElementById('xs').placeholder=CUR.srv;
+  document.getElementById('xu').placeholder=CUR.usr;
+  document.getElementById('xp').placeholder=CUR.ps;
+  document.getElementById('es').placeholder=CUR.srvUrl;
+  document.getElementById('euser').placeholder=CUR.uname;
+  document.getElementById('epass').placeholder=CUR.pwd;
+  document.getElementById('t-termsTitle').textContent=CUR.termsTitle;
+  document.getElementById('t-termsAgree').textContent=CUR.termsAgree;
+  document.getElementById('t-termsBody').innerHTML=CUR.termsBody;
+  document.querySelector('#p1 h2').style.textAlign=CUR.dir==='rtl'?'right':'left';
+  document.querySelectorAll('.input').forEach(i=>i.style.textAlign=CUR.dir==='rtl'?'right':'left')
+}
+
+function acceptTerms(){
+  localStorage.setItem('kamelpro_terms_accepted', 'yes');
+  document.getElementById('termsModal').classList.remove('show');
+}
+
+// يطلع البوباب أول مرة بس
+window.addEventListener('load', ()=>{
+  setLang(localStorage.getItem('lang')||'ar');
+  if(!localStorage.getItem('kamelpro_terms_accepted')){
+    setTimeout(()=>{
+      document.getElementById('termsModal').classList.add('show');
+    }, 600);
+  }
+});
 
 async function login(){
   const macInput = document.getElementById('mac').value.replace('MAC:','').trim().toUpperCase();
@@ -266,8 +368,6 @@ function startQR(){
     }
   }).catch(e=>alert(CUR.alert10));
 }
-
-setLang(localStorage.getItem('lang')||'ar');
 </script>
 </body>
 </html>
