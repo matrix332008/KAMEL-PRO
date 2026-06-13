@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:internet_speed_test/internet_speed_test.dart';
+import 'package:flutter_internet_speed_test/flutter_internet_speed_test.dart';
 
 class SpeedTestScreen extends StatefulWidget {
   @override
@@ -7,7 +7,7 @@ class SpeedTestScreen extends StatefulWidget {
 }
 
 class _SpeedTestScreenState extends State<SpeedTestScreen> with SingleTickerProviderStateMixin {
-  final speedTest = InternetSpeedTest();
+  final speedTest = FlutterInternetSpeedTest();
   double downloadRate = 0;
   double uploadRate = 0;
   String status = 'جاهز';
@@ -21,23 +21,50 @@ class _SpeedTestScreenState extends State<SpeedTestScreen> with SingleTickerProv
   }
 
   void _startTest() async {
-    setState(() { testing = true; status = 'يختبر Download...'; downloadRate = 0; uploadRate = 0; });
+    setState(() { 
+      testing = true; 
+      status = 'يختبر...'; 
+      downloadRate = 0; 
+      uploadRate = 0; 
+    });
     
-    speedTest.startDownloadTesting(
-      onDone: (_) {
-        setState(() => status = 'يختبر Upload...');
-        speedTest.startUploadTesting(
-          onDone: (_) => setState(() { testing = false; status = 'اكتمل'; _ctrl.stop(); }),
-          onProgress: (p, data) => setState(() => uploadRate = data.transferRate),
-        );
+    speedTest.startTesting(
+      useFastApi: true,
+      onStarted: () => setState(() => status = 'بدأ الاختبار'),
+      onProgress: (percent, data) {
+        setState(() {
+          // أقل من 50% = تحميل، أكثر = رفع
+          if (percent < 50) {
+            downloadRate = data.transferRate;
+            status = 'Download ${percent.toStringAsFixed(0)}%';
+          } else {
+            uploadRate = data.transferRate;
+            status = 'Upload ${percent.toStringAsFixed(0)}%';
+          }
+        });
       },
-      onProgress: (p, data) => setState(() => downloadRate = data.transferRate),
-      onError: (e, s) => setState(() { testing = false; status = 'خطأ'; }),
+      onCompleted: (download, upload) {
+        setState(() { 
+          downloadRate = download.transferRate;
+          uploadRate = upload.transferRate;
+          testing = false; 
+          status = 'اكتمل'; 
+          _ctrl.stop(); 
+        });
+      },
+      onError: (errorMessage, speedTestError) => setState(() { 
+        testing = false; 
+        status = 'خطأ'; 
+      }),
     );
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() { 
+    _ctrl.dispose(); 
+    speedTest.cancelTest();
+    super.dispose(); 
+  }
 
   @override
   Widget build(BuildContext context) {
