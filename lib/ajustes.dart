@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'lang.dart';
 import 'main.dart';
+import 'speed_test.dart'; // الملف الجديد باش نعملوه بعد
 
 class AjustesScreen extends StatefulWidget {
   @override
@@ -26,7 +26,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
     {'icon': Icons.playlist_add, 'title': 'ajouter_liste', 'action': 'playlist'},
     {'icon': Icons.lock, 'title': 'parental', 'action': 'parental'},
     {'icon': Icons.swap_horiz, 'title': 'changer_liste', 'action': 'change'},
-    {'icon': Icons.language, 'title': 'changer_langue', 'action': 'lang'},
     {'icon': Icons.grid_view, 'title': 'disposition', 'action': 'layout'},
     {'icon': Icons.visibility_off, 'title': 'masquer_live', 'action': 'hide_live'},
     {'icon': Icons.visibility_off, 'title': 'masquer_vod', 'action': 'hide_vod'},
@@ -38,7 +37,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
     {'icon': Icons.live_tv, 'title': 'live_format', 'action': 'format'},
     {'icon': Icons.play_circle, 'title': 'select_player', 'action': 'player'},
     {'icon': Icons.extension, 'title': 'acteurs_externes', 'action': 'external'},
-    {'icon': Icons.qr_code, 'title': 'qr_code', 'action': 'qr'},
   ];
 
   @override
@@ -59,17 +57,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-
-        // ✅ نفس الكود 100% كيما في main.dart
         String androidId = androidInfo.id?? '';
-        String base = androidId;
-        var bytes = utf8.encode(base);
+        var bytes = utf8.encode(androidId);
         var digest = sha1.convert(bytes);
         String hex = digest.toString().substring(0, 12).toUpperCase();
-
         String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
         mac = mac.substring(0, 17);
-
         String deviceId = digest.toString().substring(0, 6).toUpperCase();
 
         setState(() {
@@ -83,7 +76,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         await prefs.setString('expiry', '${expiry.day}/${expiry.month}/${expiry.year}');
       }
       setState(() => _expiry = prefs.getString('expiry')?? '');
-    } catch(e) {
+    } catch (e) {
       setState(() {
         _deviceName = 'ANDROID TV';
         _mac = '00:11:22:33:44:55';
@@ -102,12 +95,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   void _handleAction(String action) {
     switch (action) {
-      case 'lang':
-        _showLangDialog();
-        break;
-      case 'qr':
-        _showQrDialog();
-        break;
       case 'player':
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Exo Player actif ✓')));
         break;
@@ -116,25 +103,31 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
-  void _showQrDialog() {
-    final data = 'DEVICE:$_deviceName|MAC:$_mac|ID:$_deviceId|EXP:$_expiry';
+  // QR الكبير للموقع
+  void _showQrBigDialog() {
+    String title = {
+      'ar': 'امسح للزيارة',
+      'fr': 'Scannez pour visiter',
+      'en': 'Scan to visit',
+      'de': 'Zum Besuchen scannen',
+      'cs': 'Naskenujte pro návštěvu',
+    }[_currentLang]?? 'Scan to visit';
+
     showDialog(context: context, builder: (_) => AlertDialog(
       backgroundColor: Color(0xFF1A1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('KAMEL PRO', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        Text(title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
         Container(
           color: Colors.white,
-          padding: EdgeInsets.all(15),
-          child: QrImageView(data: data, size: 200),
+          padding: EdgeInsets.all(12),
+          child: Image.asset('assets/qr_big.png', width: 340, height: 340, fit: BoxFit.contain),
         ),
-        SizedBox(height: 15),
-        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 14)),
-        Text(_mac, style: TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('ID: $_deviceId • Exp: $_expiry', style: TextStyle(color: Colors.orange, fontSize: 13)),
+        SizedBox(height: 12),
+        Text('kamelpro.com', style: TextStyle(color: Colors.white70, fontSize: 16, letterSpacing: 1.2)),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: Text('Fermer', style: TextStyle(color: Colors.white70)))
+        TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))
       ],
     ));
   }
@@ -147,8 +140,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
         _langOption('🇹🇳', 'عربي', 'ar'),
         _langOption('🇫🇷', 'Français', 'fr'),
         _langOption('🇨🇿', 'Čeština', 'cs'),
-        _langOption('🇬🇧', 'English', 'en'), // جديد
-        _langOption('🇩🇪', 'Deutsch', 'de'), // جديد
+        _langOption('🇬🇧', 'English', 'en'),
+        _langOption('🇩🇪', 'Deutsch', 'de'),
       ]),
     ));
   }
@@ -159,6 +152,39 @@ class _AjustesScreenState extends State<AjustesScreen> {
       title: Text(name, style: TextStyle(color: Colors.white)),
       trailing: _currentLang == code? Icon(Icons.check, color: Colors.cyan) : null,
       onTap: () { Navigator.pop(context); _changeLang(code); },
+    );
+  }
+
+  void _showUpdateDialog() {
+    showDialog(context: context, builder: (_) => AlertDialog(
+      backgroundColor: Color(0xFF1A1A2E),
+      title: Text('Mise à jour', style: TextStyle(color: Colors.white)),
+      content: Text('Version actuelle: 1.0.0\nDernière version disponible sur kamelpro.com', style: TextStyle(color: Colors.white70)),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))],
+    ));
+  }
+
+  Widget _topIcon(String asset, String label, VoidCallback onTap) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [Color(0xFF1A1A2E), Color(0xFF16213E)]),
+              border: Border.all(color: Colors.cyan.withOpacity(0.5), width: 2),
+              boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 8)],
+            ),
+            padding: EdgeInsets.all(14),
+            child: Image.asset(asset, fit: BoxFit.contain),
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(label, style: TextStyle(color: Colors.white70, fontSize: 13)),
+      ],
     );
   }
 
@@ -177,12 +203,25 @@ class _AjustesScreenState extends State<AjustesScreen> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(40, 50, 30, 20),
+              padding: EdgeInsets.fromLTRB(40, 50, 30, 10),
               child: Row(
                 children: [
                   IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: () => Navigator.pop(context)),
                   SizedBox(width: 15),
                   Text(Lang.get('settings'), style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            // --- الأيقونات المدورة الأربعة ---
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _topIcon('assets/globe.png', Lang.get('langue'), _showLangDialog),
+                  _topIcon('assets/qr.png', 'QR', _showQrBigDialog),
+                  _topIcon('assets/update.png', 'Update', _showUpdateDialog),
+                  _topIcon('assets/speed.png', 'Speed', () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeedTestScreen()))),
                 ],
               ),
             ),
@@ -268,10 +307,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
                             Clipboard.setData(ClipboardData(text: 'Device: $_deviceName\nMAC: $_mac\nID: $_deviceId\nExpire: $_expiry'));
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم النسخ ✓')));
                           },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.qr_code_2, color: Colors.cyan, size: 28),
-                          onPressed: _showQrDialog,
                         ),
                         IconButton(
                           icon: Icon(Icons.share, color: Colors.cyan),
