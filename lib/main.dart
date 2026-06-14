@@ -16,7 +16,19 @@ import 'login.dart';
 import 'lang.dart';
 import 'speed_test.dart';
 
+// ✅✅✅ هذا الكلاس الجديد يحل مشكل CERTIFICATE_VERIFY_FAILED في الاجهزة القديمة
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() async {
+  // ✅✅✅ هذا السطر لازم قبل اي حاجة باش التحديث يخدم
+  HttpOverrides.global = MyHttpOverrides(); 
+  
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
