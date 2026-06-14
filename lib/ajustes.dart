@@ -6,6 +6,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:io';
+// --- زدنا هاذم للتحديث ---
+import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 import 'lang.dart';
 import 'main.dart';
 import 'speed_test.dart';
@@ -108,14 +113,137 @@ class _AjustesScreenState extends State<AjustesScreen> {
     onTap: () { Navigator.pop(context); _changeLang(code); },
   );
 
-  void _showUpdateDialog() {
+  // --- الدالة الجديدة متاع التحديث ---
+  Future<void> _checkForUpdate() async {
     String title = {'ar':'تحديث','fr':'Mise à jour','en':'Update','de':'Update','cs':'Aktualizace'}[_currentLang]!;
-    showDialog(context: context, builder: (_) => AlertDialog(
-      backgroundColor: Color(0xFF1A1A2E),
-      title: Text(title, style: TextStyle(color: Colors.white)),
-      content: Text('Version: 1.0.0\nkamelpro.com', style: TextStyle(color: Colors.white70)),
-      actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: Text('OK', style: TextStyle(color: Colors.cyan)))],
-    ));
+    
+    // Dialog تحميل
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF1A1A2E),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.cyan),
+            SizedBox(height: 16),
+            Text({'ar':'جاري البحث عن تحديث...','fr':'Recherche de mise à jour...','en':'Checking for update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // 1. جيب معلومات التطبيق الحالي
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      int currentVersion = int.parse(packageInfo.buildNumber);
+
+      // 2. جيب version.json من GitHub
+      final response = await http.get(Uri.parse(
+          'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
+      
+      Navigator.pop(context); // سكّر dialog التحميل
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        int newVersion = data['versionCode'];
+        String apkUrl = data['apkUrl'];
+        String newNotes = data['notes'];
+        String newSha256 = data['sha256'];
+
+        // 3. قارن النسخ
+        if (newVersion > currentVersion) {
+          // فما تحديث جديد
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Color(0xFF1A1A2E),
+              title: Text('$title ${data['versionName']}', style: TextStyle(color: Colors.white)),
+              content: Text(newNotes, style: TextStyle(color: Colors.white70)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text({'ar':'لاحقا','fr':'Plus tard','en':'Later'}[_currentLang]!, style: TextStyle(color: Colors.white70, fontSize: 18)),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _downloadAndInstallApk(apkUrl, newSha256);
+                  },
+                  child: Text({'ar':'حدّث الآن','fr':'Mettre à jour','en':'Update Now'}[_currentLang]!, style: TextStyle(color: Colors.green, fontSize: 18)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text({'ar':'التطبيق محدّث لآخر نسخة','fr':'Application à jour','en':'App is up to date'}[_currentLang]!), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text({'ar':'فشل الاتصال بالسيرفر','fr':'Échec de connexion','en':'Connection failed'}[_currentLang]!), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // --- دالة تحميل وتثبيت الـAPK ---
+  Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
+    // Dialog متاع التحميل
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xFF1A1A2E),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.cyan),
+            SizedBox(height: 16),
+            Text({'ar':'جاري تحميل التحديث...','fr':'Téléchargement...','en':'Downloading update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // 1. حمّل الـAPK
+      final response = await http.get(Uri.parse(url));
+      final bytes = response.bodyBytes;
+
+      // 2. تأكد من الـsha256
+      final sha256 = sha256.convert(bytes).toString();
+      if (sha256 != expectedSha256) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted'}[_currentLang]!), backgroundColor: Colors.red),
+        );
+        return;
+      }
+
+      // 3. خزّن الملف
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/update.apk');
+      await file.writeAsBytes(bytes);
+
+      Navigator.pop(context);
+
+      // 4. افتح الملف للتثبيت
+      await OpenFile.open(file.path);
+      
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${{'ar':'فشل التحميل','fr':'Échec du téléchargement','en':'Download failed'}[_currentLang]!}: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _bigCircle(String asset, String label, VoidCallback onTap, {bool autofocus=false}) {
@@ -177,7 +305,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 _bigCircle('assets/globe.png', labels['langue']!, _showLangDialog, autofocus: true),
                 _bigCircle('assets/qr.png', labels['qr']!, _showQrBigDialog),
-                _bigCircle('assets/update.png', labels['update']!, _showUpdateDialog),
+                // --- هنا بدّلنا _showUpdateDialog بـ _checkForUpdate ---
+                _bigCircle('assets/update.png', labels['update']!, _checkForUpdate),
                 _bigCircle('assets/speed.png', labels['speed']!, ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>SpeedTestScreen()))),
               ]),
             ),
