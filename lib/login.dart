@@ -43,22 +43,22 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    // ✅✅✅ هذا السطر الوحيد اللي تبدل - الباقي كيف ما هو
-    if (mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...') {
+    // ✅ هذا الإصلاح المهم - يمنع ERROR للأبد
+    if (mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length != 17) {
       mac = await getMacAddress();
-      await prefs.setString('device_mac', mac); // ✅ حفظ الماك
+      await prefs.setString('device_mac', mac); // ✅ حفظ الماك الجديد
     }
     if (key.isEmpty) {
       key = generateKey();
       await prefs.setString('device_key', key);
     }
 
-    // ✅ دائما حدّث Supabase (مش كان أول مرة)
+    // ✅ دائما حدّث Supabase
     await Supabase.instance.client.from('devices').upsert({
       'mac_address': mac,
       'activation_key': key,
       'last_seen': DateTime.now().toIso8601String(),
-      'device_name': name, // ✅ زدنا اسم الجهاز
+      'device_name': name,
     }, onConflict: 'mac_address');
 
     setState(() {
@@ -67,11 +67,11 @@ class _LoginSelectionState extends State<LoginSelection> {
       _deviceId = key;
     });
 
-    // ✅ جديد: جرّب دخول أوتوماتيك من السحابة
+    // ✅ جرّب دخول أوتوماتيك من السحابة
     await _tryAutoLoginFromCloud(mac);
   }
 
-  // ✅ دالة جديدة: تقرا من Supabase
+  // ✅ دالة تقرا من Supabase
   Future<void> _tryAutoLoginFromCloud(String mac) async {
     try {
       final data = await Supabase.instance.client
@@ -112,7 +112,7 @@ class _LoginSelectionState extends State<LoginSelection> {
                     await prefs.setString('expiry', '${expDate.day}/${expDate.month}/${expDate.year}');
                     await prefs.setInt('daysLeft', expDate.difference(DateTime.now()).inDays);
                     
-                    // ✅ جديد: ابعث تاريخ الانتهاء لـ Supabase
+                    // ✅ ابعث تاريخ الانتهاء لـ Supabase
                     try {
                       await Supabase.instance.client.from('devices').update({
                         'expiry_date': expDate.toIso8601String(),
@@ -379,7 +379,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
                 
-                // ✅ جديد: ابعث تاريخ الانتهاء لـ Supabase
+                // ✅ ابعث تاريخ الانتهاء لـ Supabase
                 String deviceMac = prefs.getString('device_mac') ?? '';
                 if (deviceMac.isNotEmpty) {
                   try {
