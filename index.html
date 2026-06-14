@@ -155,7 +155,6 @@ async function sx(){
 
   if(!server ||!user) return alert(CUR.alert6);
 
-  // 1. نحفظ في playlists باش يبان في الموقع
   let {data:exists} = await supa.from('playlists')
 .select('id').eq('mac', currentMac).eq('type','xtream')
 .eq('server_url', server).eq('username', user).maybeSingle();
@@ -175,7 +174,6 @@ async function sx(){
     alert(CUR.alert5);
   }
 
-  // 2. التعديل الجديد: نحفظ في devices باش التطبيق يلقاه
   await supa.from('devices').update({
     server_url: server,
     username: user,
@@ -191,19 +189,18 @@ async function load(){
     <div class="item">
       <div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div>
       <div style="display:flex;gap:12px">
-        <button onclick="edit(${p.id})" style="background:none;border:none;color:#7aa7ff;font-size:20px">✏️</button>
-        <button onclick="del(${p.id})" style="background:none;border:none;color:#ff5c5c;font-size:20px">🗑️</button>
+        <button onclick="window.edit('${p.id}')" style="background:none;border:none;color:#7aa7ff;font-size:20px">✏️</button>
+        <button onclick="window.del('${p.id}')" style="background:none;border:none;color:#ff5c5c;font-size:20px">🗑️</button>
       </div>
     </div>`).join('');
 }
 
-async function del(id){
+window.del = async function(id){
   if(confirm(CUR.alert8)){
     const {data} = await supa.from('playlists').select('type').eq('id',id).single();
 
     await supa.from('playlists').delete().eq('id',id);
 
-    // كان Xtream، نمسحوه زادة من devices باش التطبيق يفرغ
     if(data?.type === 'xtream'){
       await supa.from('devices').update({
         server_url: null,
@@ -216,7 +213,7 @@ async function del(id){
   }
 }
 
-async function edit(id){
+window.edit = async function(id){
   const {data} = await supa.from('playlists').select().eq('id', id).single();
   if(!data) return alert('خطأ');
 
@@ -256,7 +253,6 @@ async function saveEdit(){
       password: pass
     }).eq('id', editId);
 
-    // التعديل الجديد: نحدث devices زادة
     await supa.from('devices').update({
       server_url: server,
       username: user,
