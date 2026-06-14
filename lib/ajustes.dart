@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:io';
-// --- زدنا هاذم للتحديث ---
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -113,11 +112,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
     onTap: () { Navigator.pop(context); _changeLang(code); },
   );
 
-  // --- الدالة الجديدة متاع التحديث ---
   Future<void> _checkForUpdate() async {
     String title = {'ar':'تحديث','fr':'Mise à jour','en':'Update','de':'Update','cs':'Aktualizace'}[_currentLang]!;
     
-    // Dialog تحميل
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -135,15 +132,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
 
     try {
-      // 1. جيب معلومات التطبيق الحالي
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       int currentVersion = int.parse(packageInfo.buildNumber);
 
-      // 2. جيب version.json من GitHub
       final response = await http.get(Uri.parse(
           'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
       
-      Navigator.pop(context); // سكّر dialog التحميل
+      Navigator.pop(context);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -152,9 +147,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         String newNotes = data['notes'];
         String newSha256 = data['sha256'];
 
-        // 3. قارن النسخ
         if (newVersion > currentVersion) {
-          // فما تحديث جديد
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -194,9 +187,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
-  // --- دالة تحميل وتثبيت الـAPK ---
   Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
-    // Dialog متاع التحميل
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -214,13 +205,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
     );
 
     try {
-      // 1. حمّل الـAPK
       final response = await http.get(Uri.parse(url));
       final bytes = response.bodyBytes;
 
-      // 2. تأكد من الـsha256
-      final sha256 = sha256.convert(bytes).toString();
-      if (sha256 != expectedSha256) {
+      // ✅ هذا اللي صلحناه - بدّلنا اسم الـvariable
+      final calculatedSha256 = sha256.convert(bytes).toString();
+      if (calculatedSha256 != expectedSha256) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted'}[_currentLang]!), backgroundColor: Colors.red),
@@ -228,14 +218,11 @@ class _AjustesScreenState extends State<AjustesScreen> {
         return;
       }
 
-      // 3. خزّن الملف
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/update.apk');
       await file.writeAsBytes(bytes);
 
       Navigator.pop(context);
-
-      // 4. افتح الملف للتثبيت
       await OpenFile.open(file.path);
       
     } catch (e) {
@@ -305,7 +292,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 _bigCircle('assets/globe.png', labels['langue']!, _showLangDialog, autofocus: true),
                 _bigCircle('assets/qr.png', labels['qr']!, _showQrBigDialog),
-                // --- هنا بدّلنا _showUpdateDialog بـ _checkForUpdate ---
                 _bigCircle('assets/update.png', labels['update']!, _checkForUpdate),
                 _bigCircle('assets/speed.png', labels['speed']!, ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>SpeedTestScreen()))),
               ]),
