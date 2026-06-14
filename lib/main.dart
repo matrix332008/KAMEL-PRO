@@ -15,7 +15,7 @@ import 'favorites.dart';
 import 'ajustes.dart';
 import 'login.dart';
 import 'lang.dart';
-import 'speed_test.dart'; // <-- خليتها
+import 'speed_test.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,6 @@ void main() async {
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  // ✅ Supabase الصحيح متاعك
   await Supabase.initialize(
     url: 'https://pmgdzroirlegkpqzcyra.supabase.co',
     anonKey: 'sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj',
@@ -35,33 +34,51 @@ void main() async {
   runApp(KamelProApp());
 }
 
-// ✅ هذا الجديد - قناة باش نكلمو الأندرويد الأصلي (ماعادش نستعملوها، خليناها باش ما نفسدوش الكود)
 const _macChannel = MethodChannel('com.kamelpro.iptv/mac');
 
+// ✅ تولد MAC ثابت للأبد - ما يتبدلش
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
 
-  // 1) لو الماك محفوظ من قبل، رجعو طول (ثابت للأبد)
+  // 1) لو الماك محفوظ و صحيح، رجعو طول - ثابت للأبد
   String? saved = prefs.getString('device_mac');
-  if (saved!= null && saved.isNotEmpty) return saved;
+  if (saved != null && saved.isNotEmpty && saved != 'ERROR' && saved != 'UNKNOWN' && saved != '...') {
+    return saved; // ✅ يرجع نفسو ديما
+  }
 
-  // 2) نولدو ماك ثابت من ANDROID_ID متاع الجهاز (ما يتبدلش لا بوايفاي لا بكابل)
+  // 2) نولدو ماك ثابت من معلومات الجهاز - مرة وحدة في العمر
   try {
     final deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
-      String id = androidInfo.id; // هذا رقم حديدي من المصنع
+      
+      // نجمعو برشة معلومات باش نضمنو ما يكونش unknown
+      String id = androidInfo.id;
+      if (id.isEmpty || id == 'unknown') {
+        id = '${androidInfo.fingerprint}${androidInfo.model}${androidInfo.brand}${androidInfo.device}';
+      }
+      if (id.isEmpty) {
+        id = '${androidInfo.serialNumber}${androidInfo.board}${androidInfo.hardware}';
+      }
+      
+      // هذا الرقم حديدي من المصنع - ما يتبدلش
       String hex = sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
       String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
-      await prefs.setString('device_mac', mac);
+      await prefs.setString('device_mac', mac); // ✅ يتخزن مرة وحدة و معادش يتبدل
       return mac;
     }
-    return 'UNKNOWN';
+    return 'UNKNOWN_DEVICE';
   } catch (e) {
-    return 'ERROR';
+    // حتى في الكاتش نولدو MAC ثابت
+    final random = Random.secure();
+    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
+    String mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
+    await prefs.setString('device_mac', mac);
+    return mac;
   }
 }
 
+// ✅ هذا ID يتغير - كل مرة يتولد جديد
 String generateKey() {
   final random = Random();
   return (100000 + random.nextInt(900000)).toString();
@@ -69,14 +86,14 @@ String generateKey() {
 
 Future<void> registerDevice() async {
   try {
-    final mac = await getMacAddress();
-    final key = generateKey();
+    final mac = await getMacAddress(); // ✅ ثابت للأبد
+    final key = generateKey(); // ✅ يتغير كل مرة
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('device_mac', mac);
     await prefs.setString('device_key', key);
     await Supabase.instance.client.from('devices').upsert({
-      'mac_address': mac,
-      'activation_key': key,
+      'mac_address': mac, // ✅ ثابت في Supabase
+      'activation_key': key, // ✅ يتغير - هذا اللي تحمي بيه
       'last_seen': DateTime.now().toIso8601String(),
     }, onConflict: 'mac_address');
   } catch (e) {
@@ -84,6 +101,7 @@ Future<void> registerDevice() async {
   }
 }
 
+// ... الباقي نفسو بالضبط ما تبدل شي ...
 class KamelProApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -261,7 +279,6 @@ class _MainMenuState extends State<MainMenu> {
                         ],
                       ),
                       Spacer(),
-                      // ✅ هنا نحيت _SpeedButton
                       _LogoutButton(onPressed: () => _logout(context)),
                     ],
                   ),
