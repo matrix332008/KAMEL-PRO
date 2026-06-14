@@ -21,9 +21,9 @@ class AjustesScreen extends StatefulWidget {
 
 class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
-  String _mac = '...';
-  String _deviceId = '...';
-  String _deviceName = '...';
+  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _deviceId = '000000';
+  String _deviceName = 'ANDROID TV';
   String _expiry = '';
 
   @override
@@ -43,16 +43,19 @@ class _AjustesScreenState extends State<AjustesScreen> {
     final prefs = await SharedPreferences.getInstance();
     
     // ✅ نقراو MAC و ID من اللي خزناهم في main.dart
-    String mac = await getMacAddress(); // 👈 يجيب من macAddress
-    String deviceId = prefs.getString('device_id') ?? '...';
+    String mac = await getMacAddress(); // 👈 يجيب من macAddress + Fallback
+    String deviceId = prefs.getString('device_id') ?? '000000';
+    
+    print('🔥 AJUSTES MAC: $mac');
+    print('🔥 AJUSTES ID: $deviceId');
     
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = deviceId; // 👈 من SharedPreferences
-          _mac = mac; // 👈 من SharedPreferences
+          _deviceId = deviceId;
+          _mac = mac;
         });
       }
       if (!prefs.containsKey('expiry')) {
@@ -63,7 +66,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     } catch (e) {
       setState(() {
         _deviceName = 'ANDROID TV';
-        _mac = mac; // 👈 حتى في الـ catch نستعملو المخزن
+        _mac = mac;
         _deviceId = deviceId;
         _expiry = '20/9/2026';
       });
