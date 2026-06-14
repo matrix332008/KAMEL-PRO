@@ -11,7 +11,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'lang.dart';
-import 'main.dart';
+import 'main.dart'; // 👈 باش نستعملو getMacAddress()
 import 'speed_test.dart';
 
 class AjustesScreen extends StatefulWidget {
@@ -41,18 +41,18 @@ class _AjustesScreenState extends State<AjustesScreen> {
   _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     final prefs = await SharedPreferences.getInstance();
+    
+    // ✅ نقراو MAC و ID من اللي خزناهم في main.dart
+    String mac = await getMacAddress(); // 👈 يجيب من macAddress
+    String deviceId = prefs.getString('device_id') ?? '...';
+    
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        String androidId = androidInfo.id ?? '';
-        var digest = sha1.convert(utf8.encode(androidId));
-        String hex = digest.toString().substring(0, 12).toUpperCase();
-        String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
-        mac = mac.substring(0, 17);
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = digest.toString().substring(0, 6).toUpperCase();
-          _mac = mac;
+          _deviceId = deviceId; // 👈 من SharedPreferences
+          _mac = mac; // 👈 من SharedPreferences
         });
       }
       if (!prefs.containsKey('expiry')) {
@@ -62,9 +62,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
       setState(() => _expiry = prefs.getString('expiry') ?? '');
     } catch (e) {
       setState(() {
-        _deviceName = 'XIAOMI MITV-AYFR0';
-        _mac = '45:2A:CD:2F:31:17';
-        _deviceId = '452ACD';
+        _deviceName = 'ANDROID TV';
+        _mac = mac; // 👈 حتى في الـ catch نستعملو المخزن
+        _deviceId = deviceId;
         _expiry = '20/9/2026';
       });
     }
@@ -208,7 +208,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
       final response = await http.get(Uri.parse(url));
       final bytes = response.bodyBytes;
 
-      // ✅ هذا اللي صلحناه - بدّلنا اسم الـvariable
       final calculatedSha256 = sha256.convert(bytes).toString();
       if (calculatedSha256 != expectedSha256) {
         Navigator.pop(context);
