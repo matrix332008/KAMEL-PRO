@@ -1,6 +1,7 @@
 {
-  "versionCode": 1,
-  "versionName": "1.0.0",
-  "apkUrl": "https://kamel-pro.com/app-release.apk",
-  "notes": "أول نسخة"
+  "versionCode": 118,
+  "versionName": "1.0.118", 
+  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v118/app-release.apk",
+  "sha256": "cba14237a1afa46975c0f35646e000980a49eb8f0dd068a72cf7e336e09a89ca",
+  "notes": "تحديث Build 118 - اصلاحات وتحسينات"
 }
