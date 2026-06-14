@@ -1,7 +1,7 @@
 {
-  "versionCode": 118,
-  "versionName": "1.0.118", 
-  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v118/app-release.apk",
-  "sha256": "cba14237a1afa46975c0f35646e000980a49eb8f0dd068a72cf7e336e09a89ca",
-  "notes": "تحديث Build 118 - اصلاحات وتحسينات"
+  "versionCode": 121,
+  "versionName": "1.0.121",
+  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v121/app-release.apk",
+  "sha256": "TEMP_SHA256_REPLACE_AFTER_BUILD",
+  "notes": "تحديث Build 121 - اصلاح مشكلة تسجيل الدخول MAC Address ثابت"
 }
