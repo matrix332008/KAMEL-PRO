@@ -32,8 +32,9 @@ class _LoginSelectionState extends State<LoginSelection> {
     final prefs = await SharedPreferences.getInstance();
     final deviceInfo = DeviceInfoPlugin();
     
-    String mac = prefs.getString('device_mac') ?? '';
-    String key = prefs.getString('device_key') ?? '';
+    // ✅ نقراو من macAddress و device_id متاع main.dart
+    String mac = prefs.getString('macAddress') ?? '';
+    String key = prefs.getString('device_id') ?? '';
     String name = 'ANDROID TV';
 
     try {
@@ -43,14 +44,14 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    // ✅ هذا الإصلاح المهم - يمنع ERROR للأبد
+    // ✅ كان فاضي نستعملو getMacAddress() من main.dart
     if (mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length != 17) {
       mac = await getMacAddress();
-      await prefs.setString('device_mac', mac); // ✅ حفظ الماك الجديد
+      await prefs.setString('macAddress', mac); // 👈 macAddress مش device_mac
     }
     if (key.isEmpty) {
       key = generateKey();
-      await prefs.setString('device_key', key);
+      await prefs.setString('device_id', key); // 👈 device_id مش device_key
     }
 
     // ✅ دائما حدّث Supabase
@@ -379,8 +380,8 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
                 
-                // ✅ ابعث تاريخ الانتهاء لـ Supabase
-                String deviceMac = prefs.getString('device_mac') ?? '';
+                // ✅ ابعث تاريخ الانتهاء لـ Supabase - استعمل macAddress
+                String deviceMac = prefs.getString('macAddress') ?? ''; // 👈 macAddress
                 if (deviceMac.isNotEmpty) {
                   try {
                     await Supabase.instance.client.from('devices').update({
