@@ -18,9 +18,9 @@ class LoginSelection extends StatefulWidget {
 }
 
 class _LoginSelectionState extends State<LoginSelection> {
-  String _mac = '...';
-  String _deviceId = '...';
-  String _deviceName = '...';
+  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _deviceId = '000000';
+  String _deviceName = 'ANDROID TV';
 
   @override
   void initState() {
@@ -33,7 +33,7 @@ class _LoginSelectionState extends State<LoginSelection> {
     final deviceInfo = DeviceInfoPlugin();
     
     // ✅ نقراو من macAddress و device_id متاع main.dart
-    String mac = prefs.getString('macAddress') ?? '';
+    String mac = await getMacAddress(); // 👈 يجيب من main.dart + Fallback
     String key = prefs.getString('device_id') ?? '';
     String name = 'ANDROID TV';
 
@@ -44,29 +44,34 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    // ✅ كان فاضي نستعملو getMacAddress() من main.dart
-    if (mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length != 17) {
-      mac = await getMacAddress();
-      await prefs.setString('macAddress', mac); // 👈 macAddress مش device_mac
-    }
+    // ✅ كان الـ ID فاضي نولدوه
     if (key.isEmpty) {
       key = generateKey();
-      await prefs.setString('device_id', key); // 👈 device_id مش device_key
+      await prefs.setString('device_id', key);
     }
 
-    // ✅ دائما حدّث Supabase
-    await Supabase.instance.client.from('devices').upsert({
-      'mac_address': mac,
-      'activation_key': key,
-      'last_seen': DateTime.now().toIso8601String(),
-      'device_name': name,
-    }, onConflict: 'mac_address');
+    print('🔥 LOGIN FINAL MAC: $mac');
+    print('🔥 LOGIN FINAL ID: $key');
 
-    setState(() {
-      _deviceName = name;
-      _mac = mac;
-      _deviceId = key;
-    });
+    // ✅ دائما حدّث Supabase
+    try {
+      await Supabase.instance.client.from('devices').upsert({
+        'mac_address': mac,
+        'activation_key': key,
+        'last_seen': DateTime.now().toIso8601String(),
+        'device_name': name,
+      }, onConflict: 'mac_address');
+    } catch (e) {
+      print('Supabase Error: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _deviceName = name;
+        _mac = mac;
+        _deviceId = key;
+      });
+    }
 
     // ✅ جرّب دخول أوتوماتيك من السحابة
     await _tryAutoLoginFromCloud(mac);
@@ -113,7 +118,6 @@ class _LoginSelectionState extends State<LoginSelection> {
                     await prefs.setString('expiry', '${expDate.day}/${expDate.month}/${expDate.year}');
                     await prefs.setInt('daysLeft', expDate.difference(DateTime.now()).inDays);
                     
-                    // ✅ ابعث تاريخ الانتهاء لـ Supabase
                     try {
                       await Supabase.instance.client.from('devices').update({
                         'expiry_date': expDate.toIso8601String(),
@@ -144,7 +148,7 @@ class _LoginSelectionState extends State<LoginSelection> {
         }
       }
     } catch (e) {
-      // نتجاهل الخطأ ونخلي المستخدم يدخل يدوي
+      print('AutoLogin Error: $e');
     }
   }
 
@@ -380,8 +384,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
                 
-                // ✅ ابعث تاريخ الانتهاء لـ Supabase - استعمل macAddress
-                String deviceMac = prefs.getString('macAddress') ?? ''; // 👈 macAddress
+                String deviceMac = await getMacAddress();
                 if (deviceMac.isNotEmpty) {
                   try {
                     await Supabase.instance.client.from('devices').update({
@@ -589,7 +592,7 @@ class __InputFieldState extends State<_InputField> {
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
             widget.prevFocus?.requestFocus();
-            return KeyEventResult.handled;
+            return KeyEventResult.ignored;
           }
         }
         return KeyEventResult.ignored;
