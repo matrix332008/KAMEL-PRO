@@ -1,7 +1,7 @@
 name: kamel_pro
 description: "KAMEL PRO IPTV - Android TV App"
 publish_to: 'none'
-version: 1.0.121+121
+version: 1.0.122+122
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -16,7 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   intl: ^0.19.0
   font_awesome_flutter: 10.4.0
-  device_info_plus: ^10.1.0
+  # device_info_plus: ^10.1.0  ❌ نحيناها - معادش نستعملوها
   share_plus: ^7.2.1
   qr_flutter: ^4.1.0
   crypto: ^3.0.3
