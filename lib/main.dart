@@ -31,7 +31,7 @@ void main() async {
 
   await Lang.load();
   
-  // ✅✅✅ القنبلة الذرية: نولدو MAC قبل runApp - مستحيل يطلع...
+  // ✅✅ القنبلة الذرية: نولدو MAC قبل runApp - مستحيل يطلع...
   await forceGenerateMacIfNeeded();
   
   runApp(KamelProApp());
@@ -40,29 +40,29 @@ void main() async {
 // ✅✅✅ يشتغل قبل ما اي شاشة تفتح
 Future<void> forceGenerateMacIfNeeded() async {
   final prefs = await SharedPreferences.getInstance();
-  String? mac = prefs.getString('device_mac');
+  String? mac = prefs.getString('macAddress'); // 👈 بدلنا من device_mac
   
   // كان فاسد ولا... ولا فاضي ولا مش 17 حرف، نولدو جديد
   if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length!= 17 ||!mac.contains(':')) {
     final random = Random.secure();
     final bytes = List<int>.generate(6, (i) => random.nextInt(256));
     mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-    await prefs.setString('device_mac', mac);
+    await prefs.setString('macAddress', mac); // 👈 بدلنا من device_mac
     print('FORCE NEW MAC: $mac');
   }
   
   // نتأكدو ID موجود زادا
-  String? key = prefs.getString('device_key');
+  String? key = prefs.getString('device_id'); // 👈 بدلنا من device_key
   if (key == null || key.isEmpty) {
     key = (100000 + Random().nextInt(900000)).toString();
-    await prefs.setString('device_key', key);
+    await prefs.setString('device_id', key); // 👈 بدلنا من device_key
   }
 }
 
 // ✅ توّا getMacAddress تقرا برك - ما تولدش
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('device_mac')?? 'AA:BB:CC:DD:EE:FF'; // مستحيل توصل هنا
+  return prefs.getString('macAddress')?? 'AA:BB:CC:DD:EE:FF'; // 👈 بدلنا من device_mac
 }
 
 // ✅ هذا ID يتغير - كل مرة يتولد جديد
@@ -76,7 +76,7 @@ Future<void> registerDevice() async {
     final mac = await getMacAddress(); // ✅ ديما موجود
     final key = generateKey(); // ✅ يتغير كل مرة
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('device_key', key);
+    await prefs.setString('device_id', key); // 👈 بدلنا من device_key
     await Supabase.instance.client.from('devices').upsert({
       'mac_address': mac, // ✅ ثابت في Supabase
       'activation_key': key, // ✅ يتغير - هذا اللي تحمي بيه
