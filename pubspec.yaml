@@ -16,13 +16,12 @@ dependencies:
   cupertino_icons: ^1.0.6
   intl: ^0.19.0
   font_awesome_flutter: 10.4.0
-  # device_info_plus: ^10.1.0  ❌ نحيناها - معادش نستعملوها
+  device_info_plus: ^10.1.0  # ✅ رجعناها باش ajustees.dart و login.dart يخدمو
   share_plus: ^7.2.1
   qr_flutter: ^4.1.0
   crypto: ^3.0.3
   supabase_flutter: ^2.5.0
   flutter_internet_speed_test: ^1.5.0
-  # --- زدنا هاذم للتحديث ---
   package_info_plus: ^8.0.0
   path_provider: ^2.1.3
   open_file: ^3.3.2
@@ -44,7 +43,6 @@ flutter:
     - assets/series.png
     - assets/favorites.png
     - assets/ajustes.png
-    # --- الأيقونات الجديدة المدورة ---
     - assets/globe.png
     - assets/qr.png
     - assets/update.png
