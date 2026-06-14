@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -31,62 +30,39 @@ void main() async {
   );
 
   await Lang.load();
+  
+  // ✅✅✅ القنبلة الذرية: نولدو MAC قبل runApp - مستحيل يطلع...
+  await forceGenerateMacIfNeeded();
+  
   runApp(KamelProApp());
 }
 
-// ❌ نحيناه - معادش نستعملو MethodChannel
-// const _macChannel = MethodChannel('com.kamelpro.iptv/mac');
+// ✅✅✅ يشتغل قبل ما اي شاشة تفتح
+Future<void> forceGenerateMacIfNeeded() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? mac = prefs.getString('device_mac');
+  
+  // كان فاسد ولا... ولا فاضي ولا مش 17 حرف، نولدو جديد
+  if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length!= 17 ||!mac.contains(':')) {
+    final random = Random.secure();
+    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
+    mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
+    await prefs.setString('device_mac', mac);
+    print('FORCE NEW MAC: $mac');
+  }
+  
+  // نتأكدو ID موجود زادا
+  String? key = prefs.getString('device_key');
+  if (key == null || key.isEmpty) {
+    key = (100000 + Random().nextInt(900000)).toString();
+    await prefs.setString('device_key', key);
+  }
+}
 
-// ✅ تولد MAC ثابت للأبد - مستحيل يرجع ERROR
+// ✅ توّا getMacAddress تقرا برك - ما تولدش
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
-
-  // 1) لو الماك محفوظ و صحيح، رجعو طول - ثابت للأبد
-  String? saved = prefs.getString('device_mac');
-  if (saved != null && saved.isNotEmpty && saved != 'ERROR' && saved != 'UNKNOWN' && saved != '...' && saved.length == 17) {
-    return saved; // ✅ يرجع نفسو ديما
-  }
-
-  // 2) نولدو ماك ثابت من معلومات الجهاز - مرة وحدة في العمر
-  try {
-    final deviceInfo = DeviceInfoPlugin();
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      
-      // نجمعو برشة معلومات باش نضمنو ما يكونش unknown
-      String id = androidInfo.id;
-      if (id.isEmpty || id == 'unknown') {
-        id = '${androidInfo.fingerprint}${androidInfo.model}${androidInfo.brand}${androidInfo.device}';
-      }
-      if (id.isEmpty || id == 'unknown') {
-        id = '${androidInfo.serialNumber}${androidInfo.board}${androidInfo.hardware}';
-      }
-      
-      // كان الكل فاضي نستعملو الوقت - ما يتبدلش خاطر يتخزن
-      if (id.isEmpty || id == 'unknown') {
-        id = DateTime.now().millisecondsSinceEpoch.toString();
-      }
-      
-      // هذا الرقم يتخزن للأبد - ما يتبدلش
-      String hex = sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
-      String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:').substring(0,17);
-      await prefs.setString('device_mac', mac); // ✅ يتخزن مرة وحدة و معادش يتبدل
-      return mac;
-    }
-    // كان مش اندرويد نولدو واحد عشوائي و نخزنوه
-    final random = Random.secure();
-    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
-    String mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-    await prefs.setString('device_mac', mac);
-    return mac;
-  } catch (e) {
-    // حتى في الكاتش نولدو MAC ثابت و نخزنوه
-    final random = Random.secure();
-    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
-    String mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-    await prefs.setString('device_mac', mac);
-    return mac;
-  }
+  return prefs.getString('device_mac')?? 'AA:BB:CC:DD:EE:FF'; // مستحيل توصل هنا
 }
 
 // ✅ هذا ID يتغير - كل مرة يتولد جديد
@@ -97,10 +73,9 @@ String generateKey() {
 
 Future<void> registerDevice() async {
   try {
-    final mac = await getMacAddress(); // ✅ ثابت للأبد
+    final mac = await getMacAddress(); // ✅ ديما موجود
     final key = generateKey(); // ✅ يتغير كل مرة
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('device_mac', mac);
     await prefs.setString('device_key', key);
     await Supabase.instance.client.from('devices').upsert({
       'mac_address': mac, // ✅ ثابت في Supabase
