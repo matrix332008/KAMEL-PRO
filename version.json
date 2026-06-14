@@ -1,7 +1,7 @@
 {
-  "versionCode": 125,
-  "versionName": "1.0.125",
-  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v1.0.125/app-release.apk",
-  "sha256": "02be6dfe500834e4a6edb84fe8da99a462a17abd98075bf26711cb8a729bc2f6",
-  "notes": "تحديث Build 125 - إصلاح مشكل التحديث SSL + فورمات الماك + ثبات MAC Address"
+  "versionCode": 126,
+  "versionName": "1.0.126",
+  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v1.0.126/app-release.apk",
+  "sha256": "حط هنا SHA256 متاع app-release.apk الجديد",
+  "notes": "إصلاح مشكل التحديث CERTIFICATE_VERIFY_FAILED نهائيا + تحسينات"
 }
