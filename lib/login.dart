@@ -43,7 +43,8 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    if (mac.isEmpty) {
+    // ✅✅✅ هذا السطر الوحيد اللي تبدل - الباقي كيف ما هو
+    if (mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...') {
       mac = await getMacAddress();
       await prefs.setString('device_mac', mac); // ✅ حفظ الماك
     }
