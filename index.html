@@ -84,7 +84,6 @@ let html5Qr;
 let editId = null;
 let editType = '';
 
-// === فورمات الماك الجديد ===
 function formatMac(input) {
   let v = input.value.toUpperCase().replace(/[^A-F0-9]/g, '');
   if (v.length > 12) v = v.substring(0, 12);
@@ -156,6 +155,7 @@ async function sx(){
 
   if(!server ||!user) return alert(CUR.alert6);
 
+  // 1. نحفظ في playlists باش يبان في الموقع
   let {data:exists} = await supa.from('playlists')
 .select('id').eq('mac', currentMac).eq('type','xtream')
 .eq('server_url', server).eq('username', user).maybeSingle();
@@ -174,6 +174,14 @@ async function sx(){
     });
     alert(CUR.alert5);
   }
+
+  // 2. التعديل الجديد: نحفظ في devices باش التطبيق يلقاه
+  await supa.from('devices').update({
+    server_url: server,
+    username: user,
+    password: pass
+  }).eq('mac_address', currentMac);
+
   load();
 }
 
@@ -191,7 +199,19 @@ async function load(){
 
 async function del(id){
   if(confirm(CUR.alert8)){
+    const {data} = await supa.from('playlists').select('type').eq('id',id).single();
+
     await supa.from('playlists').delete().eq('id',id);
+
+    // كان Xtream، نمسحوه زادة من devices باش التطبيق يفرغ
+    if(data?.type === 'xtream'){
+      await supa.from('devices').update({
+        server_url: null,
+        username: null,
+        password: null
+      }).eq('mac_address', currentMac);
+    }
+
     load();
   }
 }
@@ -226,11 +246,22 @@ async function saveEdit(){
     const url = document.getElementById('eu').value.trim();
     await supa.from('playlists').update({url}).eq('id', editId);
   } else {
+    const server = document.getElementById('es').value.trim();
+    const user = document.getElementById('euser').value.trim();
+    const pass = document.getElementById('epass').value;
+
     await supa.from('playlists').update({
-      server_url: document.getElementById('es').value.trim(),
-      username: document.getElementById('euser').value.trim(),
-      password: document.getElementById('epass').value
+      server_url: server,
+      username: user,
+      password: pass
     }).eq('id', editId);
+
+    // التعديل الجديد: نحدث devices زادة
+    await supa.from('devices').update({
+      server_url: server,
+      username: user,
+      password: pass
+    }).eq('mac_address', currentMac);
   }
 
   alert(CUR.alert9);
