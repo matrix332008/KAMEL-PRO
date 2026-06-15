@@ -128,7 +128,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           children: [
             CircularProgressIndicator(color: Colors.cyan),
             SizedBox(height: 16),
-            Text({'ar':'جاري البحث عن تحديث...','fr':'Recherche de mise à jour...','en':'Checking for update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+            Text({'ar':'جاري البحث عن تحديث...','fr':'Recherche de mise à jour...','en':'Checking for update...','de':'Suche nach Updates...','cs':'Kontrola aktualizace...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -160,32 +160,32 @@ class _AjustesScreenState extends State<AjustesScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text({'ar':'لاحقا','fr':'Plus tard','en':'Later'}[_currentLang]!, style: TextStyle(color: Colors.white70, fontSize: 18)),
+                  child: Text({'ar':'لاحقا','fr':'Plus tard','en':'Later','de':'Später','cs':'Později'}[_currentLang]!, style: TextStyle(color: Colors.white70, fontSize: 18)),
                 ),
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
                     await _downloadAndInstallApk(apkUrl, newSha256);
                   },
-                  child: Text({'ar':'حدّث الآن','fr':'Mettre à jour','en':'Update Now'}[_currentLang]!, style: TextStyle(color: Colors.green, fontSize: 18)),
+                  child: Text({'ar':'حدّث الآن','fr':'Mettre à jour','en':'Update Now','de':'Jetzt aktualisieren','cs':'Aktualizovat'}[_currentLang]!, style: TextStyle(color: Colors.green, fontSize: 18)),
                 ),
               ],
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text({'ar':'التطبيق محدّث لآخر نسخة','fr':'Application à jour','en':'App is up to date'}[_currentLang]!), backgroundColor: Colors.green),
+            SnackBar(content: Text({'ar':'التطبيق محدّث لآخر نسخة','fr':'Application à jour','en':'App is up to date','de':'App ist aktuell','cs':'Aplikace je aktuální'}[_currentLang]!), backgroundColor: Colors.green),
           );
         }
       } else {
          ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text({'ar':'فشل الاتصال بالسيرفر','fr':'Échec de connexion','en':'Connection failed'}[_currentLang]!), backgroundColor: Colors.red),
+          SnackBar(content: Text({'ar':'فشل الاتصال بالسيرفر','fr':'Échec de connexion','en':'Connection failed','de':'Verbindung fehlgeschlagen','cs':'Připojení selhalo'}[_currentLang]!), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('${Lang.get('error')}: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -201,7 +201,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           children: [
             CircularProgressIndicator(color: Colors.cyan),
             SizedBox(height: 16),
-            Text({'ar':'جاري تحميل التحديث...','fr':'Téléchargement...','en':'Downloading update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+            Text({'ar':'جاري تحميل التحديث...','fr':'Téléchargement...','en':'Downloading update...','de':'Update wird heruntergeladen...','cs':'Stahování aktualizace...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -215,7 +215,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       if (calculatedSha256 != expectedSha256) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted'}[_currentLang]!), backgroundColor: Colors.red),
+          SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted','de':'Datei beschädigt','cs':'Soubor je poškozen'}[_currentLang]!), backgroundColor: Colors.red),
         );
         return;
       }
@@ -230,7 +230,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${{'ar':'فشل التحميل','fr':'Échec du téléchargement','en':'Download failed'}[_currentLang]!}: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('${{'ar':'فشل التحميل','fr':'Échec du téléchargement','en':'Download failed','de':'Download fehlgeschlagen','cs':'Stahování selhalo'}[_currentLang]!}: $e'), backgroundColor: Colors.red),
       );
     }
   }
