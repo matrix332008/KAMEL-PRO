@@ -24,11 +24,11 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (c) => AlertDialog(
         backgroundColor: Colors.black87,
-        title: Text('خروج', style: TextStyle(color: Colors.white)),
-        content: Text('هل تريد الخروج من التطبيق؟', style: TextStyle(color: Colors.white70)),
+        title: Text(Lang.get('exit'), style: TextStyle(color: Colors.white)), // ← تبدل
+        content: Text(Lang.get('exit_msg'), style: TextStyle(color: Colors.white70)), // ← تبدل
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('لا', style: TextStyle(color: Colors.white70))),
-          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('نعم', style: TextStyle(color: Colors.redAccent))),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Lang.get('no'), style: TextStyle(color: Colors.white70))), // ← تبدل
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.redAccent))), // ← تبدل
         ],
       ),
     ) ?? false;
