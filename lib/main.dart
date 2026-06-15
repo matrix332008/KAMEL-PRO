@@ -21,14 +21,14 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+     ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
 void main() async {
   // ✅✅✅ هذا السطر لازم قبل اي حاجة باش التحديث يخدم
-  HttpOverrides.global = MyHttpOverrides(); 
-  
+  HttpOverrides.global = MyHttpOverrides();
+
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
@@ -42,20 +42,20 @@ void main() async {
   );
 
   await Lang.load();
-  
+
   // ✅✅✅ نولدو MAC اجباري قبل ما اي شاشة تفتح
   await forceGenerateMacIfNeeded();
-  
+
   runApp(KamelProApp());
 }
 
-// ✅ يولد MAC اجباري - مستحيل يرجع ...
+// ✅ يولد MAC اجباري - مستحيل يرجع...
 Future<void> forceGenerateMacIfNeeded() async {
   final prefs = await SharedPreferences.getInstance();
   String? mac = prefs.getString('macAddress');
-  
+
   // ✅ شرط اقوى: كان فاسد ولا فاضي ولا مش MAC صحيح، نولدو جديد
-  if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length != 17 || !mac.contains(':') || mac.split(':').length != 6) {
+  if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length!= 17 ||!mac.contains(':') || mac.split(':').length!= 6) {
     final random = Random.secure();
     final bytes = List<int>.generate(6, (i) => random.nextInt(256));
     mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
@@ -64,7 +64,7 @@ Future<void> forceGenerateMacIfNeeded() async {
   } else {
     print('✅ EXISTING MAC FOUND: $mac');
   }
-  
+
   String? key = prefs.getString('device_id');
   if (key == null || key.isEmpty) {
     key = (100000 + Random().nextInt(900000)).toString();
@@ -72,10 +72,10 @@ Future<void> forceGenerateMacIfNeeded() async {
   }
 }
 
-// ✅ تقرا برك + Fallback مستحيل يرجع ...
+// ✅ تقرا برك + Fallback مستحيل يرجع...
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
-  String mac = prefs.getString('macAddress') ?? '';
+  String mac = prefs.getString('macAddress')?? '';
   if (mac.isEmpty || mac == '...') return 'AA:BB:CC:DD:EE:FF';
   return mac;
 }
@@ -236,7 +236,7 @@ class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {
     Color expiryColor = _daysLeft > 30? Colors.green : _daysLeft > 7? Colors.orange : Colors.red;
-    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft يوم' : 'انتهى');
+    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft ${Lang.get('days_left')}' : Lang.get('expired')); // ← هذا السطر تبدل
 
     return WillPopScope(
       onWillPop: () async {
