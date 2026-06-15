@@ -139,6 +139,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       int currentVersion = int.parse(packageInfo.buildNumber);
+      
+      print('🔥 CURRENT VERSION: $currentVersion'); // للـ Debug
 
       final response = await http.get(Uri.parse(
           'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
@@ -151,6 +153,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
         String apkUrl = data['apkUrl'];
         String newNotes = data['notes'];
         String newSha256 = data['sha256'];
+
+        print('🔥 NEW VERSION: $newVersion'); // للـ Debug
 
         if (newVersion > currentVersion) {
           showDialog(
@@ -284,7 +288,22 @@ class _AjustesScreenState extends State<AjustesScreen> {
         decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)])),
         child: Column(children: [
-          Padding(padding: EdgeInsets.fromLTRB(40,50,30,20),
+          // ✅ هاذي جديدة: توريك النسخة الحقيقية متاع الـ APK
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return SizedBox(height: 40);
+              return Container(
+                padding: EdgeInsets.only(top: 45),
+                child: Text(
+                  'BUILD: ${snapshot.data!.version}+${snapshot.data!.buildNumber}',
+                  style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              );
+            },
+          ),
+          
+          Padding(padding: EdgeInsets.fromLTRB(40,10,30,20),
             child: Row(children: [
               IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: ()=>Navigator.pop(context)),
               SizedBox(width: 15),
@@ -296,7 +315,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 _bigCircle('assets/globe.png', labels['langue']!, _showLangDialog, autofocus: true),
                 _bigCircle('assets/qr.png', labels['qr']!, _showQrBigDialog),
-                _bigCircle('assets/update.png', labels['update']!, _checkForUpdate),
+                _bigCircle('assets/update.png', labels['update']!, () => _checkForUpdate()),
                 _bigCircle('assets/speed.png', labels['speed']!, ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>SpeedTestScreen()))),
               ]),
             ),
