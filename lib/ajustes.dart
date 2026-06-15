@@ -11,9 +11,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'lang.dart';
-import 'device_register.dart'; // ✅ بدلت import
-import 'speed_test.dart';
 import 'main.dart';
+import 'speed_test.dart';
 
 class AjustesScreen extends StatefulWidget {
   @override
@@ -22,9 +21,9 @@ class AjustesScreen extends StatefulWidget {
 
 class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
-  String _mac = 'AA:BB:CC:DD:EE:FF';
-  String _deviceId = '000000';
-  String _deviceName = 'ANDROID TV';
+  String _mac = '...';
+  String _deviceId = '...';
+  String _deviceName = '...';
   String _expiry = '';
 
   @override
@@ -42,20 +41,17 @@ class _AjustesScreenState extends State<AjustesScreen> {
   _getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     final prefs = await SharedPreferences.getInstance();
-    
-    // ✅ نجيبو من DeviceRegister الجديد
-    String mac = await DeviceRegister.getStableId(); 
-    String deviceId = await DeviceRegister.getActivationKey();
-    
-    print('🔥 AJUSTES MAC: $mac');
-    print('🔥 AJUSTES ID: $deviceId');
-    
     try {
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
+        String androidId = androidInfo.id ?? '';
+        var digest = sha1.convert(utf8.encode(androidId));
+        String hex = digest.toString().substring(0, 12).toUpperCase();
+        String mac = hex.replaceAllMapped(RegExp(r'.{2}'), (m) => '${m.group(0)}:');
+        mac = mac.substring(0, 17);
         setState(() {
           _deviceName = '${androidInfo.manufacturer} ${androidInfo.model}'.toUpperCase();
-          _deviceId = deviceId;
+          _deviceId = digest.toString().substring(0, 6).toUpperCase();
           _mac = mac;
         });
       }
@@ -66,9 +62,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
       setState(() => _expiry = prefs.getString('expiry') ?? '');
     } catch (e) {
       setState(() {
-        _deviceName = 'ANDROID TV';
-        _mac = mac;
-        _deviceId = deviceId;
+        _deviceName = 'XIAOMI MITV-AYFR0';
+        _mac = '45:2A:CD:2F:31:17';
+        _deviceId = '452ACD';
         _expiry = '20/9/2026';
       });
     }
@@ -102,10 +98,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
       backgroundColor: Color(0xFF1A1A2E),
       title: Text(Lang.get('choisir_langue'), style: TextStyle(color: Colors.white)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        _langOption('🇹🇳','عربي','ar'), 
-        _langOption('🇫🇷','Français','fr'),
-        _langOption('🇨🇿','Čeština','cs'), 
-        _langOption('🇬🇧','English','en'),
+        _langOption('🇹🇳','عربي','ar'), _langOption('🇫🇷','Français','fr'),
+        _langOption('🇨🇿','Čeština','cs'), _langOption('🇬🇧','English','en'),
         _langOption('🇩🇪','Deutsch','de'),
       ]),
     ));
@@ -131,7 +125,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           children: [
             CircularProgressIndicator(color: Colors.cyan),
             SizedBox(height: 16),
-            Text({'ar':'جاري البحث عن تحديث...','fr':'Recherche de mise à jour...','en':'Checking for update...','de':'Suche nach Updates...','cs':'Kontrola aktualizace...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+            Text({'ar':'جاري البحث عن تحديث...','fr':'Recherche de mise à jour...','en':'Checking for update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -140,8 +134,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
     try {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       int currentVersion = int.parse(packageInfo.buildNumber);
-      
-      print('🔥 CURRENT VERSION: $currentVersion');
 
       final response = await http.get(Uri.parse(
           'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
@@ -155,8 +147,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         String newNotes = data['notes'];
         String newSha256 = data['sha256'];
 
-        print('🔥 NEW VERSION: $newVersion');
-
         if (newVersion > currentVersion) {
           showDialog(
             context: context,
@@ -167,26 +157,26 @@ class _AjustesScreenState extends State<AjustesScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text({'ar':'لاحقا','fr':'Plus tard','en':'Later','de':'Später','cs':'Později'}[_currentLang]!, style: TextStyle(color: Colors.white70, fontSize: 18)),
+                  child: Text({'ar':'لاحقا','fr':'Plus tard','en':'Later'}[_currentLang]!, style: TextStyle(color: Colors.white70, fontSize: 18)),
                 ),
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
                     await _downloadAndInstallApk(apkUrl, newSha256);
                   },
-                  child: Text({'ar':'حدّث الآن','fr':'Mettre à jour','en':'Update Now','de':'Jetzt aktualisieren','cs':'Aktualizovat'}[_currentLang]!, style: TextStyle(color: Colors.green, fontSize: 18)),
+                  child: Text({'ar':'حدّث الآن','fr':'Mettre à jour','en':'Update Now'}[_currentLang]!, style: TextStyle(color: Colors.green, fontSize: 18)),
                 ),
               ],
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text({'ar':'التطبيق محدّث لآخر نسخة','fr':'Application à jour','en':'App is up to date','de':'App ist aktuell','cs':'Aplikace je aktuální'}[_currentLang]!), backgroundColor: Colors.green),
+            SnackBar(content: Text({'ar':'التطبيق محدّث لآخر نسخة','fr':'Application à jour','en':'App is up to date'}[_currentLang]!), backgroundColor: Colors.green),
           );
         }
       } else {
          ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text({'ar':'فشل الاتصال بالسيرفر','fr':'Échec de connexion','en':'Connection failed','de':'Verbindung fehlgeschlagen','cs':'Připojení selhalo'}[_currentLang]!), backgroundColor: Colors.red),
+          SnackBar(content: Text({'ar':'فشل الاتصال بالسيرفر','fr':'Échec de connexion','en':'Connection failed'}[_currentLang]!), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -208,7 +198,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
           children: [
             CircularProgressIndicator(color: Colors.cyan),
             SizedBox(height: 16),
-            Text({'ar':'جاري تحميل التحديث...','fr':'Téléchargement...','en':'Downloading update...','de':'Update wird heruntergeladen...','cs':'Stahování aktualizace...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
+            Text({'ar':'جاري تحميل التحديث...','fr':'Téléchargement...','en':'Downloading update...'}[_currentLang]!, style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -218,11 +208,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
       final response = await http.get(Uri.parse(url));
       final bytes = response.bodyBytes;
 
+      // ✅ هذا اللي صلحناه - بدّلنا اسم الـvariable
       final calculatedSha256 = sha256.convert(bytes).toString();
       if (calculatedSha256 != expectedSha256) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted','de':'Datei beschädigt','cs':'Soubor je poškozen'}[_currentLang]!), backgroundColor: Colors.red),
+          SnackBar(content: Text({'ar':'خطأ: الملف معطوب','fr':'Fichier corrompu','en':'File corrupted'}[_currentLang]!), backgroundColor: Colors.red),
         );
         return;
       }
@@ -237,7 +228,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${{'ar':'فشل التحميل','fr':'Échec du téléchargement','en':'Download failed','de':'Download fehlgeschlagen','cs':'Stahování selhalo'}[_currentLang]!}: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('${{'ar':'فشل التحميل','fr':'Échec du téléchargement','en':'Download failed'}[_currentLang]!}: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -289,21 +280,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)])),
         child: Column(children: [
-          FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return SizedBox(height: 40);
-              return Container(
-                padding: EdgeInsets.only(top: 45),
-                child: Text(
-                  'BUILD: ${snapshot.data!.version}+${snapshot.data!.buildNumber}',
-                  style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              );
-            },
-          ),
-          
-          Padding(padding: EdgeInsets.fromLTRB(40,10,30,20),
+          Padding(padding: EdgeInsets.fromLTRB(40,50,30,20),
             child: Row(children: [
               IconButton(icon: Icon(Icons.arrow_back, color: Colors.white, size: 32), onPressed: ()=>Navigator.pop(context)),
               SizedBox(width: 15),
@@ -315,7 +292,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 _bigCircle('assets/globe.png', labels['langue']!, _showLangDialog, autofocus: true),
                 _bigCircle('assets/qr.png', labels['qr']!, _showQrBigDialog),
-                _bigCircle('assets/update.png', labels['update']!, () => _checkForUpdate()),
+                _bigCircle('assets/update.png', labels['update']!, _checkForUpdate),
                 _bigCircle('assets/speed.png', labels['speed']!, ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>SpeedTestScreen()))),
               ]),
             ),
