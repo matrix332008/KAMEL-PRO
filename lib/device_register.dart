@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'dart:math';
 
 class DeviceRegister {
   static Future<void> init() async {
@@ -14,40 +13,64 @@ class DeviceRegister {
     );
   }
 
-  static Future<String> getMac() async {
+  static Future<String> getStableId() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // 1. كان عندنا ID مخزن من قبل، رجعو طول وما تولدش جديد
+    String? savedId = prefs.getString('stable_device_id');
+    if (savedId != null && savedId.isNotEmpty) {
+      print('✅ STABLE ID FOUND: $savedId');
+      return savedId;
+    }
+
+    // 2. كان ما فماش، ولد ID ثابت من معلومات الجهاز
     try {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        String id = androidInfo.id + androidInfo.model;
-        return sha1.convert(utf8.encode(id)).toString().substring(0, 12).toUpperCase();
+        // نستعمل ANDROID_ID + SERIAL باش نضمنو ثابت 100%
+        String rawId = androidInfo.id + androidInfo.fingerprint;
+        String stableId = sha1.convert(utf8.encode(rawId)).toString().toUpperCase();
+        
+        // خزنو مرة وحدة مدى الحياة
+        await prefs.setString('stable_device_id', stableId);
+        print('🔥 NEW STABLE ID GENERATED: $stableId');
+        return stableId;
       }
-      return 'UNKNOWN';
+      return 'UNKNOWN_DEVICE';
     } catch (e) {
-      return 'ERROR';
+      print('❌ Error generating ID: $e');
+      return 'ERROR_DEVICE';
     }
   }
 
-  static String generateKey() {
-    return (100000 + Random().nextInt(900000)).toString();
+  static Future<String> getActivationKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // 1. كان عندنا Key مخزن، رجعو هو بيدو
+    String? savedKey = prefs.getString('activation_key');
+    if (savedKey != null && savedKey.isNotEmpty) {
+      return savedKey;
+    }
+
+    // 2. كان لا، ولد واحد جديد وخزنو
+    String newKey = (100000 + DateTime.now().millisecondsSinceEpoch % 900000).toString();
+    await prefs.setString('activation_key', newKey);
+    return newKey;
   }
 
   static Future<void> register() async {
     try {
-      final mac = await getMac();
-      final key = generateKey();
-      final prefs = await SharedPreferences.getInstance();
-      
-      await prefs.setString('device_mac', mac);
-      await prefs.setString('device_key', key);
+      final id = await getStableId();
+      final key = await getActivationKey();
       
       await Supabase.instance.client.from('devices').upsert({
-        'mac_address': mac,
+        'mac_address': id, // نستعملو نفس العمود باش ما نبدلوش الداتابيز
         'activation_key': key,
         'last_seen': DateTime.now().toIso8601String(),
       }, onConflict: 'mac_address');
       
-      print('✅ Registered: $mac - $key');
+      print('✅ Registered: $id - $key');
     } catch (e) {
       print('❌ Error: $e');
     }
