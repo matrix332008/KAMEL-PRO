@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'device_register.dart'; // ✅ نستعملو هذا برك
 import 'main.dart';
 import 'lang.dart';
 
@@ -19,7 +20,7 @@ class LoginSelection extends StatefulWidget {
 }
 
 class _LoginSelectionState extends State<LoginSelection> {
-  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _mac = 'AA:BB:CC:DD:EE:FF';
   String _deviceId = '000000';
   String _deviceName = 'ANDROID TV';
 
@@ -33,9 +34,9 @@ class _LoginSelectionState extends State<LoginSelection> {
     final prefs = await SharedPreferences.getInstance();
     final deviceInfo = DeviceInfoPlugin();
     
-    // ✅ نقراو من macAddress و device_id متاع main.dart
-    String mac = await getMacAddress(); // 👈 يجيب من main.dart + Fallback
-    String key = prefs.getString('device_id') ?? '';
+    // ✅ نجيبو من DeviceRegister الجديد
+    String mac = await DeviceRegister.getStableId();
+    String key = await DeviceRegister.getActivationKey();
     String name = 'ANDROID TV';
 
     try {
@@ -45,16 +46,10 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    // ✅ كان الـ ID فاضي نولدوه
-    if (key.isEmpty) {
-      key = generateKey();
-      await prefs.setString('device_id', key);
-    }
-
     print('🔥 LOGIN FINAL MAC: $mac');
     print('🔥 LOGIN FINAL ID: $key');
 
-    // ✅ دائما حدّث Supabase
+    // ✅ نحدثو Supabase
     try {
       await Supabase.instance.client.from('devices').upsert({
         'mac_address': mac,
@@ -74,11 +69,9 @@ class _LoginSelectionState extends State<LoginSelection> {
       });
     }
 
-    // ✅ جرّب دخول أوتوماتيك من السحابة
     await _tryAutoLoginFromCloud(mac);
   }
 
-  // ✅ دالة تقرا من Supabase
   Future<void> _tryAutoLoginFromCloud(String mac) async {
     try {
       final data = await Supabase.instance.client
@@ -385,7 +378,8 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
                 
-                String deviceMac = await getMacAddress();
+                // ✅ نستعمل DeviceRegister.getStableId() بدل getMacAddress()
+                String deviceMac = await DeviceRegister.getStableId();
                 if (deviceMac.isNotEmpty) {
                   try {
                     await Supabase.instance.client.from('devices').update({
