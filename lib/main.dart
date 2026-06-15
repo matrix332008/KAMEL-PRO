@@ -4,9 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'dart:math';
 import 'live_tv.dart';
 import 'filmes.dart';
 import 'series.dart';
@@ -15,13 +12,14 @@ import 'ajustes.dart';
 import 'login.dart';
 import 'lang.dart';
 import 'speed_test.dart';
+import 'device_register.dart'; // ✅ زدنا import للملف الجديد
 
 // ✅✅✅ هذا الكلاس الجديد يحل مشكل CERTIFICATE_VERIFY_FAILED في الاجهزة القديمة
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-     ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
@@ -43,64 +41,18 @@ void main() async {
 
   await Lang.load();
 
-  // ✅✅✅ نولدو MAC اجباري قبل ما اي شاشة تفتح
-  await forceGenerateMacIfNeeded();
+  // ✅✅ نحينا forceGenerateMacIfNeeded و عوضناه بـ DeviceRegister
+  await DeviceRegister.init();
+  await DeviceRegister.register();
 
   runApp(KamelProApp());
 }
 
-// ✅ يولد MAC اجباري - مستحيل يرجع...
-Future<void> forceGenerateMacIfNeeded() async {
-  final prefs = await SharedPreferences.getInstance();
-  String? mac = prefs.getString('macAddress');
-
-  // ✅ شرط اقوى: كان فاسد ولا فاضي ولا مش MAC صحيح، نولدو جديد
-  if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length!= 17 ||!mac.contains(':') || mac.split(':').length!= 6) {
-    final random = Random.secure();
-    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
-    mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-    await prefs.setString('macAddress', mac);
-    print('🔥 NEW MAC GENERATED: $mac');
-  } else {
-    print('✅ EXISTING MAC FOUND: $mac');
-  }
-
-  String? key = prefs.getString('device_id');
-  if (key == null || key.isEmpty) {
-    key = (100000 + Random().nextInt(900000)).toString();
-    await prefs.setString('device_id', key);
-  }
-}
-
-// ✅ تقرا برك + Fallback مستحيل يرجع...
-Future<String> getMacAddress() async {
-  final prefs = await SharedPreferences.getInstance();
-  String mac = prefs.getString('macAddress')?? '';
-  if (mac.isEmpty || mac == '...') return 'AA:BB:CC:DD:EE:FF';
-  return mac;
-}
-
-// ✅ هذا ID يتغير - كل مرة يتولد جديد
-String generateKey() {
-  final random = Random();
-  return (100000 + random.nextInt(900000)).toString();
-}
-
-Future<void> registerDevice() async {
-  try {
-    final mac = await getMacAddress();
-    final key = generateKey();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('device_id', key);
-    await Supabase.instance.client.from('devices').upsert({
-      'mac_address': mac,
-      'activation_key': key,
-      'last_seen': DateTime.now().toIso8601String(),
-    }, onConflict: 'mac_address');
-  } catch (e) {
-    print('Error: $e');
-  }
-}
+// ✅ حذفنا كل الـ Functions هاذم خاطر عوضناهم في device_register.dart
+// forceGenerateMacIfNeeded() ❌
+// getMacAddress() ❌
+// generateKey() ❌
+// registerDevice() ❌
 
 class KamelProApp extends StatelessWidget {
   @override
@@ -135,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _checkLogin() async {
-    await registerDevice();
+    // ✅ نحينا registerDevice() من هنا خاطر صار في main()
     await Future.delayed(Duration(seconds: 2));
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn')?? false;
@@ -236,7 +188,7 @@ class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {
     Color expiryColor = _daysLeft > 30? Colors.green : _daysLeft > 7? Colors.orange : Colors.red;
-    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft ${Lang.get('days_left')}' : Lang.get('expired')); // ← هذا السطر تبدل
+    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft ${Lang.get('days_left')}' : Lang.get('expired'));
 
     return WillPopScope(
       onWillPop: () async {
