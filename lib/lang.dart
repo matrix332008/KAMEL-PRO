@@ -44,6 +44,14 @@ class Lang {
       'bientot': 'قريباً...',
       'qr_code': 'رمز QR',
       'speed_test': 'اختبار سرعة الانترنات',
+      // النصوص الجديدة اللي ناقصة
+      'search_channel': 'بحث عن قناة...',
+      'search_movie': 'بحث عن فيلم...',
+      'search_series': 'بحث عن مسلسل...',
+      'days_left': 'يوم',
+      'ramadan': 'رمضان 2026',
+      'turkish_sub': 'يعرض الان تركي مترجم',
+      'turkish_dub': 'يعرض الان تركي مدبلج',
     },
     'fr': {
       'live': 'DIRECT',
@@ -86,6 +94,14 @@ class Lang {
       'bientot': 'Bientôt...',
       'qr_code': 'Code QR',
       'speed_test': 'Test vitesse',
+      // النصوص الجديدة
+      'search_channel': 'Rechercher une chaîne...',
+      'search_movie': 'Rechercher un film...',
+      'search_series': 'Rechercher une série...',
+      'days_left': 'jours',
+      'ramadan': 'Ramadan 2026',
+      'turkish_sub': 'Turc sous-titré en cours',
+      'turkish_dub': 'Turc doublé en cours',
     },
     'cs': {
       'live': 'ŽIVĚ',
@@ -128,6 +144,14 @@ class Lang {
       'bientot': 'Již brzy...',
       'qr_code': 'QR kód',
       'speed_test': 'Test rychlosti',
+      // النصوص الجديدة
+      'search_channel': 'Hledat kanál...',
+      'search_movie': 'Hledat film...',
+      'search_series': 'Hledat seriál...',
+      'days_left': 'dní',
+      'ramadan': 'Ramadán 2026',
+      'turkish_sub': 'Turecký s titulky',
+      'turkish_dub': 'Turecký dabing',
     },
     'en': {
       'live': 'LIVE',
@@ -170,6 +194,14 @@ class Lang {
       'bientot': 'Coming soon...',
       'qr_code': 'QR Code',
       'speed_test': 'Speed Test',
+      // النصوص الجديدة
+      'search_channel': 'Search channel...',
+      'search_movie': 'Search movie...',
+      'search_series': 'Search series...',
+      'days_left': 'days',
+      'ramadan': 'Ramadan 2026',
+      'turkish_sub': 'Turkish subtitled',
+      'turkish_dub': 'Turkish dubbed',
     },
     'de': {
       'live': 'LIVE',
@@ -212,6 +244,14 @@ class Lang {
       'bientot': 'Bald verfügbar...',
       'qr_code': 'QR-Code',
       'speed_test': 'Speedtest',
+      // النصوص الجديدة
+      'search_channel': 'Kanal suchen...',
+      'search_movie': 'Film suchen...',
+      'search_series': 'Serie suchen...',
+      'days_left': 'Tage',
+      'ramadan': 'Ramadan 2026',
+      'turkish_sub': 'Türkisch mit Untertiteln',
+      'turkish_dub': 'Türkisch synchronisiert',
     },
   };
 
