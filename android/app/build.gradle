@@ -4,9 +4,27 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
 android {
-    namespace "com.kamelpro.iptv"
-    compileSdkVersion 34
+    namespace "com.kamelpro.kamel_pro"
+    compileSdkVersion 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -19,11 +37,11 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.kamelpro.iptv"
+        applicationId "com.kamelpro.kamel_pro"
         minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 36
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
     }
 
     buildTypes {
