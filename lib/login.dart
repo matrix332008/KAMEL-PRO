@@ -35,7 +35,7 @@ class _LoginSelectionState extends State<LoginSelection> {
     final deviceInfo = DeviceInfoPlugin();
     
     // ✅ نجيبو من DeviceRegister الجديد
-    String mac = await DeviceRegister.getStableId();
+    String mac = await DeviceRegister.getStableMac();
     String key = await DeviceRegister.getActivationKey();
     String name = 'ANDROID TV';
 
@@ -378,8 +378,8 @@ class _XtreamLoginState extends State<XtreamLogin> {
                 int daysLeft = expDate.difference(DateTime.now()).inDays;
                 await prefs.setInt('daysLeft', daysLeft > 0 ? daysLeft : 0);
                 
-                // ✅ نستعمل DeviceRegister.getStableId() بدل getMacAddress()
-                String deviceMac = await DeviceRegister.getStableId();
+                // ✅ نستعمل DeviceRegister.getStableMac() 
+                String deviceMac = await DeviceRegister.getStableMac();
                 if (deviceMac.isNotEmpty) {
                   try {
                     await Supabase.instance.client.from('devices').update({
