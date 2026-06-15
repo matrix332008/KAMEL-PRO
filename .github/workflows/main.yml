@@ -26,17 +26,6 @@ jobs:
       - name: Show pubspec version
         run: cat pubspec.yaml | grep version
       
-      - name: Clean Flutter
-        run: flutter clean
-        
-      - name: Fix Android folder
-        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android .
-          
-      - name: Set SDK 36
-        run: |
-          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/g' android/app/build.gradle
-          
       - name: Get dependencies
         run: flutter pub get
         
