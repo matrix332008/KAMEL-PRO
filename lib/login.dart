@@ -10,6 +10,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main.dart';
+import 'lang.dart';
 
 // ============= LOGIN SELECTION =============
 class LoginSelection extends StatefulWidget {
@@ -174,7 +175,7 @@ class _LoginSelectionState extends State<LoginSelection> {
                 ),
               ),
               Spacer(),
-              Text('LOGIN METHOD', style: TextStyle(color: Colors.cyanAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyan, blurRadius: 20)])),
+              Text(Lang.get('login_method'), style: TextStyle(color: Colors.cyanAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyan, blurRadius: 20)])),
               SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -204,7 +205,7 @@ class _LoginSelectionState extends State<LoginSelection> {
             child: GestureDetector(
               onTap: () {
                 Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم نسخ البيانات ✓'), duration: Duration(seconds: 1)));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('copied')), duration: Duration(seconds: 1)));
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +356,7 @@ class _XtreamLoginState extends State<XtreamLogin> {
     String pass = _passController.text.trim();
 
     if (server.isEmpty || user.isEmpty || pass.isEmpty || server == 'http://' || server == 'https://') {
-      _showError('Please fill all fields');
+      _showError(Lang.get('fill_all_fields'));
       setState(() => _loading = false);
       return;
     }
@@ -399,13 +400,13 @@ class _XtreamLoginState extends State<XtreamLogin> {
           
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainMenu()));
         } else {
-          _showError('Invalid credentials');
+          _showError(Lang.get('invalid_credentials'));
         }
       } else {
-        _showError('Server error');
+        _showError(Lang.get('server_error'));
       }
     } catch (e) {
-      _showError('Connection failed');
+      _showError(Lang.get('connection_failed'));
     }
     setState(() => _loading = false);
   }
@@ -433,18 +434,18 @@ class _XtreamLoginState extends State<XtreamLogin> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      _InputField(controller: _serverController, hint: 'SERVER URL', color: Colors.cyan, focusNode: _serverFocus, nextFocus: _userFocus),
+                      _InputField(controller: _serverController, hint: Lang.get('server_url'), color: Colors.cyan, focusNode: _serverFocus, nextFocus: _userFocus),
                       SizedBox(height: 20),
-                      _InputField(controller: _userController, hint: 'USERNAME', color: Colors.cyan, focusNode: _userFocus, nextFocus: _passFocus, prevFocus: _serverFocus),
+                      _InputField(controller: _userController, hint: Lang.get('username'), color: Colors.cyan, focusNode: _userFocus, nextFocus: _passFocus, prevFocus: _serverFocus),
                       SizedBox(height: 20),
-                      _InputField(controller: _passController, hint: 'PASSWORD', color: Colors.cyan, obscure: true, focusNode: _passFocus, prevFocus: _userFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
+                      _InputField(controller: _passController, hint: Lang.get('password'), color: Colors.cyan, obscure: true, focusNode: _passFocus, prevFocus: _userFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
                       SizedBox(height: 30),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _Button(text: 'LOGIN', color: Colors.cyan, onPressed: _loading ? null : _login),
+                          _Button(text: Lang.get('login'), color: Colors.cyan, onPressed: _loading ? null : _login),
                           SizedBox(width: 20),
-                          _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
+                          _Button(text: Lang.get('cancel'), color: Colors.grey, onPressed: () => Navigator.pop(context)),
                         ],
                       ),
                       SizedBox(height: 50),
@@ -499,7 +500,7 @@ class _M3ULoginState extends State<M3ULogin> {
     setState(() => _loading = true);
     String url = _urlController.text.trim();
     if (url.isEmpty || url == 'http://' || url == 'https://') {
-      _showError('Please enter M3U URL');
+      _showError(Lang.get('enter_m3u_url'));
       setState(() => _loading = false);
       return;
     }
@@ -535,16 +536,16 @@ class _M3ULoginState extends State<M3ULogin> {
                   padding: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      _InputField(controller: _urlController, hint: 'M3U URL', color: Colors.red, focusNode: _urlFocus, nextFocus: _nameFocus),
+                      _InputField(controller: _urlController, hint: Lang.get('m3u_url'), color: Colors.red, focusNode: _urlFocus, nextFocus: _nameFocus),
                       SizedBox(height: 20),
-                      _InputField(controller: _nameController, hint: 'PLAYLIST NAME (Optional)', color: Colors.red, focusNode: _nameFocus, prevFocus: _urlFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
+                      _InputField(controller: _nameController, hint: Lang.get('playlist_name'), color: Colors.red, focusNode: _nameFocus, prevFocus: _urlFocus, textInputAction: TextInputAction.done, onSubmitted: (_) => _login()),
                       SizedBox(height: 30),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _Button(text: 'LOGIN', color: Colors.red, onPressed: _loading ? null : _login),
+                          _Button(text: Lang.get('login'), color: Colors.red, onPressed: _loading ? null : _login),
                           SizedBox(width: 20),
-                          _Button(text: 'CANCEL', color: Colors.grey, onPressed: () => Navigator.pop(context)),
+                          _Button(text: Lang.get('cancel'), color: Colors.grey, onPressed: () => Navigator.pop(context)),
                         ],
                       ),
                       SizedBox(height: 50),
