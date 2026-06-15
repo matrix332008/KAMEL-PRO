@@ -11,8 +11,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'lang.dart';
-import 'main.dart'; // 👈 باش نستعملو getMacAddress()
+import 'device_register.dart'; // ✅ بدلت import
 import 'speed_test.dart';
+import 'main.dart';
 
 class AjustesScreen extends StatefulWidget {
   @override
@@ -21,7 +22,7 @@ class AjustesScreen extends StatefulWidget {
 
 class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
-  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _mac = 'AA:BB:CC:DD:EE:FF';
   String _deviceId = '000000';
   String _deviceName = 'ANDROID TV';
   String _expiry = '';
@@ -42,9 +43,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
     final deviceInfo = DeviceInfoPlugin();
     final prefs = await SharedPreferences.getInstance();
     
-    // ✅ نقراو MAC و ID من اللي خزناهم في main.dart
-    String mac = await getMacAddress(); // 👈 يجيب من macAddress + Fallback
-    String deviceId = prefs.getString('device_id') ?? '000000';
+    // ✅ نجيبو من DeviceRegister الجديد
+    String mac = await DeviceRegister.getStableId(); 
+    String deviceId = await DeviceRegister.getActivationKey();
     
     print('🔥 AJUSTES MAC: $mac');
     print('🔥 AJUSTES ID: $deviceId');
@@ -140,7 +141,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       int currentVersion = int.parse(packageInfo.buildNumber);
       
-      print('🔥 CURRENT VERSION: $currentVersion'); // للـ Debug
+      print('🔥 CURRENT VERSION: $currentVersion');
 
       final response = await http.get(Uri.parse(
           'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
@@ -154,7 +155,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         String newNotes = data['notes'];
         String newSha256 = data['sha256'];
 
-        print('🔥 NEW VERSION: $newVersion'); // للـ Debug
+        print('🔥 NEW VERSION: $newVersion');
 
         if (newVersion > currentVersion) {
           showDialog(
@@ -288,7 +289,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)])),
         child: Column(children: [
-          // ✅ هاذي جديدة: توريك النسخة الحقيقية متاع الـ APK
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
