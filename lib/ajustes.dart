@@ -101,8 +101,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
       backgroundColor: Color(0xFF1A1A2E),
       title: Text(Lang.get('choisir_langue'), style: TextStyle(color: Colors.white)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        _langOption('🇹🇳','عربي','ar'), _langOption('🇫🇷','Français','fr'),
-        _langOption('🇨🇿','Čeština','cs'), _langOption('🇬🇧','English','en'),
+        _langOption('🇹🇳','عربي','ar'), 
+        _langOption('🇫🇷','Français','fr'),
+        _langOption('🇨🇿','Čeština','cs'), 
+        _langOption('🇬🇧','English','en'),
         _langOption('🇩🇪','Deutsch','de'),
       ]),
     ));
@@ -185,7 +187,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     } catch (e) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${Lang.get('error')}: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
       );
     }
   }
