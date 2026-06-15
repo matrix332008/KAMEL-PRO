@@ -19,12 +19,12 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+   ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
 void main() async {
-  // ✅✅✅ هذا السطر لازم قبل اي حاجة باش التحديث يخدم
+  // ✅✅ هذا السطر لازم قبل اي حاجة باش التحديث يخدم
   HttpOverrides.global = MyHttpOverrides();
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,8 +41,7 @@ void main() async {
 
   await Lang.load();
 
-  // ✅✅ نحينا forceGenerateMacIfNeeded و عوضناه بـ DeviceRegister
-  await DeviceRegister.init();
+  // ✅ نحينا await DeviceRegister.init(); خاطر ما عادش موجود
   await DeviceRegister.register();
 
   runApp(KamelProApp());
