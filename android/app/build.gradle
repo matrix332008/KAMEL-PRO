@@ -44,14 +44,6 @@ android {
         versionName flutterVersionName
     }
 
-    // ✅✅✅ هذا هو الحل متاع flavorUndefinedHandler
-    flavorDimensions "default"
-    productFlavors {
-        main {
-            dimension "default"
-        }
-    }
-
     buildTypes {
         release {
             signingConfig signingConfigs.debug
