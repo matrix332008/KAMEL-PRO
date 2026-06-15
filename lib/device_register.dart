@@ -6,32 +6,46 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 class DeviceRegister {
-  // ✅ حذفنا init() نهائياً - main.dart هو اللي يعمل Initialize
 
-  static Future<String> getStableId() async {
+  // يولد MAC ثابت بصيغة 02:00:00:XX:XX:XX
+  static Future<String> getStableMac() async {
     final prefs = await SharedPreferences.getInstance();
     
-    String? savedId = prefs.getString('stable_device_id');
-    if (savedId != null && savedId.isNotEmpty) {
-      print('✅ STABLE ID FOUND: $savedId');
-      return savedId;
+    // 1. شوف كان مخزن قبل
+    String? savedMac = prefs.getString('device_mac');
+    if (savedMac != null && savedMac.isNotEmpty) {
+      print('✅ SAVED MAC: $savedMac');
+      return savedMac;
     }
 
+    // 2. ولّد MAC جديد ثابت من ANDROID_ID
     try {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
-        String rawId = androidInfo.id + androidInfo.fingerprint;
-        String stableId = sha1.convert(utf8.encode(rawId)).toString().toUpperCase();
         
-        await prefs.setString('stable_device_id', stableId);
-        print('🔥 NEW STABLE ID GENERATED: $stableId');
-        return stableId;
+        // نستعمل ANDROID_ID + fingerprint باش يكون unique لكل جهاز
+        String rawId = androidInfo.id + androidInfo.fingerprint;
+        
+        // نحولوه لـ sha256 وناخذو اول 6 ارقام
+        final bytes = utf8.encode(rawId);
+        final digest = sha256.convert(bytes);
+        final hex = digest.toString().substring(0, 6).toUpperCase();
+        
+        // نصنعو MAC يبدا بـ 02:00:00
+        String mac = '02:00:00:' + 
+                     hex.substring(0, 2) + ':' + 
+                     hex.substring(2, 4) + ':' + 
+                     hex.substring(4, 6);
+        
+        await prefs.setString('device_mac', mac);
+        print('🔥 NEW MAC GENERATED: $mac');
+        return mac;
       }
-      return 'UNKNOWN_DEVICE';
+      return '02:00:00:00';
     } catch (e) {
-      print('❌ Error generating ID: $e');
-      return 'ERROR_DEVICE';
+      print('❌ Error: $e');
+      return '02:00:00:00';
     }
   }
 
@@ -50,16 +64,16 @@ class DeviceRegister {
 
   static Future<void> register() async {
     try {
-      final id = await getStableId();
+      final mac = await getStableMac(); // نستعملو MAC مش ID
       final key = await getActivationKey();
       
       await Supabase.instance.client.from('devices').upsert({
-        'mac_address': id,
+        'mac_address': mac, // نحطو MAC هنا
         'activation_key': key,
         'last_seen': DateTime.now().toIso8601String(),
       }, onConflict: 'mac_address');
       
-      print('✅ Registered: $id - $key');
+      print('✅ Registered: $mac - $key');
     } catch (e) {
       print('❌ Error: $e');
     }
