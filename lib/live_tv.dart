@@ -176,7 +176,7 @@ class _LiveTVState extends State<LiveTV> {
                                       onChanged: (v) => setState(() => _search = v),
                                       style: TextStyle(color: Colors.white, fontSize: 18),
                                       decoration: InputDecoration(
-                                        hintText: 'بحث عن قناة...',
+                                        hintText: Lang.get('search_channel'), // ← صلحنا هذا السطر
                                         hintStyle: TextStyle(color: Colors.white54),
                                         border: InputBorder.none,
                                       ),
