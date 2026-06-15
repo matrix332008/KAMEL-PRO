@@ -23,6 +23,12 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
       
+      - name: Show pubspec version
+        run: cat pubspec.yaml | grep version
+      
+      - name: Clean Flutter
+        run: flutter clean
+        
       - name: Fix Android folder
         run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android .
           
@@ -37,8 +43,15 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
         
+      - name: Show APK version info
+        run: |
+          echo "### APK Version Info 👇" >> $GITHUB_STEP_SUMMARY
+          unzip -p build/app/outputs/flutter-apk/app-release.apk AndroidManifest.xml | strings | grep version >> $GITHUB_STEP_SUMMARY || true
+          echo "### SHA256 👇" >> $GITHUB_STEP_SUMMARY
+          shasum -a 256 build/app/outputs/flutter-apk/app-release.apk >> $GITHUB_STEP_SUMMARY
+        
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KAMEL-PRO-release
+          name: KAMEL-PRO-v1.0.128
           path: build/app/outputs/flutter-apk/app-release.apk
