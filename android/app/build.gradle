@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.kamelpro.kamel_pro"
-    compileSdkVersion 33  // ✅ بدلت 36 -> 33
+    compileSdkVersion 34  // ✅ بدلت 36 -> 33
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -40,7 +40,7 @@ android {
     defaultConfig {
         applicationId "com.kamelpro.kamel_pro"
         minSdkVersion 21
-        targetSdkVersion 33  // ✅ بدلت 36 -> 33
+        targetSdkVersion 34  // ✅ بدلت 36 -> 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
