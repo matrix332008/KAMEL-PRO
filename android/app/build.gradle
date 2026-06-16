@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.kamelpro.kamel_pro"
-    compileSdkVersion 34  // ✅ بدلت 36 -> 33
+    compileSdkVersion 33
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -40,7 +40,7 @@ android {
     defaultConfig {
         applicationId "com.kamelpro.kamel_pro"
         minSdkVersion 21
-        targetSdkVersion 34  // ✅ بدلت 36 -> 33
+        targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
@@ -55,16 +55,18 @@ android {
     }
 }
 
-configurations.all {
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
-    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-}
+// احذف البلوك هذا كامل ❌
+// configurations.all {
+//     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+//     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+// }
 
 flutter {
     source '../..'
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+    // احذف هذا السطر ❌ implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+    implementation "androidx.multidex:multidex:2.0.1" // زيد هذا ✅
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
