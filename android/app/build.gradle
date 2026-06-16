@@ -24,12 +24,13 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.kamelpro.kamel_pro"
-    compileSdkVersion 36
+    compileSdkVersion 33  // ✅ بدلت 36 -> 33
     ndkVersion flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
@@ -39,14 +40,17 @@ android {
     defaultConfig {
         applicationId "com.kamelpro.kamel_pro"
         minSdkVersion 21
-        targetSdkVersion 36
+        targetSdkVersion 33  // ✅ بدلت 36 -> 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        multiDexEnabled true
     }
 
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
@@ -62,4 +66,5 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
