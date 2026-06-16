@@ -1,16 +1,23 @@
-name: Build KAMEL PRO APK
+name: Auto Build & Release KAMEL PRO
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'pubspec.yaml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -24,7 +31,7 @@ jobs:
           channel: 'stable'
       
       - name: Fix Android folder
-        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android .
+        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android.
           
       - name: Set SDK 36
         run: |
@@ -33,12 +40,44 @@ jobs:
           
       - name: Get dependencies
         run: flutter pub get
+      
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         
       - name: Build APK
         run: flutter build apk --release
         
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Calculate SHA256
+        id: sha
+        run: |
+          SHA=$(sha256sum build/app/outputs/flutter-apk/app-release.apk | cut -d ' ' -f1)
+          echo "SHA256=$SHA" >> $GITHUB_OUTPUT
+      
+      - name: Update version.json
+        run: |
+          echo '{
+            "versionCode": ${{ steps.version.outputs.VERSION }}'.split('+')[1]',
+            "versionName": "${{ steps.version.outputs.VERSION }}".split('+')[0]',
+            "apkUrl": "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.VERSION }}/app-release.apk",
+            "sha256": "${{ steps.sha.outputs.SHA256 }}",
+            "notes": "تحديث جديد"
+          }' > version.json
+      
+      - name: Commit version.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "🔥 Auto update to ${{ steps.version.outputs.VERSION }}" || echo "No changes"
+          git push
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: KAMEL-PRO-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: KAMEL PRO v${{ steps.version.outputs.VERSION }}
+          body: "تحديث أوتوماتيك"
+          files: build/app/outputs/flutter-apk/app-release.apk
