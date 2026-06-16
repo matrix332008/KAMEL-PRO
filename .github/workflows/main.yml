@@ -31,7 +31,7 @@ jobs:
           channel: 'stable'
       
       - name: Fix Android folder
-        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android.
+        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android .
           
       - name: Set SDK 36
         run: |
@@ -45,7 +45,11 @@ jobs:
         id: version
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2)
+          VERSION_NAME=$(echo $VERSION | cut -d '+' -f1)
+          VERSION_CODE=$(echo $VERSION | cut -d '+' -f2)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_OUTPUT
         
       - name: Build APK
         run: flutter build apk --release
@@ -58,13 +62,15 @@ jobs:
       
       - name: Update version.json
         run: |
-          echo '{
-            "versionCode": ${{ steps.version.outputs.VERSION }}'.split('+')[1]',
-            "versionName": "${{ steps.version.outputs.VERSION }}".split('+')[0]',
+          cat > version.json << EOF
+          {
+            "versionCode": ${{ steps.version.outputs.VERSION_CODE }},
+            "versionName": "${{ steps.version.outputs.VERSION_NAME }}",
             "apkUrl": "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.VERSION }}/app-release.apk",
             "sha256": "${{ steps.sha.outputs.SHA256 }}",
             "notes": "تحديث جديد"
-          }' > version.json
+          }
+          EOF
       
       - name: Commit version.json
         run: |
