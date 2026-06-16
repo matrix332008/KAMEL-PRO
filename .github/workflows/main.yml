@@ -30,25 +30,6 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
       
-      - name: Remove old Android folder
-        run: rm -rf android
-      
-      - name: Recreate Android folder
-        run: flutter create --org com.kamelpro.iptv --project-name kamel_pro --platforms=android .
-      
-      - name: Force update local.properties
-        run: |
-          echo "flutter.versionName=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2 | cut -d '+' -f1)" >> android/local.properties
-          echo "flutter.versionCode=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2 | cut -d '+' -f2)" >> android/local.properties
-          
-      - name: Set SDK 36
-        run: |
-          sed -i 's/compileSdkVersion 34/compileSdkVersion 36/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion 34/targetSdkVersion 36/g' android/app/build.gradle
-          
-      - name: Get dependencies
-        run: flutter pub get
-      
       - name: Get version from pubspec
         id: version
         run: |
@@ -58,7 +39,21 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
           echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_OUTPUT
-        
+      
+      - name: Force update local.properties
+        run: |
+          echo "flutter.versionName=${{ steps.version.outputs.VERSION_NAME }}" > android/local.properties
+          echo "flutter.versionCode=${{ steps.version.outputs.VERSION_CODE }}" >> android/local.properties
+          echo "sdk.dir=/usr/local/lib/android/sdk" >> android/local.properties
+          
+      - name: Set SDK 36
+        run: |
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 36/g' android/app/build.gradle
+          sed -i 's/targetSdkVersion 34/targetSdkVersion 36/g' android/app/build.gradle
+          
+      - name: Get dependencies
+        run: flutter pub get
+      
       - name: Build APK
         run: flutter build apk --release
         
