@@ -33,6 +33,17 @@ jobs:
       - name: Recreate Android folder with correct ID
         run: flutter create --org com.kamelpro.iptv --project-name kamel_pro --platforms=android .
       
+      - name: Replace app icons with custom logo
+        run: |
+          # انسخ logo.png لكل أحجام الأيقونات
+          cp assets/logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          cp assets/logo.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          cp assets/logo.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          cp assets/logo.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          cp assets/logo.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          # امسح الأيقونات الدائرية باش يستعمل المربعة متاعك
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher_round.png
+      
       - name: Force correct version in local.properties
         run: |
           echo "flutter.versionName=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2 | cut -d '+' -f1)" > android/local.properties
