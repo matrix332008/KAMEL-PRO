@@ -1,0 +1,7 @@
+{
+  "versionCode": 126,
+  "versionName": "1.0.126",
+  "apkUrl": "https://github.com/matrix332008/KAMEL-PRO/releases/download/v1.0.126/app-release.apk",
+  "sha256": "6b29895d0994fe5e0e8625ad1f8154c79767d617d519323c3c3a82f0f5046624",
+  "notes": "إصلاح نهائي لمشكل التحديث CERTIFICATE_VERIFY_FAILED + تحسينات"
+}
