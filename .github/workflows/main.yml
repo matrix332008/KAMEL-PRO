@@ -34,12 +34,17 @@ jobs:
         run: rm -rf android
       
       - name: Recreate Android folder
-        run: flutter create --org com.kamelpro --project-name kamel_pro --platforms=android .
+        run: flutter create --org com.kamelpro.iptv --project-name kamel_pro --platforms=android .
+      
+      - name: Force update local.properties
+        run: |
+          echo "flutter.versionName=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2 | cut -d '+' -f1)" >> android/local.properties
+          echo "flutter.versionCode=$(grep 'version:' pubspec.yaml | cut -d ' ' -f2 | cut -d '+' -f2)" >> android/local.properties
           
       - name: Set SDK 36
         run: |
-          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 36/g' android/app/build.gradle
+          sed -i 's/targetSdkVersion 34/targetSdkVersion 36/g' android/app/build.gradle
           
       - name: Get dependencies
         run: flutter pub get
