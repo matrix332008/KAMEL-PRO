@@ -22,11 +22,18 @@ class _LoginSelectionState extends State<LoginSelection> {
   String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
   String _deviceId = '000000';
   String _deviceName = 'ANDROID TV';
+  String _currentLang = 'ar'; // ✅ زدنا اللغة
 
   @override
   void initState() {
     super.initState();
+    _loadLang(); // ✅ نقراو اللغة
     _getDeviceInfo();
+  }
+
+  _loadLang() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() => _currentLang = prefs.getString('lang') ?? 'ar');
   }
 
   _getDeviceInfo() async {
@@ -157,6 +164,12 @@ class _LoginSelectionState extends State<LoginSelection> {
   Widget build(BuildContext context) {
     String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
     
+    // ✅ النصوص حسب اللغة
+    final labels = {
+      'activate_manual': {'ar':'تفعيل يدوي','fr':'Activation Manuelle','en':'Manual Activation','de':'Manuelle Aktivierung','cs':'Manuální aktivace'}[_currentLang]!,
+      'activate_website': {'ar':'تفعيل الاشتراك عن طريق الموقع','fr':'Activer l\'abonnement via le site','en':'Activate Subscription via Website','de':'Abo über Website aktivieren','cs':'Aktivovat předplatné přes web'}[_currentLang]!,
+    };
+    
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -175,7 +188,8 @@ class _LoginSelectionState extends State<LoginSelection> {
                 ),
               ),
               Spacer(),
-              Text(Lang.get('login_method'), style: TextStyle(color: Colors.cyanAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyan, blurRadius: 20)])),
+              // ✅ بدلنا LOGIN METHOD → تفعيل يدوي
+              Text(labels['activate_manual']!, style: TextStyle(color: Colors.cyanAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyan, blurRadius: 20)])),
               SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -193,7 +207,8 @@ class _LoginSelectionState extends State<LoginSelection> {
                   children: [
                     FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                     SizedBox(width: 8),
-                    Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                    // ✅ بدلنا لون رقم الواتساب كيف MAC = Cyan
+                    Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -210,6 +225,37 @@ class _LoginSelectionState extends State<LoginSelection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ✅✅✅ QR الكبير الجديد تحت صورتك وفوق QR الصغير
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange, width: 3), // ✅ برتقالي باش يبان
+                      boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.6), blurRadius: 20, spreadRadius: 2)],
+                    ),
+                    child: Column(
+                      children: [
+                        QrImageView(
+                          data: 'https://kamel-pro.com', // ✅ QR متاع الموقع
+                          size: 110,
+                          backgroundColor: Colors.white,
+                        ),
+                        SizedBox(height: 4),
+                        Container(
+                          width: 110,
+                          child: Text(
+                            labels['activate_website']!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12), // ✅ مسافة بين QR الكبير و الصغير
+                  
+                  // QR الصغير القديم + الكارت كيما هوما
                   Container(
                     padding: EdgeInsets.all(6),
                     decoration: BoxDecoration(
