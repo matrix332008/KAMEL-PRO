@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:android_id/android_id.dart'; // ✅ زدنا هاذي للـMAC الثابت
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -21,7 +22,7 @@ class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-     ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
@@ -43,58 +44,67 @@ void main() async {
 
   await Lang.load();
 
-  // ✅✅✅ نولدو MAC اجباري قبل ما اي شاشة تفتح
-  await forceGenerateMacIfNeeded();
+  // ✅✅✅ نولدو MAC ثابت و ID متغير
+  await initDeviceIds();
 
   runApp(KamelProApp());
 }
 
-// ✅ يولد MAC اجباري - مستحيل يرجع...
-Future<void> forceGenerateMacIfNeeded() async {
+// ✅✅✅ هذا الجديد: MAC ثابت من ANDROID_ID + ID متغير
+Future<void> initDeviceIds() async {
   final prefs = await SharedPreferences.getInstance();
+
+  // 1. MAC ثابت: ما يتبدلش جامي - مربوط بالاشتراك
   String? mac = prefs.getString('macAddress');
+  if (mac == null || mac.isEmpty || mac.length!= 17) {
+    const androidId = AndroidId();
+    String? deviceId = await androidId.getId();
 
-  // ✅ شرط اقوى: كان فاسد ولا فاضي ولا مش MAC صحيح، نولدو جديد
-  if (mac == null || mac.isEmpty || mac == 'ERROR' || mac == 'UNKNOWN' || mac == '...' || mac.length!= 17 ||!mac.contains(':') || mac.split(':').length!= 6) {
-    final random = Random.secure();
-    final bytes = List<int>.generate(6, (i) => random.nextInt(256));
-    mac = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-    await prefs.setString('macAddress', mac);
-    print('🔥 NEW MAC GENERATED: $mac');
+    if (deviceId!= null) {
+      deviceId = deviceId.toUpperCase().replaceAll('-', '');
+      // نحولو لـ format MAC: AA:BB:CC:DD:EE:FF
+      mac = '';
+      for (int i = 0; i < 12 && i < deviceId.length; i += 2) {
+        if (i > 0) mac += ':';
+        mac += deviceId.substring(i, i + 2);
+      }
+      await prefs.setString('macAddress', mac);
+      print('🔥 STABLE MAC GENERATED: $mac');
+    } else {
+      // Fallback مستحيل
+      mac = 'AA:BB:CC:DD:EE:FF';
+      await prefs.setString('macAddress', mac);
+    }
   } else {
-    print('✅ EXISTING MAC FOUND: $mac');
+    print('✅ STABLE MAC FOUND: $mac');
   }
 
-  String? key = prefs.getString('device_id');
-  if (key == null || key.isEmpty) {
-    key = (100000 + Random().nextInt(900000)).toString();
-    await prefs.setString('device_id', key);
-  }
+  // 2. ID متغير: يتبدل كل ما يحل التطبيق - حماية من السرقة
+  String sessionId = (100000 + Random().nextInt(900000)).toString();
+  await prefs.setString('device_id', sessionId);
+  print('🔄 SESSION ID: $sessionId');
 }
 
-// ✅ تقرا برك + Fallback مستحيل يرجع...
+// ✅ تقرا MAC الثابت
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
-  String mac = prefs.getString('macAddress')?? '';
-  if (mac.isEmpty || mac == '...') return 'AA:BB:CC:DD:EE:FF';
-  return mac;
+  return prefs.getString('macAddress')?? 'AA:BB:CC:DD:EE:FF';
 }
 
-// ✅ هذا ID يتغير - كل مرة يتولد جديد
-String generateKey() {
-  final random = Random();
-  return (100000 + random.nextInt(900000)).toString();
+// ✅ تقرا ID المتغير
+Future<String> getSessionId() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('device_id')?? '000000';
 }
 
 Future<void> registerDevice() async {
   try {
-    final mac = await getMacAddress();
-    final key = generateKey();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('device_id', key);
+    final mac = await getMacAddress(); // ثابت
+    final key = await getSessionId(); // متغير
+
     await Supabase.instance.client.from('devices').upsert({
-      'mac_address': mac,
-      'activation_key': key,
+      'mac_address': mac, // هذا ثابت = الاشتراك ما يضيعش
+      'activation_key': key, // هذا يتبدل = حماية من السرقة
       'last_seen': DateTime.now().toIso8601String(),
     }, onConflict: 'mac_address');
   } catch (e) {
@@ -236,7 +246,7 @@ class _MainMenuState extends State<MainMenu> {
   @override
   Widget build(BuildContext context) {
     Color expiryColor = _daysLeft > 30? Colors.green : _daysLeft > 7? Colors.orange : Colors.red;
-    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft ${Lang.get('days_left')}' : Lang.get('expired')); // ← هذا السطر تبدل
+    String daysText = _expiry.isEmpty? '--' : (_daysLeft > 0? '$_daysLeft ${Lang.get('days_left')}' : Lang.get('expired'));
 
     return WillPopScope(
       onWillPop: () async {
