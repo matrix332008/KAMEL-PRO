@@ -19,15 +19,15 @@ class LoginSelection extends StatefulWidget {
 }
 
 class _LoginSelectionState extends State<LoginSelection> {
-  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _mac = 'AA:BB:CC:DD:EE:FF';
   String _deviceId = '000000';
   String _deviceName = 'ANDROID TV';
-  String _currentLang = 'ar'; // ✅ زدنا اللغة
+  String _currentLang = 'ar';
 
   @override
   void initState() {
     super.initState();
-    _loadLang(); // ✅ نقراو اللغة
+    _loadLang();
     _getDeviceInfo();
   }
 
@@ -40,8 +40,7 @@ class _LoginSelectionState extends State<LoginSelection> {
     final prefs = await SharedPreferences.getInstance();
     final deviceInfo = DeviceInfoPlugin();
     
-    // ✅ نقراو من macAddress و device_id متاع main.dart
-    String mac = await getMacAddress(); // 👈 يجيب من main.dart + Fallback
+    String mac = await getMacAddress();
     String key = prefs.getString('device_id') ?? '';
     String name = 'ANDROID TV';
 
@@ -52,7 +51,6 @@ class _LoginSelectionState extends State<LoginSelection> {
       }
     } catch(e) {}
 
-    // ✅ كان الـ ID فاضي نولدوه
     if (key.isEmpty) {
       key = generateKey();
       await prefs.setString('device_id', key);
@@ -61,7 +59,6 @@ class _LoginSelectionState extends State<LoginSelection> {
     print('🔥 LOGIN FINAL MAC: $mac');
     print('🔥 LOGIN FINAL ID: $key');
 
-    // ✅ دائما حدّث Supabase
     try {
       await Supabase.instance.client.from('devices').upsert({
         'mac_address': mac,
@@ -81,11 +78,9 @@ class _LoginSelectionState extends State<LoginSelection> {
       });
     }
 
-    // ✅ جرّب دخول أوتوماتيك من السحابة
     await _tryAutoLoginFromCloud(mac);
   }
 
-  // ✅ دالة تقرا من Supabase
   Future<void> _tryAutoLoginFromCloud(String mac) async {
     try {
       final data = await Supabase.instance.client
@@ -164,10 +159,9 @@ class _LoginSelectionState extends State<LoginSelection> {
   Widget build(BuildContext context) {
     String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
     
-    // ✅ النصوص حسب اللغة
     final labels = {
-      'activate_manual': {'ar':'تفعيل يدوي','fr':'Activation Manuelle','en':'Manual Activation','de':'Manuelle Aktivierung','cs':'Manuální aktivace'}[_currentLang]!,
-      'activate_website': {'ar':'تفعيل الاشتراك عن طريق الموقع','fr':'Activer l\'abonnement via le site','en':'Activate Subscription via Website','de':'Abo über Website aktivieren','cs':'Aktivovat předplatné přes web'}[_currentLang]!,
+      'activate_manual': 'MANUEL REGISTRATION', // ✅ بدلت تحويل يدوي
+      'activate_website': 'SCAN ME FOR AUTOMATIC REGISTRATION', // ✅ النص الجديد
     };
     
     return Scaffold(
@@ -188,8 +182,27 @@ class _LoginSelectionState extends State<LoginSelection> {
                 ),
               ),
               Spacer(),
-              // ✅ بدلنا LOGIN METHOD → تفعيل يدوي
-              Text(labels['activate_manual']!, style: TextStyle(color: Colors.cyanAccent, fontSize: 28, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.cyan, blurRadius: 20)])),
+              
+              // ✅ النص الجديد MANUEL REGISTRATION على اليمين و واضح
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    labels['activate_manual']!, 
+                    style: TextStyle(
+                      color: Colors.white, 
+                      fontSize: 28, 
+                      fontWeight: FontWeight.bold, 
+                      shadows: [
+                        Shadow(color: Colors.black, blurRadius: 10, offset: Offset(2, 2)),
+                        Shadow(color: Colors.cyan, blurRadius: 20)
+                      ]
+                    )
+                  ),
+                ),
+              ),
+              
               SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -207,13 +220,14 @@ class _LoginSelectionState extends State<LoginSelection> {
                   children: [
                     FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
                     SizedBox(width: 8),
-                    // ✅ بدلنا لون رقم الواتساب كيف MAC = Cyan
                     Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
             ],
           ),
+          
+          // ✅ كل QRs على اليسار تحت بعض
           Positioned(
             bottom: 35,
             left: 25,
@@ -225,37 +239,40 @@ class _LoginSelectionState extends State<LoginSelection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅✅✅ QR الكبير الجديد تحت صورتك وفوق QR الصغير
+                  // ✅ QR الكبير - كبرتو و حطيتو الفوق
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.orange, width: 3), // ✅ برتقالي باش يبان
-                      boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.6), blurRadius: 20, spreadRadius: 2)],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange, width: 4),
+                      boxShadow: [
+                        BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 25, spreadRadius: 3),
+                        BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
+                      ],
                     ),
                     child: Column(
                       children: [
                         QrImageView(
-                          data: 'https://kamel-pro.com', // ✅ QR متاع الموقع
-                          size: 110,
+                          data: 'https://kamel-pro.com', // ✅ ثابت كيما تحب
+                          size: 140, // ✅ كبرتو للماكس
                           backgroundColor: Colors.white,
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 6),
                         Container(
-                          width: 110,
+                          width: 140,
                           child: Text(
-                            labels['activate_website']!,
+                            labels['activate_website']!, // ✅ SCAN ME FOR AUTOMATIC REGISTRATION
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w900, height: 1.2),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 12), // ✅ مسافة بين QR الكبير و الصغير
+                  SizedBox(height: 15), // ✅ مسافة اكبر بيناتهم
                   
-                  // QR الصغير القديم + الكارت كيما هوما
+                  // QR الصغير + الكارت
                   Container(
                     padding: EdgeInsets.all(6),
                     decoration: BoxDecoration(
