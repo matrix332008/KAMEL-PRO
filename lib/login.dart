@@ -160,8 +160,8 @@ class _LoginSelectionState extends State<LoginSelection> {
     String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
     
     final labels = {
-      'activate_manual': 'MANUEL REGISTRATION', // ✅ بدلت تحويل يدوي
-      'activate_website': 'SCAN ME FOR AUTOMATIC REGISTRATION', // ✅ النص الجديد
+      'activate_manual': 'MANUEL REGISTRATION',
+      'activate_website': 'SCAN ME FOR\nAUTOMATIC\nREGISTRATION',
     };
     
     return Scaffold(
@@ -171,6 +171,7 @@ class _LoginSelectionState extends State<LoginSelection> {
           Image.asset('assets/background.jpeg', fit: BoxFit.fill),
           Column(
             children: [
+              // ✅ صورتك رجعت لبلاصتها الأصلية
               Padding(
                 padding: EdgeInsets.all(20),
                 child: Row(
@@ -183,7 +184,7 @@ class _LoginSelectionState extends State<LoginSelection> {
               ),
               Spacer(),
               
-              // ✅ النص الجديد MANUEL REGISTRATION على اليمين و واضح
+              // ✅ MANUEL REGISTRATION على اليمين
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40),
                 child: Align(
@@ -227,7 +228,7 @@ class _LoginSelectionState extends State<LoginSelection> {
             ],
           ),
           
-          // ✅ كل QRs على اليسار تحت بعض
+          // ✅ QR الكبير + الصغير - صغرنا الكبير برك
           Positioned(
             bottom: 35,
             left: 25,
@@ -239,38 +240,38 @@ class _LoginSelectionState extends State<LoginSelection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅ QR الكبير - كبرتو و حطيتو الفوق
+                  // ✅ QR الكبير - صغرناه من 140 لـ 115 برك
                   Container(
-                    padding: EdgeInsets.all(10),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange, width: 4),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange, width: 3),
                       boxShadow: [
-                        BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 25, spreadRadius: 3),
+                        BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 20, spreadRadius: 2),
                         BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
                       ],
                     ),
                     child: Column(
                       children: [
                         QrImageView(
-                          data: 'https://kamel-pro.com', // ✅ ثابت كيما تحب
-                          size: 140, // ✅ كبرتو للماكس
+                          data: 'https://kamel-pro.com',
+                          size: 115, // ✅ التعديل الوحيد هنا: 140 → 115
                           backgroundColor: Colors.white,
                         ),
-                        SizedBox(height: 6),
+                        SizedBox(height: 5),
                         Container(
-                          width: 140,
+                          width: 115, // ✅ تبعنا الحجم
                           child: Text(
-                            labels['activate_website']!, // ✅ SCAN ME FOR AUTOMATIC REGISTRATION
+                            labels['activate_website']!,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w900, height: 1.2),
+                            style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 15), // ✅ مسافة اكبر بيناتهم
+                  SizedBox(height: 12),
                   
                   // QR الصغير + الكارت
                   Container(
