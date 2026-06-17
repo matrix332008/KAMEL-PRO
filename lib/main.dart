@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:android_id/android_id.dart'; // ✅ زدنا هاذي للـMAC الثابت
+import 'package:android_id/android_id.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -17,17 +17,15 @@ import 'login.dart';
 import 'lang.dart';
 import 'speed_test.dart';
 
-// ✅✅✅ هذا الكلاس الجديد يحل مشكل CERTIFICATE_VERIFY_FAILED في الاجهزة القديمة
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+   ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
 void main() async {
-  // ✅✅✅ هذا السطر لازم قبل اي حاجة باش التحديث يخدم
   HttpOverrides.global = MyHttpOverrides();
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,17 +42,16 @@ void main() async {
 
   await Lang.load();
 
-  // ✅✅✅ نولدو MAC ثابت و ID متغير
   await initDeviceIds();
 
   runApp(KamelProApp());
 }
 
-// ✅✅✅ هذا الجديد: MAC ثابت من ANDROID_ID + ID متغير
+// ✅✅✅ مصلح مشكل Null Safety
 Future<void> initDeviceIds() async {
   final prefs = await SharedPreferences.getInstance();
 
-  // 1. MAC ثابت: ما يتبدلش جامي - مربوط بالاشتراك
+  // 1. MAC ثابت: ما يتبدلش جامي
   String? mac = prefs.getString('macAddress');
   if (mac == null || mac.isEmpty || mac.length!= 17) {
     const androidId = AndroidId();
@@ -62,16 +59,16 @@ Future<void> initDeviceIds() async {
 
     if (deviceId!= null) {
       deviceId = deviceId.toUpperCase().replaceAll('-', '');
-      // نحولو لـ format MAC: AA:BB:CC:DD:EE:FF
-      mac = '';
+      // ✅ هوني صلحنا المشكل: mac لازم تكون String مش String?
+      String newMac = '';
       for (int i = 0; i < 12 && i < deviceId.length; i += 2) {
-        if (i > 0) mac += ':';
-        mac += deviceId.substring(i, i + 2);
+        if (i > 0) newMac += ':';
+        newMac += deviceId.substring(i, i + 2);
       }
+      mac = newMac;
       await prefs.setString('macAddress', mac);
       print('🔥 STABLE MAC GENERATED: $mac');
     } else {
-      // Fallback مستحيل
       mac = 'AA:BB:CC:DD:EE:FF';
       await prefs.setString('macAddress', mac);
     }
@@ -79,22 +76,25 @@ Future<void> initDeviceIds() async {
     print('✅ STABLE MAC FOUND: $mac');
   }
 
-  // 2. ID متغير: يتبدل كل ما يحل التطبيق - حماية من السرقة
+  // 2. ID متغير: يتبدل كل ما يحل التطبيق
   String sessionId = (100000 + Random().nextInt(900000)).toString();
   await prefs.setString('device_id', sessionId);
   print('🔄 SESSION ID: $sessionId');
 }
 
-// ✅ تقرا MAC الثابت
 Future<String> getMacAddress() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('macAddress')?? 'AA:BB:CC:DD:EE:FF';
 }
 
-// ✅ تقرا ID المتغير
 Future<String> getSessionId() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('device_id')?? '000000';
+}
+
+// ✅ رجعت generateKey هنا باش login.dart ما يطيحش
+String generateKey() {
+  return (100000 + Random().nextInt(900000)).toString();
 }
 
 Future<void> registerDevice() async {
@@ -103,8 +103,8 @@ Future<void> registerDevice() async {
     final key = await getSessionId(); // متغير
 
     await Supabase.instance.client.from('devices').upsert({
-      'mac_address': mac, // هذا ثابت = الاشتراك ما يضيعش
-      'activation_key': key, // هذا يتبدل = حماية من السرقة
+      'mac_address': mac,
+      'activation_key': key,
       'last_seen': DateTime.now().toIso8601String(),
     }, onConflict: 'mac_address');
   } catch (e) {
