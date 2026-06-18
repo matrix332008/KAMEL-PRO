@@ -33,7 +33,40 @@ class _LoginSelectionState extends State<LoginSelection> {
 
   _loadLang() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() => _currentLang = prefs.getString('lang') ?? 'ar');
+    String lang = prefs.getString('lang') ?? 'ar';
+    await Lang.setLang(lang);
+    setState(() => _currentLang = lang);
+  }
+
+  Future<void> _changeLang() async {
+    final langs = {
+      'ar': 'العربية',
+      'cs': 'Čeština',
+      'fr': 'Français',
+      'en': 'English',
+      'de': 'Deutsch',
+    };
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text('Language / اللغة', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: langs.entries.map((e) => ListTile(
+            title: Text(e.value, style: TextStyle(color: Colors.white70)),
+            trailing: _currentLang == e.key ? Icon(Icons.check, color: Colors.cyanAccent) : null,
+            onTap: () => Navigator.pop(c, e.key),
+          )).toList(),
+        ),
+      ),
+    );
+    if (selected != null && selected != _currentLang) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('lang', selected);
+      await Lang.setLang(selected);
+      setState(() => _currentLang = selected);
+    }
   }
 
   _getDeviceInfo() async {
@@ -159,10 +192,15 @@ class _LoginSelectionState extends State<LoginSelection> {
   Widget build(BuildContext context) {
     String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
     
-    final labels = {
-      'activate_manual': 'MANUAL REGISTRATION',
-      'activate_website': 'SCAN ME FOR\nAUTOMATIC\nREGISTRATION',
+    final texts = {
+      'ar': {'manual': 'التسجيل اليدوي', 'scan': 'امسح للتسجيل\nالتلقائي'},
+      'cs': {'manual': 'MANUÁLNÍ REGISTRACE', 'scan': 'NASKENUJTE PRO\nAUTOMATICKOU\nREGISTRACI'},
+      'fr': {'manual': 'ENREGISTREMENT MANUEL', 'scan': 'SCANNEZ POUR\nINSCRIPTION\nAUTOMATIQUE'},
+      'en': {'manual': 'MANUAL REGISTRATION', 'scan': 'SCAN ME FOR\nAUTOMATIC\nREGISTRATION'},
+      'de': {'manual': 'MANUELLE REGISTRIERUNG', 'scan': 'SCANNEN FÜR\nAUTOMATISCHE\nREGISTRIERUNG'},
     };
+    
+    final t = texts[_currentLang] ?? texts['en']!;
     
     return Scaffold(
       body: Stack(
@@ -174,19 +212,81 @@ class _LoginSelectionState extends State<LoginSelection> {
               Padding(
                 padding: EdgeInsets.all(20),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                        SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('copied')), duration: Duration(seconds: 1)));
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.cyan, width: 2),
+                                  boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
+                                ),
+                                child: QrImageView(
+                                  data: qrData,
+                                  size: 110,
+                                  backgroundColor: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.85),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                                    SizedBox(height: 1),
+                                    Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                    Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     Spacer(),
-                    SizedBox(width: 60),
+                    GestureDetector(
+                      onTap: _changeLang,
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withOpacity(0.6),
+                          border: Border.all(color: Colors.white30, width: 2),
+                        ),
+                        child: Icon(Icons.language, color: Colors.white, size: 32),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Spacer(),
+              SizedBox(height: 40),
               
-              // ✅ MANUEL REGISTRATION رجع للوسط تحت Service Provider
+              // ✅ MANUEL REGISTRATION هبطناها
               Center(
                 child: Text(
-                  labels['activate_manual']!, 
+                  t['manual']!, 
                   style: TextStyle(
                     color: Colors.cyanAccent, 
                     fontSize: 32, 
@@ -224,84 +324,44 @@ class _LoginSelectionState extends State<LoginSelection> {
             ],
           ),
           
-          // QR الكبير + الصغير
+          // QR الكبير على اليمين لوطا
           Positioned(
             bottom: 35,
-            left: 25,
-            child: GestureDetector(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('copied')), duration: Duration(seconds: 1)));
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.orange, width: 3),
-                      boxShadow: [
-                        BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 20, spreadRadius: 2),
-                        BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        QrImageView(
-                          data: 'https://kamel-pro.com',
-                          size: 115,
-                          backgroundColor: Colors.white,
+            right: 25,
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.orange, width: 3),
+                    boxShadow: [
+                      BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 20, spreadRadius: 2),
+                      BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/qr_big.png',
+                        width: 130,
+                        height: 130,
+                        fit: BoxFit.contain,
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        width: 130,
+                        child: Text(
+                          t['scan']!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
                         ),
-                        SizedBox(height: 5),
-                        Container(
-                          width: 115,
-                          child: Text(
-                            labels['activate_website']!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 12),
-                  
-                  Container(
-                    padding: EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.cyan, width: 2),
-                      boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
-                    ),
-                    child: QrImageView(
-                      data: qrData,
-                      size: 85,
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
-                        SizedBox(height: 1),
-                        Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                        Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
