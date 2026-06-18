@@ -1,7 +1,7 @@
 name: kamel_pro
 description: "KAMEL PRO IPTV - Android TV App"
 publish_to: 'none'
-version: 1.0.4+5       # ✅ هذي الصحيحة 100%. +5 باش التحديث يخدم
+version: 1.0.4+6       # ✅ هذي الصحيحة 100%. +5 باش التحديث يخدم
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
