@@ -347,4 +347,6 @@ class Lang {
     final p = await SharedPreferences.getInstance();
     await p.setString('lang', l);
   }
+
+  static Future setLang(String l) async => await set(l);
 }
