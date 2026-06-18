@@ -16,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _macAddress = '00:00:00:00:00:00';
+  String _macAddress = '00:00:00:00';
   String _deviceId = '000000';
 
   @override
@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final androidId = await AndroidId().getId() ?? '000000';
     final deviceInfo = DeviceInfoPlugin();
     final androidInfo = await deviceInfo.androidInfo;
-    final mac = androidInfo.id; // ولا استعمل مكتبة mac_address
+    final mac = androidInfo.id;
     setState(() {
       _deviceId = androidId;
       _macAddress = mac;
@@ -53,10 +53,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _changeLang() async {
-    // تبديل سريع: ar <-> en
-    final newLang = Lang.current == 'ar' ? 'en' : 'ar';
-    await Lang.setLang(newLang);
-    setState(() {});
+    final langs = {
+      'ar': 'العربية',
+      'en': 'English',
+      'fr': 'Français',
+      'es': 'Español',
+      'de': 'Deutsch',
+    };
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: Colors.black87,
+        title: Text('Language / اللغة', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: langs.entries.map((e) => ListTile(
+            title: Text(e.value, style: TextStyle(color: Colors.white70)),
+            trailing: Lang.current == e.key ? Icon(Icons.check, color: Colors.cyanAccent) : null,
+            onTap: () => Navigator.pop(c, e.key),
+          )).toList(),
+        ),
+      ),
+    );
+    if (selected != null && selected != Lang.current) {
+      await Lang.setLang(selected);
+      setState(() {});
+    }
   }
 
   @override
@@ -81,6 +103,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   image: AssetImage('assets/background.jpeg'),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
+                ),
+              ),
+            ),
+
+            // MANUAL REGISTRATION - هبطناها شوي
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.41,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'MANUAL REGISTRATION',
+                  style: TextStyle(
+                    color: Colors.cyanAccent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+                  ),
                 ),
               ),
             ),
@@ -111,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // 2. QR الصغير + مربع MAC/ID على اليسار الفوق فوق KAMEL PRO
+            // 2. صورتك + QR الصغير + MAC/ID على اليسار الفوق
             Positioned(
               top: 40,
               left: 40,
@@ -119,6 +160,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // صورتك الدائرية
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white30, width: 2),
+                        image: DecorationImage(
+                          image: AssetImage('assets/qr_big.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
                     Container(
                       padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -128,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: QrImageView(
                         data: qrData,
                         version: QrVersions.auto,
-                        size: 90,
+                        size: 110, // كبرناه شوي
                       ),
                     ),
                     SizedBox(height: 8),
@@ -154,11 +209,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // 3. qr_big.png اكبر + على اليمين لوطا
             Positioned(
-              bottom: 40,
-              right: 40,
+              bottom: 30,
+              right: 30,
               child: Image.asset(
                 'assets/qr_big.png',
-                width: 180, // كبرناه
+                width: 180,
                 height: 180,
                 fit: BoxFit.contain,
               ),
