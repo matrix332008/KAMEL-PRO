@@ -34,7 +34,7 @@ class _LoginSelectionState extends State<LoginSelection> {
   _loadLang() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String lang = prefs.getString('lang') ?? 'ar';
-    await Lang.setLang(lang);
+    await Lang.set(lang);
     setState(() => _currentLang = lang);
   }
 
@@ -64,7 +64,7 @@ class _LoginSelectionState extends State<LoginSelection> {
     if (selected != null && selected != _currentLang) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('lang', selected);
-      await Lang.setLang(selected);
+      await Lang.set(selected);
       setState(() => _currentLang = selected);
     }
   }
