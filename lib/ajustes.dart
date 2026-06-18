@@ -84,7 +84,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   void _showQrBigDialog() {
     String title = {'ar':'امسح للزيارة','fr':'Scannez pour visiter','en':'Scan to visit','de':'Scannen','cs':'Naskenujte'}[_currentLang] ?? 'Scan';
     showDialog(context: context, builder: (_) => AlertDialog(
-      backgroundColor: Color(0xFF1A2E),
+      backgroundColor: Color(0xFF1A1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
@@ -242,7 +242,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
       Navigator.pop(context);
       
-      final result = await InstallPlugin.installApk(file.path, 'com.kamelpro.iptv');
+      final result = await InstallPlugin.installApk(file.path); // ✅ صلحناها - argument واحد برك
       print('Install result: $result');
       
     } catch (e) {
