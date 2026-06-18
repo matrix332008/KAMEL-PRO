@@ -4,13 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:crypto/crypto.dart';
+import 'package:qr_flutter/qr_flutter.dart'; // زدنا هذي للـ QR
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
-import 'package:permission_handler/permission_handler.dart'; // زدنا هذي
+import 'package:permission_handler/permission_handler.dart';
 import 'lang.dart';
 import 'main.dart';
 import 'speed_test.dart';
@@ -196,12 +197,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
-  // ✅ هذا هو الكود الجديد اللي يخدم على Android 6
   Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
-    // 1. نطلب Permission على Android 6
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
-      if (androidInfo.version.sdkInt < 24) { // Android 6 = API 23
+      if (androidInfo.version.sdkInt < 24) {
         var status = await Permission.storage.request();
         if (!status.isGranted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -210,11 +209,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
           return;
         }
       }
-      // Android 8+ لازم تطلب REQUEST_INSTALL_PACKAGES
       if (androidInfo.version.sdkInt >= 26) {
         var installStatus = await Permission.requestInstallPackages.request();
         if (!installStatus.isGranted) {
-          openAppSettings(); // يفتح للـ user الـ settings باش يفعلها
+          openAppSettings();
           return;
         }
       }
@@ -249,7 +247,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         return;
       }
 
-      // على Android 6 لازم نحطو الملف في ExternalStorage
       Directory dir;
       if (Platform.isAndroid) {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
@@ -270,7 +267,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
       Navigator.pop(context);
       
-      // ✅ هذا السطر هو اللي يفرق: يخدم على الكل من 6 لعند 14
       final result = await OpenFile.open(file.path);
       
       if (result.type != ResultType.done) {
@@ -328,6 +324,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
       'speed': {'ar':'اختبار سرعة الانترنت','fr':'Test vitesse','en':'Speed Test','de':'Speedtest','cs':'Test rychlosti'}[_currentLang]!,
     };
 
+    final qrData = 'MAC:$_mac\nID:$_deviceId\nEXP:$_expiry';
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
@@ -365,17 +363,48 @@ class _AjustesScreenState extends State<AjustesScreen> {
               ]),
             ),
           )),
+          
+          // ✅ هذي هي الحتة اللي تبدلت: QR باين ديما جنب المربع
           Padding(padding: EdgeInsets.only(bottom: 35),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
-              decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.cyan.withOpacity(0.3))),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                SizedBox(height: 6),
-                Text('ID: $_deviceId   •   Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 15)),
-              ]),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // المربع الاسود متاع MAC/ID
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4), 
+                    borderRadius: BorderRadius.circular(16), 
+                    border: Border.all(color: Colors.cyan.withOpacity(0.3))
+                  ),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(_deviceName, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                    SizedBox(height: 6),
+                    Text('ID: $_deviceId   •   Exp: $_expiry', style: TextStyle(color: Colors.white70, fontSize: 15)),
+                  ]),
+                ),
+                
+                SizedBox(width: 20), // مسافة بين المربع والـ QR
+                
+                // QR Code باين ديما - نفس الحجم ونفس الديزاين
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white, // خلفية بيضا للـ QR
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.cyan.withOpacity(0.3), width: 2),
+                    boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 15)],
+                  ),
+                  child: QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 110, // نفس ارتفاع المربع تقريبا
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ]),
