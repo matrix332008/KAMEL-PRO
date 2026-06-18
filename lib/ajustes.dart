@@ -4,13 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:crypto/crypto.dart';
-import 'package:qr_flutter/qr_flutter.dart'; // زدنا هذي للـ QR
+import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
+import 'package:install_plugin/install_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'lang.dart';
 import 'main.dart';
@@ -84,7 +84,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   void _showQrBigDialog() {
     String title = {'ar':'امسح للزيارة','fr':'Scannez pour visiter','en':'Scan to visit','de':'Scannen','cs':'Naskenujte'}[_currentLang] ?? 'Scan';
     showDialog(context: context, builder: (_) => AlertDialog(
-      backgroundColor: Color(0xFF1A1A2E),
+      backgroundColor: Color(0xFF1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
@@ -198,24 +198,13 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
-    if (Platform.isAndroid) {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      if (androidInfo.version.sdkInt < 24) {
-        var status = await Permission.storage.request();
-        if (!status.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('لازم تعطي permission للتخزين'), backgroundColor: Colors.red),
-          );
-          return;
-        }
-      }
-      if (androidInfo.version.sdkInt >= 26) {
-        var installStatus = await Permission.requestInstallPackages.request();
-        if (!installStatus.isGranted) {
-          openAppSettings();
-          return;
-        }
-      }
+    var installStatus = await Permission.requestInstallPackages.request();
+    if (!installStatus.isGranted) {
+      openAppSettings();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text({'ar':'لازم تفعل Install unknown apps','fr':'Activez Install unknown apps','en':'Enable Install unknown apps','de':'Aktivieren Sie Unbekannte Apps installieren','cs':'Povolte Instalace neznámých aplikací'}[_currentLang]!), backgroundColor: Colors.orange),
+      );
+      return;
     }
 
     showDialog(
@@ -247,33 +236,14 @@ class _AjustesScreenState extends State<AjustesScreen> {
         return;
       }
 
-      Directory dir;
-      if (Platform.isAndroid) {
-        final androidInfo = await DeviceInfoPlugin().androidInfo;
-        if (androidInfo.version.sdkInt < 24) {
-          dir = Directory('/storage/emulated/0/Download');
-          if (!await dir.exists()) {
-            dir = await getExternalStorageDirectory() ?? await getTemporaryDirectory();
-          }
-        } else {
-          dir = await getTemporaryDirectory();
-        }
-      } else {
-        dir = await getTemporaryDirectory();
-      }
-      
+      final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/kamelpro_update.apk');
       await file.writeAsBytes(bytes);
 
       Navigator.pop(context);
       
-      final result = await OpenFile.open(file.path);
-      
-      if (result.type != ResultType.done) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في التثبيت: ${result.message}'), backgroundColor: Colors.red),
-        );
-      }
+      final result = await InstallPlugin.installApk(file.path, 'com.kamelpro.iptv');
+      print('Install result: $result');
       
     } catch (e) {
       Navigator.pop(context);
@@ -364,12 +334,10 @@ class _AjustesScreenState extends State<AjustesScreen> {
             ),
           )),
           
-          // ✅ هذي هي الحتة اللي تبدلت: QR باين ديما جنب المربع
           Padding(padding: EdgeInsets.only(bottom: 35),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // المربع الاسود متاع MAC/ID
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
                   decoration: BoxDecoration(
@@ -386,13 +354,12 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   ]),
                 ),
                 
-                SizedBox(width: 20), // مسافة بين المربع والـ QR
+                SizedBox(width: 20),
                 
-                // QR Code باين ديما - نفس الحجم ونفس الديزاين
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white, // خلفية بيضا للـ QR
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.cyan.withOpacity(0.3), width: 2),
                     boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 15)],
@@ -400,7 +367,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
                   child: QrImageView(
                     data: qrData,
                     version: QrVersions.auto,
-                    size: 110, // نفس ارتفاع المربع تقريبا
+                    size: 110,
                     backgroundColor: Colors.white,
                   ),
                 ),
