@@ -275,32 +275,30 @@ class _LoginSelectionState extends State<LoginSelection> {
                           color: Colors.black.withOpacity(0.6),
                           border: Border.all(color: Colors.white30, width: 2),
                         ),
-                        child: Icon(Icons.language, color: Colors.white, size: 32),
+                        child: Center(child: Text('🇹🇳', style: TextStyle(fontSize: 30))),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 40),
+              SizedBox(height: 15),
               
-              // ✅ MANUEL REGISTRATION هبطناها
               Center(
                 child: Text(
                   t['manual']!, 
                   style: TextStyle(
-                    color: Colors.cyanAccent, 
+                    color: Colors.white, 
                     fontSize: 32, 
                     fontWeight: FontWeight.bold, 
                     letterSpacing: 3,
                     shadows: [
-                      Shadow(color: Colors.black, blurRadius: 15, offset: Offset(3, 3)),
-                      Shadow(color: Colors.cyan, blurRadius: 25)
+                      Shadow(color: Colors.black, blurRadius: 15, offset: Offset(3, 3))
                     ]
                   )
                 ),
               ),
               
-              SizedBox(height: 50),
+              SizedBox(height: 25),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -324,7 +322,6 @@ class _LoginSelectionState extends State<LoginSelection> {
             ],
           ),
           
-          // QR الكبير على اليمين لوطا
           Positioned(
             bottom: 35,
             right: 25,
@@ -426,7 +423,6 @@ class __LoginCardState extends State<_LoginCard> {
   }
 }
 
-// ============= XTREAM LOGIN =============
 class XtreamLogin extends StatefulWidget {
   @override
   _XtreamLoginState createState() => _XtreamLoginState();
@@ -579,7 +575,6 @@ class _XtreamLoginState extends State<XtreamLogin> {
   }
 }
 
-// ============= M3U LOGIN =============
 class M3ULogin extends StatefulWidget {
   @override
   _M3ULoginState createState() => _M3ULoginState();
