@@ -198,13 +198,28 @@ class _AjustesScreenState extends State<AjustesScreen> {
   }
 
   Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
-    var installStatus = await Permission.requestInstallPackages.request();
-    if (!installStatus.isGranted) {
-      openAppSettings();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text({'ar':'لازم تفعل Install unknown apps','fr':'Activez Install unknown apps','en':'Enable Install unknown apps','de':'Aktivieren Sie Unbekannte Apps installieren','cs':'Povolte Instalace neznámých aplikací'}[_currentLang]!), backgroundColor: Colors.orange),
-      );
-      return;
+    final deviceInfo = DeviceInfoPlugin();
+    int sdkInt = 30;
+    if (Platform.isAndroid) {
+      sdkInt = (await deviceInfo.androidInfo).version.sdkInt;
+    }
+
+    // Android 8+ يحتاج permission خاص
+    if (sdkInt >= 26) {
+      var installStatus = await Permission.requestInstallPackages.status;
+      if (!installStatus.isGranted) {
+        installStatus = await Permission.requestInstallPackages.request();
+      }
+      if (!installStatus.isGranted) {
+        openAppSettings();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text({'ar':'لازم تفعل Install unknown apps','fr':'Activez Install unknown apps','en':'Enable Install unknown apps','de':'Aktivieren Sie Unbekannte Apps installieren','cs':'Povolte Instalace neznámých aplikací'}[_currentLang]!), backgroundColor: Colors.orange),
+        );
+        return;
+      }
+    } else {
+      // Android 6 و 7
+      await Permission.storage.request();
     }
 
     showDialog(
@@ -242,7 +257,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
       Navigator.pop(context);
       
-      final result = await InstallPlugin.installApk(file.path); // ✅ هذا الصحيح 100%
+      PackageInfo info = await PackageInfo.fromPlatform();
+      final result = await InstallPlugin.installApk(file.path, info.packageName);
       print('Install result: $result');
       
     } catch (e) {
