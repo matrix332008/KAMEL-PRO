@@ -24,9 +24,40 @@
 .page{display:none}.page.active{display:block}
 .item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
 .whatsapp{position:fixed;bottom:20px;left:20px;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;z-index:99}
+
+/* ✅ Terms of Use Modal */
+.terms-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.terms-overlay.show{display:flex}
+.terms-modal{background:linear-gradient(135deg,#c9184a,#6a040f 50%,#240046);border-radius:20px;padding:0;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+.terms-header{background:rgba(255,255,255,.1);padding:20px 24px;border-radius:20px 20px 0 0}
+.terms-header h2{margin:0;font-size:24px;font-weight:900;color:#fff;text-align:center}
+.terms-body{padding:24px;color:#fff;font-size:15px;line-height:1.7}
+.terms-body p{margin:0 0 16px 0}
+.terms-body strong{font-weight:900}
+.terms-footer{padding:20px 24px;display:flex;justify-content:center}
+.btn-agree{background:#2dc653;border:none;color:#fff;padding:14px 50px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(45,198,83,.4);transition:.2s}
+.btn-agree:hover{background:#25a244;transform:translateY(-2px)}
+.btn-agree:active{transform:translateY(0)}
 </style>
 </head>
 <body>
+<!-- ✅ Terms of Use Modal -->
+<div class="terms-overlay" id="termsModal">
+  <div class="terms-modal">
+    <div class="terms-header">
+      <h2>Terms of Use</h2>
+    </div>
+    <div class="terms-body">
+      <p>Kamel Pro is a <strong>media player only</strong>. The application does not contain, provide, host, sell, or promote any media content, streaming servers, or subscriptions. Kamel Pro does not offer access to any copyrighted material.</p>
+      <p>All content played within the application must be supplied solely by the user, who is fully responsible for ensuring that such content is legally obtained and authorized for personal use. Any misuse of the application to access unauthorized or copyrighted content is strictly prohibited and is the sole responsibility of the user.</p>
+      <p>By using Kamel Pro, you agree to comply with all applicable copyright and intellectual property laws.</p>
+    </div>
+    <div class="terms-footer">
+      <button class="btn-agree" onclick="acceptTerms()">I Agree</button>
+    </div>
+  </div>
+</div>
+
 <div class="header">
   <div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9" id="subtitle">إدارة اشتراكاتك</div></div>
   <div class="top-right">
@@ -89,6 +120,18 @@ let currentMac = '';
 let html5Qr;
 let editId = null;
 let editType = '';
+
+// ✅ Check Terms on Load
+window.addEventListener('DOMContentLoaded', () => {
+  if(!localStorage.getItem('terms_accepted')){
+    document.getElementById('termsModal').classList.add('show');
+  }
+});
+
+function acceptTerms(){
+  localStorage.setItem('terms_accepted', 'true');
+  document.getElementById('termsModal').classList.remove('show');
+}
 
 function formatMac(input) {
   let v = input.value.toUpperCase().replace(/[^A-F0-9]/g, '');
