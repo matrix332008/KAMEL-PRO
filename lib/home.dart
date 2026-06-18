@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:android_id/android_id.dart';
 import 'live_tv.dart';
 import 'filmes.dart';
 import 'series.dart';
@@ -13,10 +16,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _macAddress = '00:00:00:00:00:00';
+  String _deviceId = '000000';
+
   @override
   void initState() {
     super.initState();
     Lang.load().then((_) => setState(() {}));
+    _loadDeviceInfo();
+  }
+
+  Future<void> _loadDeviceInfo() async {
+    final androidId = await AndroidId().getId() ?? '000000';
+    final deviceInfo = DeviceInfoPlugin();
+    final androidInfo = await deviceInfo.androidInfo;
+    final mac = androidInfo.id; // ولا استعمل مكتبة mac_address
+    setState(() {
+      _deviceId = androidId;
+      _macAddress = mac;
+    });
   }
 
   Future<bool> _showExitDialog() async {
@@ -24,18 +42,27 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (c) => AlertDialog(
         backgroundColor: Colors.black87,
-        title: Text(Lang.get('exit'), style: TextStyle(color: Colors.white)), // ← تبدل
-        content: Text(Lang.get('exit_msg'), style: TextStyle(color: Colors.white70)), // ← تبدل
+        title: Text(Lang.get('exit'), style: TextStyle(color: Colors.white)),
+        content: Text(Lang.get('exit_msg'), style: TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Lang.get('no'), style: TextStyle(color: Colors.white70))), // ← تبدل
-          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.redAccent))), // ← تبدل
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(Lang.get('no'), style: TextStyle(color: Colors.white70))),
+          TextButton(onPressed: () => Navigator.pop(c, true), child: Text(Lang.get('yes'), style: TextStyle(color: Colors.redAccent))),
         ],
       ),
     ) ?? false;
   }
 
+  void _changeLang() async {
+    // تبديل سريع: ar <-> en
+    final newLang = Lang.current == 'ar' ? 'en' : 'ar';
+    await Lang.setLang(newLang);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final qrData = 'MAC:$_macAddress\nID:$_deviceId';
+    
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -57,6 +84,86 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            
+            // 1. ايقونة اللغة فوق على اليمين
+            Positioned(
+              top: 40,
+              right: 40,
+              child: SafeArea(
+                child: Focus(
+                  child: Builder(builder: (ctx) {
+                    final has = Focus.of(ctx).hasFocus;
+                    return GestureDetector(
+                      onTap: _changeLang,
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 150),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: has ? Colors.blue.withOpacity(0.3) : Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(color: has ? Colors.blue : Colors.white24, width: has ? 3 : 1),
+                        ),
+                        child: Icon(Icons.language, color: has ? Colors.blue : Colors.white, size: 32),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+
+            // 2. QR الصغير + مربع MAC/ID على اليسار الفوق فوق KAMEL PRO
+            Positioned(
+              top: 40,
+              left: 40,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: QrImageView(
+                        data: qrData,
+                        version: QrVersions.auto,
+                        size: 90,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.cyanAccent, width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('MAC: $_macAddress', style: TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('ID: $_deviceId', style: TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 3. qr_big.png اكبر + على اليمين لوطا
+            Positioned(
+              bottom: 40,
+              right: 40,
+              child: Image.asset(
+                'assets/qr_big.png',
+                width: 180, // كبرناه
+                height: 180,
+                fit: BoxFit.contain,
+              ),
+            ),
+
             // KAMEL PRO الأخضر
             Positioned(
               left: 40,
