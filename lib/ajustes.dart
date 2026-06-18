@@ -37,7 +37,9 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
   _loadLang() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() => _currentLang = prefs.getString('lang') ?? 'ar');
+    String lang = prefs.getString('lang') ?? 'ar';
+    await Lang.set(lang);
+    setState(() => _currentLang = lang);
   }
 
   _getDeviceInfo() async {
