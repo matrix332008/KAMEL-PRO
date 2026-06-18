@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:android_id/android_id.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'live_tv.dart';
 import 'filmes.dart';
 import 'series.dart';
@@ -22,8 +23,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Lang.load().then((_) => setState(() {}));
+    _initLang();
     _loadDeviceInfo();
+  }
+
+  Future<void> _initLang() async {
+    await Lang.load();
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('lang')) {
+      // أول مرة - خلي الحريف يختار لغتو
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _changeLang(force: true);
+      });
+    }
+    setState(() {});
   }
 
   Future<void> _loadDeviceInfo() async {
@@ -52,32 +65,39 @@ class _HomeScreenState extends State<HomeScreen> {
     ) ?? false;
   }
 
-  void _changeLang() async {
+  void _changeLang({bool force = false}) async {
     final langs = {
       'ar': 'العربية',
-      'en': 'English',
+      'cs': 'Čeština',
       'fr': 'Français',
-      'es': 'Español',
+      'en': 'English',
       'de': 'Deutsch',
     };
     final selected = await showDialog<String>(
       context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: Colors.black87,
-        title: Text('Language / اللغة', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: langs.entries.map((e) => ListTile(
-            title: Text(e.value, style: TextStyle(color: Colors.white70)),
-            trailing: Lang.current == e.key ? Icon(Icons.check, color: Colors.cyanAccent) : null,
-            onTap: () => Navigator.pop(c, e.key),
-          )).toList(),
+      barrierDismissible: !force,
+      builder: (c) => PopScope(
+        canPop: !force,
+        child: AlertDialog(
+          backgroundColor: Colors.black87,
+          title: Text(Lang.get('choisir_langue'), style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: langs.entries.map((e) => ListTile(
+              title: Text(e.value, style: TextStyle(color: Colors.white70)),
+              trailing: Lang.current == e.key ? Icon(Icons.check, color: Colors.cyanAccent) : null,
+              onTap: () => Navigator.pop(c, e.key),
+            )).toList(),
+          ),
         ),
       ),
     );
     if (selected != null && selected != Lang.current) {
       await Lang.setLang(selected);
       setState(() {});
+    } else if (force && selected == null) {
+      // إذا سكر بدون اختيار، عاود ورّيه
+      _changeLang(force: true);
     }
   }
 
@@ -107,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // MANUAL REGISTRATION - هبطناها شوي
             Positioned(
               top: MediaQuery.of(context).size.height * 0.41,
               left: 0,
@@ -126,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             
-            // 1. ايقونة اللغة فوق على اليمين
             Positioned(
               top: 40,
               right: 40,
@@ -135,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Builder(builder: (ctx) {
                     final has = Focus.of(ctx).hasFocus;
                     return GestureDetector(
-                      onTap: _changeLang,
+                      onTap: () => _changeLang(),
                       child: AnimatedContainer(
                         duration: Duration(milliseconds: 150),
                         padding: EdgeInsets.all(12),
@@ -152,7 +170,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // 2. صورتك + QR الصغير + MAC/ID على اليسار الفوق
             Positioned(
               top: 40,
               left: 40,
@@ -160,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // صورتك الدائرية
                     Container(
                       width: 60,
                       height: 60,
@@ -183,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: QrImageView(
                         data: qrData,
                         version: QrVersions.auto,
-                        size: 110, // كبرناه شوي
+                        size: 110,
                       ),
                     ),
                     SizedBox(height: 8),
@@ -207,7 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // 3. qr_big.png اكبر + على اليمين لوطا
             Positioned(
               bottom: 30,
               right: 30,
@@ -219,7 +234,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // KAMEL PRO الأخضر
             Positioned(
               left: 40,
               bottom: 85,
@@ -240,7 +254,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // واتساب + الرقم
             Positioned(
               bottom: 45,
               left: 0,
