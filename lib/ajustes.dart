@@ -86,7 +86,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
   void _showQrBigDialog() {
     String title = {'ar':'امسح للزيارة','fr':'Scannez pour visiter','en':'Scan to visit','de':'Scannen','cs':'Naskenujte'}[_currentLang] ?? 'Scan';
     showDialog(context: context, builder: (_) => AlertDialog(
-      backgroundColor: Color(0xFF1A1A2E),
+      backgroundColor: Color(0xFF1A2E),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text(title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 20),
@@ -206,7 +206,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
       sdkInt = (await deviceInfo.androidInfo).version.sdkInt;
     }
 
-    // Android 8+ يحتاج permission خاص
     if (sdkInt >= 26) {
       var installStatus = await Permission.requestInstallPackages.status;
       if (!installStatus.isGranted) {
@@ -220,7 +219,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         return;
       }
     } else {
-      // Android 6 و 7
       await Permission.storage.request();
     }
 
@@ -259,7 +257,8 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
       Navigator.pop(context);
       
-      final result = await InstallPlugin.installApk(file.path);
+      PackageInfo info = await PackageInfo.fromPlatform();
+      final result = await InstallPlugin.installApk(file.path, appId: info.packageName);
       print('Install result: $result');
       
     } catch (e) {
