@@ -10,8 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:permission_handler/permission_handler.dart'; // زدنا هذي
 import 'lang.dart';
-import 'main.dart'; // 👈 باش نستعملو getMacAddress()
+import 'main.dart';
 import 'speed_test.dart';
 
 class AjustesScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class AjustesScreen extends StatefulWidget {
 
 class _AjustesScreenState extends State<AjustesScreen> {
   String _currentLang = 'ar';
-  String _mac = 'AA:BB:CC:DD:EE:FF'; // 👈 Fallback مش ...
+  String _mac = 'AA:BB:CC:DD:EE:FF';
   String _deviceId = '000000';
   String _deviceName = 'ANDROID TV';
   String _expiry = '';
@@ -42,8 +43,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
     final deviceInfo = DeviceInfoPlugin();
     final prefs = await SharedPreferences.getInstance();
     
-    // ✅ نقراو MAC و ID من اللي خزناهم في main.dart
-    String mac = await getMacAddress(); // 👈 يجيب من macAddress + Fallback
+    String mac = await getMacAddress();
     String deviceId = prefs.getString('device_id') ?? '000000';
     
     print('🔥 AJUSTES MAC: $mac');
@@ -140,7 +140,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       int currentVersion = int.parse(packageInfo.buildNumber);
       
-      print('🔥 CURRENT VERSION: $currentVersion'); // للـ Debug
+      print('🔥 CURRENT VERSION: $currentVersion');
 
       final response = await http.get(Uri.parse(
           'https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/version.json'));
@@ -154,7 +154,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
         String newNotes = data['notes'];
         String newSha256 = data['sha256'];
 
-        print('🔥 NEW VERSION: $newVersion'); // للـ Debug
+        print('🔥 NEW VERSION: $newVersion');
 
         if (newVersion > currentVersion) {
           showDialog(
@@ -196,7 +196,30 @@ class _AjustesScreenState extends State<AjustesScreen> {
     }
   }
 
+  // ✅ هذا هو الكود الجديد اللي يخدم على Android 6
   Future<void> _downloadAndInstallApk(String url, String expectedSha256) async {
+    // 1. نطلب Permission على Android 6
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt < 24) { // Android 6 = API 23
+        var status = await Permission.storage.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('لازم تعطي permission للتخزين'), backgroundColor: Colors.red),
+          );
+          return;
+        }
+      }
+      // Android 8+ لازم تطلب REQUEST_INSTALL_PACKAGES
+      if (androidInfo.version.sdkInt >= 26) {
+        var installStatus = await Permission.requestInstallPackages.request();
+        if (!installStatus.isGranted) {
+          openAppSettings(); // يفتح للـ user الـ settings باش يفعلها
+          return;
+        }
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -226,12 +249,35 @@ class _AjustesScreenState extends State<AjustesScreen> {
         return;
       }
 
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/update.apk');
+      // على Android 6 لازم نحطو الملف في ExternalStorage
+      Directory dir;
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt < 24) {
+          dir = Directory('/storage/emulated/0/Download');
+          if (!await dir.exists()) {
+            dir = await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+          }
+        } else {
+          dir = await getTemporaryDirectory();
+        }
+      } else {
+        dir = await getTemporaryDirectory();
+      }
+      
+      final file = File('${dir.path}/kamelpro_update.apk');
       await file.writeAsBytes(bytes);
 
       Navigator.pop(context);
-      await OpenFile.open(file.path);
+      
+      // ✅ هذا السطر هو اللي يفرق: يخدم على الكل من 6 لعند 14
+      final result = await OpenFile.open(file.path);
+      
+      if (result.type != ResultType.done) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ في التثبيت: ${result.message}'), backgroundColor: Colors.red),
+        );
+      }
       
     } catch (e) {
       Navigator.pop(context);
@@ -288,7 +334,6 @@ class _AjustesScreenState extends State<AjustesScreen> {
         decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
           colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)])),
         child: Column(children: [
-          // ✅ هاذي جديدة: توريك النسخة الحقيقية متاع الـ APK
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
