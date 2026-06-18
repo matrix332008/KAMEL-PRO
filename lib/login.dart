@@ -160,7 +160,7 @@ class _LoginSelectionState extends State<LoginSelection> {
     String qrData = jsonEncode({'mac': _mac, 'id': _deviceId, 'name': _deviceName});
     
     final labels = {
-      'activate_manual': 'MANUEL REGISTRATION',
+      'activate_manual': 'MANUAL REGISTRATION',
       'activate_website': 'SCAN ME FOR\nAUTOMATIC\nREGISTRATION',
     };
     
@@ -171,7 +171,6 @@ class _LoginSelectionState extends State<LoginSelection> {
           Image.asset('assets/background.jpeg', fit: BoxFit.fill),
           Column(
             children: [
-              // ✅ صورتك رجعت لبلاصتها الأصلية
               Padding(
                 padding: EdgeInsets.all(20),
                 child: Row(
@@ -184,27 +183,24 @@ class _LoginSelectionState extends State<LoginSelection> {
               ),
               Spacer(),
               
-              // ✅ MANUEL REGISTRATION على اليمين
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    labels['activate_manual']!, 
-                    style: TextStyle(
-                      color: Colors.white, 
-                      fontSize: 28, 
-                      fontWeight: FontWeight.bold, 
-                      shadows: [
-                        Shadow(color: Colors.black, blurRadius: 10, offset: Offset(2, 2)),
-                        Shadow(color: Colors.cyan, blurRadius: 20)
-                      ]
-                    )
-                  ),
+              // ✅ MANUEL REGISTRATION رجع للوسط تحت Service Provider
+              Center(
+                child: Text(
+                  labels['activate_manual']!, 
+                  style: TextStyle(
+                    color: Colors.cyanAccent, 
+                    fontSize: 32, 
+                    fontWeight: FontWeight.bold, 
+                    letterSpacing: 3,
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 15, offset: Offset(3, 3)),
+                      Shadow(color: Colors.cyan, blurRadius: 25)
+                    ]
+                  )
                 ),
               ),
               
-              SizedBox(height: 40),
+              SizedBox(height: 50),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -228,7 +224,7 @@ class _LoginSelectionState extends State<LoginSelection> {
             ],
           ),
           
-          // ✅ QR الكبير + الصغير - صغرنا الكبير برك
+          // QR الكبير + الصغير
           Positioned(
             bottom: 35,
             left: 25,
@@ -240,7 +236,6 @@ class _LoginSelectionState extends State<LoginSelection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅ QR الكبير - صغرناه من 140 لـ 115 برك
                   Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -256,12 +251,12 @@ class _LoginSelectionState extends State<LoginSelection> {
                       children: [
                         QrImageView(
                           data: 'https://kamel-pro.com',
-                          size: 115, // ✅ التعديل الوحيد هنا: 140 → 115
+                          size: 115,
                           backgroundColor: Colors.white,
                         ),
                         SizedBox(height: 5),
                         Container(
-                          width: 115, // ✅ تبعنا الحجم
+                          width: 115,
                           child: Text(
                             labels['activate_website']!,
                             textAlign: TextAlign.center,
@@ -273,7 +268,6 @@ class _LoginSelectionState extends State<LoginSelection> {
                   ),
                   SizedBox(height: 12),
                   
-                  // QR الصغير + الكارت
                   Container(
                     padding: EdgeInsets.all(6),
                     decoration: BoxDecoration(
