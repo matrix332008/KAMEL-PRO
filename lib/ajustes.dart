@@ -259,8 +259,7 @@ class _AjustesScreenState extends State<AjustesScreen> {
 
       Navigator.pop(context);
       
-      PackageInfo info = await PackageInfo.fromPlatform();
-      final result = await InstallPlugin.installApk(file.path, info.packageName);
+      final result = await InstallPlugin.installApk(file.path);
       print('Install result: $result');
       
     } catch (e) {
