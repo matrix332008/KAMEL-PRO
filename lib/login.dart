@@ -286,7 +286,6 @@ class _LoginSelectionState extends State<LoginSelection> {
                         ],
                       ),
                       Spacer(),
-                      // زر اللغة - صار focusable للريموت
                       Focus(
                         focusNode: _langFocusNode,
                         onFocusChange: (hasFocus) => setState(() => _langFocused = hasFocus),
@@ -318,43 +317,48 @@ class _LoginSelectionState extends State<LoginSelection> {
                     ],
                   ),
                 ),
-                SizedBox(height: 5), // طلعتهم أكثر
+                SizedBox(height: 5),
                 
-                // الأزرار طلعتهم الفوق وصغرتهم
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _LoginCard(title: 'XTREAM CODES', icon: Icons.dns, color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => XtreamLogin()))),
-                    SizedBox(width: 40),
-                    _LoginCard(title: 'M3U PLAYLIST', icon: Icons.link, color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => M3ULogin()))),
-                  ],
-                ),
-                SizedBox(height: 12),
-                // التسجيل اليدوي حطيتو تحتهم
-                Center(
-                  child: Text(
-                    t['manual']!, 
-                    style: TextStyle(
-                      color: Colors.white, 
-                      fontSize: 26, 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(color: Colors.black, blurRadius: 12, offset: Offset(2, 2))
-                      ]
-                    )
-                  ),
-                ),
-                
-                SizedBox(height: 25), // بدل Spacer باش الواتساب يطلع
-                Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                // *** التعديل الوحيد هنا ***
+                Transform.translate(
+                  offset: const Offset(0, -50),
+                  child: Column(
                     children: [
-                      FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
-                      SizedBox(width: 8),
-                      Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _LoginCard(title: 'XTREAM CODES', icon: Icons.dns, color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => XtreamLogin()))),
+                          SizedBox(width: 40),
+                          _LoginCard(title: 'M3U PLAYLIST', icon: Icons.link, color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => M3ULogin()))),
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      Center(
+                        child: Text(
+                          t['manual']!, 
+                          style: TextStyle(
+                            color: Colors.white, 
+                            fontSize: 26, 
+                            fontWeight: FontWeight.bold, 
+                            letterSpacing: 2,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 12, offset: Offset(2, 2))
+                            ]
+                          )
+                        ),
+                      ),
+                      SizedBox(height: 25),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
+                            SizedBox(width: 8),
+                            Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -748,7 +752,6 @@ class __InputFieldState extends State<_InputField> {
             widget.prevFocus?.requestFocus();
             return KeyEventResult.handled;
           }
-        }
         return KeyEventResult.ignored;
       },
       child: TextField(
