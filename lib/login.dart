@@ -24,11 +24,21 @@ class _LoginSelectionState extends State<LoginSelection> {
   String _deviceName = 'ANDROID TV';
   String _currentLang = 'ar';
 
+  // للريموت - زر اللغة
+  final FocusNode _langFocusNode = FocusNode();
+  bool _langFocused = false;
+
   @override
   void initState() {
     super.initState();
     _loadLang();
     _getDeviceInfo();
+  }
+
+  @override
+  void dispose() {
+    _langFocusNode.dispose();
+    super.dispose();
   }
 
   _loadLang() async {
@@ -203,165 +213,185 @@ class _LoginSelectionState extends State<LoginSelection> {
     final t = texts[_currentLang] ?? texts['en']!;
     
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset('assets/background.jpeg', fit: BoxFit.fill),
-          Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
-                        SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('copied')), duration: Duration(seconds: 1)));
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.cyan, width: 2),
-                                  boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
+      body: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset('assets/background.jpeg', fit: BoxFit.fill),
+            Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(radius: 30, backgroundImage: AssetImage('assets/avatar.png')),
+                          SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: 'MAC: $_mac\nID: $_deviceId'));
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(Lang.get('copied')), duration: Duration(seconds: 1)));
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.cyan, width: 2),
+                                    boxShadow: [BoxShadow(color: Colors.cyan.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)],
+                                  ),
+                                  child: QrImageView(
+                                    data: qrData,
+                                    size: 110,
+                                    backgroundColor: Colors.white,
+                                  ),
                                 ),
-                                child: QrImageView(
-                                  data: qrData,
-                                  size: 110,
-                                  backgroundColor: Colors.white,
+                                SizedBox(height: 6),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.85),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                                      SizedBox(height: 1),
+                                      Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                                      Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 6),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.85),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.cyan.withOpacity(0.6), width: 1),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(_deviceName, style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
-                                    SizedBox(height: 1),
-                                    Text('MAC: $_mac', style: TextStyle(color: Colors.cyan, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                                    Text('ID: $_deviceId', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Spacer(),
+                      // زر اللغة - صار focusable للريموت
+                      Focus(
+                        focusNode: _langFocusNode,
+                        onFocusChange: (hasFocus) => setState(() => _langFocused = hasFocus),
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent) {
+                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                              _changeLang();
+                              return KeyEventResult.handled;
+                            }
+                          }
+                          return KeyEventResult.ignored;
+                        },
+                        child: GestureDetector(
+                          onTap: _changeLang,
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200),
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withOpacity(0.6),
+                              border: Border.all(color: _langFocused ? Colors.cyanAccent : Colors.white30, width: _langFocused ? 3 : 2),
+                              boxShadow: _langFocused ? [BoxShadow(color: Colors.cyanAccent.withOpacity(0.8), blurRadius: 15, spreadRadius: 1)] : [],
+                            ),
+                            child: Center(child: Text('🇹🇳', style: TextStyle(fontSize: 30))),
                           ),
                         ),
-                      ],
-                    ),
-                    Spacer(),
-                    GestureDetector(
-                      onTap: _changeLang,
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.black.withOpacity(0.6),
-                          border: Border.all(color: Colors.white30, width: 2),
-                        ),
-                        child: Center(child: Text('🇹🇳', style: TextStyle(fontSize: 30))),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 15),
-              
-              Center(
-                child: Text(
-                  t['manual']!, 
-                  style: TextStyle(
-                    color: Colors.white, 
-                    fontSize: 32, 
-                    fontWeight: FontWeight.bold, 
-                    letterSpacing: 3,
-                    shadows: [
-                      Shadow(color: Colors.black, blurRadius: 15, offset: Offset(3, 3))
-                    ]
-                  )
-                ),
-              ),
-              
-              SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _LoginCard(title: 'XTREAM CODES', icon: Icons.dns, color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => XtreamLogin()))),
-                  SizedBox(width: 60),
-                  _LoginCard(title: 'M3U PLAYLIST', icon: Icons.link, color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => M3ULogin()))),
-                ],
-              ),
-              Spacer(),
-              Padding(
-                padding: EdgeInsets.only(bottom: 30),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
-                    SizedBox(width: 8),
-                    Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          
-          Positioned(
-            bottom: 35,
-            right: 25,
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.orange, width: 3),
-                    boxShadow: [
-                      BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 20, spreadRadius: 2),
-                      BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
                     ],
                   ),
-                  child: Column(
+                ),
+                SizedBox(height: 10),
+                
+                // الأزرار طلعتهم الفوق وصغرتهم
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _LoginCard(title: 'XTREAM CODES', icon: Icons.dns, color: Colors.blue, autofocus: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => XtreamLogin()))),
+                    SizedBox(width: 40),
+                    _LoginCard(title: 'M3U PLAYLIST', icon: Icons.link, color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => M3ULogin()))),
+                  ],
+                ),
+                SizedBox(height: 18),
+                // التسجيل اليدوي حطيتو تحتهم
+                Center(
+                  child: Text(
+                    t['manual']!, 
+                    style: TextStyle(
+                      color: Colors.white, 
+                      fontSize: 28, 
+                      fontWeight: FontWeight.bold, 
+                      letterSpacing: 2,
+                      shadows: [
+                        Shadow(color: Colors.black, blurRadius: 12, offset: Offset(2, 2))
+                      ]
+                    )
+                  ),
+                ),
+                
+                Spacer(),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        'assets/qr_big.png',
-                        width: 130,
-                        height: 130,
-                        fit: BoxFit.contain,
-                      ),
-                      SizedBox(height: 5),
-                      Container(
-                        width: 130,
-                        child: Text(
-                          t['scan']!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
-                        ),
-                      ),
+                      FaIcon(FontAwesomeIcons.whatsapp, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Text('WhatsApp +420 777099379', style: TextStyle(color: Colors.cyan, fontSize: 16, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange, width: 3),
+                      boxShadow: [
+                        BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 20, spreadRadius: 2),
+                        BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/qr_big.png',
+                          width: 130,
+                          height: 130,
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: 5),
+                        Container(
+                          width: 130,
+                          child: Text(
+                            t['scan']!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -401,8 +431,8 @@ class __LoginCardState extends State<_LoginCard> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: Duration(milliseconds: 200),
-          width: 280,
-          height: 200,
+          width: 240,
+          height: 150,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.6),
             borderRadius: BorderRadius.circular(20),
@@ -412,9 +442,9 @@ class __LoginCardState extends State<_LoginCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, size: 60, color: widget.color),
-              SizedBox(height: 20),
-              Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              Icon(widget.icon, size: 48, color: widget.color),
+              SizedBox(height: 12),
+              Text(widget.title, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -706,7 +736,7 @@ class __InputFieldState extends State<_InputField> {
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
             widget.prevFocus?.requestFocus();
-            return KeyEventResult.ignored;
+            return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
