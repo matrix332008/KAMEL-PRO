@@ -28,6 +28,15 @@ class _LoginSelectionState extends State<LoginSelection> {
   final FocusNode _langFocusNode = FocusNode();
   bool _langFocused = false;
 
+  // أعلام اللغات
+  final Map<String, String> flags = {
+    'ar': '🇹🇳',
+    'cs': '🇨🇿',
+    'fr': '🇫🇷',
+    'en': '🇬🇧',
+    'de': '🇩🇪',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +73,7 @@ class _LoginSelectionState extends State<LoginSelection> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: langs.entries.map((e) => ListTile(
+            leading: Text(flags[e.key]!, style: TextStyle(fontSize: 26)), // العلم
             title: Text(e.value, style: TextStyle(color: Colors.white70)),
             trailing: _currentLang == e.key ? Icon(Icons.check, color: Colors.cyanAccent) : null,
             onTap: () => Navigator.pop(c, e.key),
@@ -301,14 +311,14 @@ class _LoginSelectionState extends State<LoginSelection> {
                               border: Border.all(color: _langFocused ? Colors.cyanAccent : Colors.white30, width: _langFocused ? 3 : 2),
                               boxShadow: _langFocused ? [BoxShadow(color: Colors.cyanAccent.withOpacity(0.8), blurRadius: 15, spreadRadius: 1)] : [],
                             ),
-                            child: Center(child: Text('🇹🇳', style: TextStyle(fontSize: 30))),
+                            child: Center(child: Text(flags[_currentLang]!, style: TextStyle(fontSize: 30))),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 5), // طلعتهم أكثر
                 
                 // الأزرار طلعتهم الفوق وصغرتهم
                 Row(
@@ -319,14 +329,14 @@ class _LoginSelectionState extends State<LoginSelection> {
                     _LoginCard(title: 'M3U PLAYLIST', icon: Icons.link, color: Colors.red, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => M3ULogin()))),
                   ],
                 ),
-                SizedBox(height: 18),
+                SizedBox(height: 12),
                 // التسجيل اليدوي حطيتو تحتهم
                 Center(
                   child: Text(
                     t['manual']!, 
                     style: TextStyle(
                       color: Colors.white, 
-                      fontSize: 28, 
+                      fontSize: 26, 
                       fontWeight: FontWeight.bold, 
                       letterSpacing: 2,
                       shadows: [
@@ -336,9 +346,9 @@ class _LoginSelectionState extends State<LoginSelection> {
                   ),
                 ),
                 
-                Spacer(),
+                SizedBox(height: 25), // بدل Spacer باش الواتساب يطلع
                 Padding(
-                  padding: EdgeInsets.only(bottom: 15),
+                  padding: EdgeInsets.only(bottom: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -371,13 +381,13 @@ class _LoginSelectionState extends State<LoginSelection> {
                       children: [
                         Image.asset(
                           'assets/qr_big.png',
-                          width: 130,
-                          height: 130,
+                          width: 120,
+                          height: 120,
                           fit: BoxFit.contain,
                         ),
                         SizedBox(height: 5),
                         Container(
-                          width: 130,
+                          width: 120,
                           child: Text(
                             t['scan']!,
                             textAlign: TextAlign.center,
