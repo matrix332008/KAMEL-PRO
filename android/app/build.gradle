@@ -41,13 +41,21 @@ android {
         jvmTarget = '17'
     }
 
+    signingConfigs {
+        release {
+            storeFile = file("${System.getProperty("user.home")}/keystore.jks")
+            storePassword = System.getenv("STORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
     defaultConfig {
         applicationId "com.kamelpro.iptv"
         minSdkVersion 19
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        // زيد هاذم الزوز فقط
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
@@ -55,7 +63,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
         }
