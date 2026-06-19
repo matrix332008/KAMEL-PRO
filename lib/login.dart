@@ -752,8 +752,9 @@ class __InputFieldState extends State<_InputField> {
             widget.prevFocus?.requestFocus();
             return KeyEventResult.handled;
           }
+        }
         return KeyEventResult.ignored;
-      },
+      }, // هذي كانت ناقصة
       child: TextField(
         controller: widget.controller,
         obscureText: widget.obscure,
