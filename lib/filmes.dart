@@ -55,7 +55,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
         actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-     ? Center(child: CircularProgressIndicator(color: Colors.red))
+       ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
                 // --- SEARCH BAR جديد ---
@@ -73,23 +73,14 @@ class _FilmesScreenState extends State<FilmesScreen> {
                       Icon(Icons.search, color: Colors.redAccent, size: 22),
                       SizedBox(width: 8),
                       Expanded(
-                        child: Focus(
-                          onKeyEvent: (node, event) {
-                            if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                              FocusScope.of(context).focusInDirection(TraversalDirection.down);
-                              return KeyEventResult.handled;
-                            }
-                            return KeyEventResult.ignored;
-                          },
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (v) => setState(() => _search = v),
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText: Lang.get('search_movie'), // ← هذا التبديل الوحيد
-                              hintStyle: TextStyle(color: Colors.white54),
-                              border: InputBorder.none,
-                            ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _search = v),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'بحث عن فيلم...',
+                            hintStyle: TextStyle(color: Colors.white54),
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
@@ -111,7 +102,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')), // <-- هنا السر
-                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                   ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -152,7 +143,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                       ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                         ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
                                       ),
                                     ),
