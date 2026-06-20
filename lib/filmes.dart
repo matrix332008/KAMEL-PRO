@@ -1,16 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'player.dart';
-import 'lang.dart';
-
-class FilmesScreen extends StatefulWidget {
-  @override
-  _FilmesScreenState createState() => _FilmesScreenState();
-}
-
 class _FilmesScreenState extends State<FilmesScreen> {
   List movies = [];
   List cats = [];
@@ -18,9 +5,8 @@ class _FilmesScreenState extends State<FilmesScreen> {
   bool loading = true;
   String _search = '';
   final _searchController = TextEditingController();
-
-  final FocusNode searchFocus = FocusNode();
-  final FocusNode firstGridFocus = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد
+  final FocusNode _firstGridFocusNode = FocusNode(); // ✅ جديد
 
   @override
   void initState() {
@@ -30,9 +16,9 @@ class _FilmesScreenState extends State<FilmesScreen> {
 
   @override
   void dispose() {
-    searchFocus.dispose();
-    firstGridFocus.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose(); // ✅
+    _firstGridFocusNode.dispose(); // ✅
     super.dispose();
   }
 
@@ -50,13 +36,6 @@ class _FilmesScreenState extends State<FilmesScreen> {
     setState(() => loading = false);
   }
 
-  void _returnFocusToGrid() {
-    searchFocus.unfocus();
-    Future.delayed(Duration(milliseconds: 100), () {
-      if (mounted) FocusScope.of(context).requestFocus(firstGridFocus);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     var filtered = sel == 'all'? movies : movies.where((m) => m['category_id'].toString() == sel).toList();
@@ -72,38 +51,37 @@ class _FilmesScreenState extends State<FilmesScreen> {
         actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-   ? Center(child: CircularProgressIndicator(color: Colors.red))
+     ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
-                // ✅ التركيز مصلح
-                Focus(
-                  focusNode: searchFocus,
-                  onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                      _returnFocusToGrid();
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  },
-                  child: Container(
-                    height: 48,
-                    margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
-                    padding: EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: searchFocus.hasFocus? Colors.redAccent : Colors.white12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.search, color: Colors.redAccent, size: 22),
-                        SizedBox(width: 8),
-                        Expanded(
+                // --- SEARCH BAR ---
+                Container(
+                  height: 48,
+                  margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
+                  padding: EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.redAccent, size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Focus(
+                          onKeyEvent: (node, event) {
+                            if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                              _searchFocusNode.unfocus();
+                              if (filtered.isNotEmpty) _firstGridFocusNode.requestFocus();
+                              return KeyEventResult.handled;
+                            }
+                            return KeyEventResult.ignored;
+                          },
                           child: TextField(
-                            focusNode: searchFocus,
                             controller: _searchController,
+                            focusNode: _searchFocusNode, // ✅
                             onChanged: (v) => setState(() => _search = v),
-                            onSubmitted: (v) => _returnFocusToGrid(),
                             style: TextStyle(color: Colors.white, fontSize: 16),
                             decoration: InputDecoration(
                               hintText: Lang.get('search_movie'),
@@ -112,17 +90,16 @@ class _FilmesScreenState extends State<FilmesScreen> {
                             ),
                           ),
                         ),
-                        if (_search.isNotEmpty)
-                          IconButton(
-                            icon: Icon(Icons.clear, color: Colors.white54, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _search = '');
-                              _returnFocusToGrid();
-                            },
-                          ),
-                      ],
-                    ),
+                      ),
+                      if (_search.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.clear, color: Colors.white54, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _search = '');
+                          },
+                        ),
+                    ],
                   ),
                 ),
                 Container(
@@ -132,7 +109,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')),
-               ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -149,19 +126,12 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     itemBuilder: (context, i) {
                       final m = filtered[i];
                       return Focus(
-                        focusNode: i == 0? firstGridFocus : null,
+                        focusNode: i == 0? _firstGridFocusNode : null, // ✅
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent) {
-                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-                              _play(m);
-                              return KeyEventResult.handled;
-                            }
-                            // ✅ اطلع للبحث
-                            if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 6) {
-                              FocusScope.of(context).requestFocus(searchFocus);
-                              return KeyEventResult.handled;
-                            }
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _play(m);
+                            return KeyEventResult.handled;
                           }
                           return KeyEventResult.ignored;
                         },
@@ -181,7 +151,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                     ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                       ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
                                       ),
                                     ),
