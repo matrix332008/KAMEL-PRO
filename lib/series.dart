@@ -107,7 +107,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')), // <-- هنا
-            ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+           ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -148,7 +148,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                  ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                 ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -249,7 +249,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         children: [
           // المواسم مربعات
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 8),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8), // <-- صلحتها هنا
             child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)), // ← تبدل
           ),
           Container(
