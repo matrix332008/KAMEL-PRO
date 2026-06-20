@@ -321,7 +321,7 @@ class _LoginSelectionState extends State<LoginSelection> {
                 
                 // *** التعديل الوحيد هنا ***
                 Transform.translate(
-                  offset: const Offset(0, -50),
+                  offset: const Offset(0, -120),
                   child: Column(
                     children: [
                       Row(
