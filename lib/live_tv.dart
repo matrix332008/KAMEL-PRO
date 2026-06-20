@@ -18,31 +18,35 @@ class _LiveTVState extends State<LiveTV> {
   bool loading = true;
   String _search = '';
   final _searchController = TextEditingController();
-  final FocusNode _mainFocusNode = FocusNode(); // ✅ جديد للصوت
+  final FocusNode _mainFocusNode = FocusNode();
+  
+  // ✅ جديد للبحث
+  final FocusNode searchFocus = FocusNode();
+  final FocusNode firstGridFocus = FocusNode();
 
-  // ✅ Channel للصوت - لازم تزيد MainActivity.kt مبعد
   static const platform = MethodChannel('volume_channel');
 
   @override
   void initState() {
     super.initState();
     _load();
-    _mainFocusNode.requestFocus(); // ✅ جديد
+    _mainFocusNode.requestFocus();
   }
 
   @override
   void dispose() {
-    _mainFocusNode.dispose(); // ✅ جديد
+    _mainFocusNode.dispose();
+    searchFocus.dispose();
+    firstGridFocus.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  // ✅ جديد: نشدو ازرار الصوت قبل ما يمشو للـ Focus
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp) {
         _changeVolume(true);
-        return KeyEventResult.handled; // ما نخليوش يكمل
+        return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.audioVolumeDown) {
         _changeVolume(false);
@@ -56,7 +60,6 @@ class _LiveTVState extends State<LiveTV> {
     return KeyEventResult.ignored;
   }
 
-  // ✅ جديد: نبعثو للـ Native Android باش يزيد/ينقص الصوت
   void _changeVolume(bool up) async {
     try {
       await platform.invokeMethod('setVolume', {'up': up});
@@ -94,6 +97,14 @@ class _LiveTVState extends State<LiveTV> {
     setState(() => loading = false);
   }
 
+  // ✅ جديد: يرجع الفوكس للشبكة
+  void _returnFocusToGrid() {
+    searchFocus.unfocus();
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (mounted) FocusScope.of(context).requestFocus(firstGridFocus);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var filtered = sel == 'All' ? channels : channels.where((e) => e['category_id'].toString() == sel).toList();
@@ -101,7 +112,6 @@ class _LiveTVState extends State<LiveTV> {
       filtered = filtered.where((e) => (e['name'] ?? '').toString().toLowerCase().contains(_search.toLowerCase())).toList();
     }
     
-    // ✅ لفينا كل شي بـ Focus
     return Focus(
       focusNode: _mainFocusNode,
       autofocus: true,
@@ -205,40 +215,53 @@ class _LiveTVState extends State<LiveTV> {
                         Expanded(
                           child: Column(
                             children: [
-                              Container(
-                                height: 50,
-                                margin: EdgeInsets.only(bottom: 10, top: 5, right: 10),
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.cyan.withOpacity(0.3)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.search, color: Colors.cyan, size: 24),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _searchController,
-                                        onChanged: (v) => setState(() => _search = v),
-                                        style: TextStyle(color: Colors.white, fontSize: 18),
-                                        decoration: InputDecoration(
-                                          hintText: Lang.get('search_channel'),
-                                          hintStyle: TextStyle(color: Colors.white54),
-                                          border: InputBorder.none,
+                              // ✅ لفينا البحث بـ Focus باش نشدو السهم لوطا
+                              Focus(
+                                onKeyEvent: (node, event) {
+                                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown && searchFocus.hasFocus) {
+                                    _returnFocusToGrid();
+                                    return KeyEventResult.handled;
+                                  }
+                                  return KeyEventResult.ignored;
+                                },
+                                child: Container(
+                                  height: 50,
+                                  margin: EdgeInsets.only(bottom: 10, top: 5, right: 10),
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: searchFocus.hasFocus ? Colors.cyan : Colors.cyan.withOpacity(0.3), width: searchFocus.hasFocus ? 2 : 1),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.search, color: Colors.cyan, size: 24),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: TextField(
+                                          focusNode: searchFocus,
+                                          controller: _searchController,
+                                          onChanged: (v) => setState(() => _search = v),
+                                          onSubmitted: (v) => _returnFocusToGrid(), // ✅ كي يعمل OK يرجع
+                                          style: TextStyle(color: Colors.white, fontSize: 18),
+                                          decoration: InputDecoration(
+                                            hintText: Lang.get('search_channel'),
+                                            hintStyle: TextStyle(color: Colors.white54),
+                                            border: InputBorder.none,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    if (_search.isNotEmpty)
-                                      IconButton(
-                                        icon: Icon(Icons.clear, color: Colors.white54),
-                                        onPressed: () {
-                                          _searchController.clear();
-                                          setState(() => _search = '');
-                                        },
-                                      ),
-                                  ],
+                                      if (_search.isNotEmpty)
+                                        IconButton(
+                                          icon: Icon(Icons.clear, color: Colors.white54),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() => _search = '');
+                                            _returnFocusToGrid(); // ✅
+                                          },
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -255,6 +278,7 @@ class _LiveTVState extends State<LiveTV> {
                                     final ch = filtered[i];
                                     final logo = ch['stream_icon'] ?? '';
                                     return Focus(
+                                      focusNode: i == 0 ? firstGridFocus : null,
                                       autofocus: i == 0 && sel == 'All' && _search.isEmpty,
                                       onKeyEvent: (node, event) {
                                         if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
