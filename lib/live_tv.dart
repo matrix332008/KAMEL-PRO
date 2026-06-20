@@ -20,7 +20,6 @@ class _LiveTVState extends State<LiveTV> {
   final _searchController = TextEditingController();
   final FocusNode _mainFocusNode = FocusNode();
   
-  // ✅ جديد للبحث
   final FocusNode searchFocus = FocusNode();
   final FocusNode firstGridFocus = FocusNode();
 
@@ -97,7 +96,6 @@ class _LiveTVState extends State<LiveTV> {
     setState(() => loading = false);
   }
 
-  // ✅ جديد: يرجع الفوكس للشبكة
   void _returnFocusToGrid() {
     searchFocus.unfocus();
     Future.delayed(Duration(milliseconds: 100), () {
@@ -215,10 +213,11 @@ class _LiveTVState extends State<LiveTV> {
                         Expanded(
                           child: Column(
                             children: [
-                              // ✅ لفينا البحث بـ Focus باش نشدو السهم لوطا
+                              // ✅ صلحناها: عطيناها focusNode
                               Focus(
+                                focusNode: searchFocus,
                                 onKeyEvent: (node, event) {
-                                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown && searchFocus.hasFocus) {
+                                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
                                     _returnFocusToGrid();
                                     return KeyEventResult.handled;
                                   }
@@ -242,7 +241,7 @@ class _LiveTVState extends State<LiveTV> {
                                           focusNode: searchFocus,
                                           controller: _searchController,
                                           onChanged: (v) => setState(() => _search = v),
-                                          onSubmitted: (v) => _returnFocusToGrid(), // ✅ كي يعمل OK يرجع
+                                          onSubmitted: (v) => _returnFocusToGrid(),
                                           style: TextStyle(color: Colors.white, fontSize: 18),
                                           decoration: InputDecoration(
                                             hintText: Lang.get('search_channel'),
@@ -257,7 +256,7 @@ class _LiveTVState extends State<LiveTV> {
                                           onPressed: () {
                                             _searchController.clear();
                                             setState(() => _search = '');
-                                            _returnFocusToGrid(); // ✅
+                                            _returnFocusToGrid();
                                           },
                                         ),
                                     ],
@@ -281,9 +280,16 @@ class _LiveTVState extends State<LiveTV> {
                                       focusNode: i == 0 ? firstGridFocus : null,
                                       autofocus: i == 0 && sel == 'All' && _search.isEmpty,
                                       onKeyEvent: (node, event) {
-                                        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                                          _openChannel(ch, filtered, i);
-                                          return KeyEventResult.handled;
+                                        if (event is KeyDownEvent) {
+                                          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                                            _openChannel(ch, filtered, i);
+                                            return KeyEventResult.handled;
+                                          }
+                                          // ✅ جديد: اطلع للبحث
+                                          if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 5) {
+                                            FocusScope.of(context).requestFocus(searchFocus);
+                                            return KeyEventResult.handled;
+                                          }
                                         }
                                         return KeyEventResult.ignored;
                                       },
@@ -295,7 +301,7 @@ class _LiveTVState extends State<LiveTV> {
                                             child: AnimatedContainer(
                                               duration: Duration(milliseconds: 150),
                                               decoration: BoxDecoration(
-                                                color: Color(0xFF1A1A1A).withOpacity(0.8),
+                                                color: Color(0xFF1A).withOpacity(0.8),
                                                 borderRadius: BorderRadius.circular(14),
                                                 border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
                                                 boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
