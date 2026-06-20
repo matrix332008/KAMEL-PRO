@@ -18,9 +18,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
   bool loading = true;
   String _search = '';
   final _searchController = TextEditingController();
-
-  final FocusNode searchFocus = FocusNode();
-  final FocusNode firstGridFocus = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد
+  final FocusNode _firstGridFocusNode = FocusNode(); // ✅ جديد
 
   @override
   void initState() {
@@ -30,9 +29,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   @override
   void dispose() {
-    searchFocus.dispose();
-    firstGridFocus.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
+    _firstGridFocusNode.dispose();
     super.dispose();
   }
 
@@ -50,13 +49,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
     setState(() => loading = false);
   }
 
-  void _returnFocusToGrid() {
-    searchFocus.unfocus();
-    Future.delayed(Duration(milliseconds: 100), () {
-      if (mounted) FocusScope.of(context).requestFocus(firstGridFocus);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     var filtered = sel == 'all'? series : series.where((s) => s['category_id'].toString() == sel).toList();
@@ -71,34 +63,33 @@ class _SeriesScreenState extends State<SeriesScreen> {
 ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
-                Focus(
-                  focusNode: searchFocus,
-                  onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                      _returnFocusToGrid();
-                      return KeyEventResult.handled;
-                    }
-                    return KeyEventResult.ignored;
-                  },
-                  child: Container(
-                    height: 48,
-                    margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
-                    padding: EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: searchFocus.hasFocus? Colors.orange : Colors.white12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.search, color: Colors.orange, size: 22),
-                        SizedBox(width: 8),
-                        Expanded(
+                Container(
+                  height: 48,
+                  margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
+                  padding: EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.orange, size: 22),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Focus(
+                          onKeyEvent: (node, event) {
+                            if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                              _searchFocusNode.unfocus();
+                              if (filtered.isNotEmpty) _firstGridFocusNode.requestFocus();
+                              return KeyEventResult.handled;
+                            }
+                            return KeyEventResult.ignored;
+                          },
                           child: TextField(
-                            focusNode: searchFocus,
                             controller: _searchController,
+                            focusNode: _searchFocusNode,
                             onChanged: (v) => setState(() => _search = v),
-                            onSubmitted: (v) => _returnFocusToGrid(),
                             style: TextStyle(color: Colors.white, fontSize: 16),
                             decoration: InputDecoration(
                               hintText: Lang.get('search_series'),
@@ -107,17 +98,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
                             ),
                           ),
                         ),
-                        if (_search.isNotEmpty)
-                          IconButton(
-                            icon: Icon(Icons.clear, color: Colors.white54, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _search = '');
-                              _returnFocusToGrid();
-                            },
-                          ),
-                      ],
-                    ),
+                      ),
+                      if (_search.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.clear, color: Colors.white54, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _search = '');
+                          },
+                        ),
+                    ],
                   ),
                 ),
                 Container(
@@ -127,7 +117,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')),
-          ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+            ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -144,18 +134,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     itemBuilder: (context, i) {
                       final s = filtered[i];
                       return Focus(
-                        focusNode: i == 0? firstGridFocus : null,
+                        focusNode: i == 0? _firstGridFocusNode : null,
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent) {
-                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-                              _openSeries(s);
-                              return KeyEventResult.handled;
-                            }
-                            if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 6) {
-                              FocusScope.of(context).requestFocus(searchFocus);
-                              return KeyEventResult.handled;
-                            }
+                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                            _openSeries(s);
+                            return KeyEventResult.handled;
                           }
                           return KeyEventResult.ignored;
                         },
@@ -175,7 +159,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                  ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -235,6 +219,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 }
 
+// الشاشة الجديدة المزيانة
 class SeriesDetailScreen extends StatefulWidget {
   final dynamic series;
   final dynamic data;
@@ -274,7 +259,6 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            // ✅ هذا هو السطر اللي صلحتو
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
           ),
