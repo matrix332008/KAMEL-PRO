@@ -19,7 +19,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
   String _search = '';
   final _searchController = TextEditingController();
 
-  // ✅ جديد
   final FocusNode searchFocus = FocusNode();
   final FocusNode firstGridFocus = FocusNode();
 
@@ -72,10 +71,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
 ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
-                // --- SEARCH BAR معدل ---
+                // ✅ مصلح
                 Focus(
+                  focusNode: searchFocus,
                   onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown && searchFocus.hasFocus) {
+                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
                       _returnFocusToGrid();
                       return KeyEventResult.handled;
                     }
@@ -128,7 +128,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')),
-            ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+           ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -148,9 +148,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
                         focusNode: i == 0? firstGridFocus : null,
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _openSeries(s);
-                            return KeyEventResult.handled;
+                          if (event is KeyDownEvent) {
+                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                              _openSeries(s);
+                              return KeyEventResult.handled;
+                            }
+                            // ✅ اطلع للبحث
+                            if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 6) {
+                              FocusScope.of(context).requestFocus(searchFocus);
+                              return KeyEventResult.handled;
+                            }
                           }
                           return KeyEventResult.ignored;
                         },
@@ -170,7 +177,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                  ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                 ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -269,7 +276,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: EdgeInsets.fromLTRB(16, 16, 8),
             child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
           ),
           Container(
