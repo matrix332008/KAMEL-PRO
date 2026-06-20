@@ -1,25 +1,28 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'player.dart';
+import 'lang.dart'; // <-- جديد
+
+class FilmesScreen extends StatefulWidget {
+  @override
+  _FilmesScreenState createState() => _FilmesScreenState();
+}
+
 class _FilmesScreenState extends State<FilmesScreen> {
   List movies = [];
   List cats = [];
-  String sel = 'all';
+  String sel = 'all'; // <-- بدلناها
   bool loading = true;
-  String _search = '';
-  final _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد
-  final FocusNode _firstGridFocusNode = FocusNode(); // ✅ جديد
+  String _search = ''; // <-- جديد
+  final _searchController = TextEditingController(); // <-- جديد
 
   @override
   void initState() {
     super.initState();
     _load();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose(); // ✅
-    _firstGridFocusNode.dispose(); // ✅
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -39,6 +42,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
   @override
   Widget build(BuildContext context) {
     var filtered = sel == 'all'? movies : movies.where((m) => m['category_id'].toString() == sel).toList();
+    // فلترة البحث
     if (_search.isNotEmpty) {
       filtered = filtered.where((m) => (m['name']?? '').toString().toLowerCase().contains(_search.toLowerCase())).toList();
     }
@@ -47,14 +51,14 @@ class _FilmesScreenState extends State<FilmesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(Lang.get('movies').toUpperCase()),
+        title: Text(Lang.get('movies').toUpperCase()), // <-- يتغير
         actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
      ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
-                // --- SEARCH BAR ---
+                // --- SEARCH BAR جديد ---
                 Container(
                   height: 48,
                   margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -72,19 +76,17 @@ class _FilmesScreenState extends State<FilmesScreen> {
                         child: Focus(
                           onKeyEvent: (node, event) {
                             if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                              _searchFocusNode.unfocus();
-                              if (filtered.isNotEmpty) _firstGridFocusNode.requestFocus();
+                              FocusScope.of(context).focusInDirection(TraversalDirection.down);
                               return KeyEventResult.handled;
                             }
                             return KeyEventResult.ignored;
                           },
                           child: TextField(
                             controller: _searchController,
-                            focusNode: _searchFocusNode, // ✅
                             onChanged: (v) => setState(() => _search = v),
                             style: TextStyle(color: Colors.white, fontSize: 16),
                             decoration: InputDecoration(
-                              hintText: Lang.get('search_movie'),
+                              hintText: Lang.get('search_movie'), // ← هذا التبديل الوحيد
                               hintStyle: TextStyle(color: Colors.white54),
                               border: InputBorder.none,
                             ),
@@ -108,7 +110,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _buildChip('all', Lang.get('all')),
+                      _buildChip('all', Lang.get('all')), // <-- هنا السر
                  ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
@@ -126,7 +128,6 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     itemBuilder: (context, i) {
                       final m = filtered[i];
                       return Focus(
-                        focusNode: i == 0? _firstGridFocusNode : null, // ✅
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
                           if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
