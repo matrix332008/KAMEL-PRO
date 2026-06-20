@@ -71,7 +71,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
 ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
-                // ✅ مصلح
                 Focus(
                   focusNode: searchFocus,
                   onKeyEvent: (node, event) {
@@ -128,7 +127,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')),
-           ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+          ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -153,7 +152,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
                               _openSeries(s);
                               return KeyEventResult.handled;
                             }
-                            // ✅ اطلع للبحث
                             if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 6) {
                               FocusScope.of(context).requestFocus(searchFocus);
                               return KeyEventResult.handled;
@@ -177,7 +175,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                 ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -276,7 +274,8 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 8),
+            // ✅ هذا هو السطر اللي صلحتو
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
           ),
           Container(
