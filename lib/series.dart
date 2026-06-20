@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'player.dart';
-import 'lang.dart';
+import 'lang.dart'; // <-- جديد
 
 class SeriesScreen extends StatefulWidget {
   @override
@@ -14,25 +14,15 @@ class SeriesScreen extends StatefulWidget {
 class _SeriesScreenState extends State<SeriesScreen> {
   List series = [];
   List cats = [];
-  String sel = 'all';
+  String sel = 'all'; // <-- بدلناها
   bool loading = true;
-  String _search = '';
-  final _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد
-  final FocusNode _firstGridFocusNode = FocusNode(); // ✅ جديد
+  String _search = ''; // <-- جديد
+  final _searchController = TextEditingController(); // <-- جديد
 
   @override
   void initState() {
     super.initState();
     _load();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    _firstGridFocusNode.dispose();
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -52,6 +42,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
   @override
   Widget build(BuildContext context) {
     var filtered = sel == 'all'? series : series.where((s) => s['category_id'].toString() == sel).toList();
+    // فلترة البحث
     if (_search.isNotEmpty) {
       filtered = filtered.where((s) => (s['name']?? '').toString().toLowerCase().contains(_search.toLowerCase())).toList();
     }
@@ -63,6 +54,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
+                // --- SEARCH BAR جديد ---
                 Container(
                   height: 48,
                   margin: EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -80,19 +72,17 @@ class _SeriesScreenState extends State<SeriesScreen> {
                         child: Focus(
                           onKeyEvent: (node, event) {
                             if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                              _searchFocusNode.unfocus();
-                              if (filtered.isNotEmpty) _firstGridFocusNode.requestFocus();
+                              FocusScope.of(context).focusInDirection(TraversalDirection.down);
                               return KeyEventResult.handled;
                             }
                             return KeyEventResult.ignored;
                           },
                           child: TextField(
                             controller: _searchController,
-                            focusNode: _searchFocusNode,
                             onChanged: (v) => setState(() => _search = v),
                             style: TextStyle(color: Colors.white, fontSize: 16),
                             decoration: InputDecoration(
-                              hintText: Lang.get('search_series'),
+                              hintText: Lang.get('search_series'), // ← تبدل
                               hintStyle: TextStyle(color: Colors.white54),
                               border: InputBorder.none,
                             ),
@@ -116,7 +106,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
-                      _buildChip('all', Lang.get('all')),
+                      _buildChip('all', Lang.get('all')), // <-- هنا
             ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
@@ -134,7 +124,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     itemBuilder: (context, i) {
                       final s = filtered[i];
                       return Focus(
-                        focusNode: i == 0? _firstGridFocusNode : null,
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
                           if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
@@ -258,9 +247,10 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // المواسم مربعات
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
+            padding: EdgeInsets.fromLTRB(16, 16, 8),
+            child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)), // ← تبدل
           ),
           Container(
             height: 80,
@@ -294,7 +284,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                             border: Border.all(color: hasFocus? Colors.white : Colors.transparent, width: 3),
                           ),
                           child: Center(
-                            child: Text('${Lang.get('season')} $season', style: TextStyle(
+                            child: Text('${Lang.get('season')} $season', style: TextStyle( // ← تبدل
                               color: isSel? Colors.black : Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold
@@ -308,9 +298,11 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
               },
             ),
           ),
+
+          // الحلقات مربعات
           Padding(
             padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Text('${Lang.get('episodes')} - ${Lang.get('season')} $selectedSeason', style: TextStyle(color: Colors.white70, fontSize: 16)),
+            child: Text('${Lang.get('episodes')} - ${Lang.get('season')} $selectedSeason', style: TextStyle(color: Colors.white70, fontSize: 16)), // ← تبدل
           ),
           Expanded(
             child: GridView.builder(
@@ -350,7 +342,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  '${Lang.get('episode')} ${i+1}',
+                                  '${Lang.get('episode')} ${i+1}', // ← تبدل
                                   style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: hasFocus? FontWeight.bold : FontWeight.normal),
                                   overflow: TextOverflow.ellipsis,
                                 ),
