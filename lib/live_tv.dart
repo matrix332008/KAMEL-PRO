@@ -1,16 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'player.dart';
-import 'lang.dart';
-
-class LiveTV extends StatefulWidget {
-  @override
-  _LiveTVState createState() => _LiveTVState();
-}
-
 class _LiveTVState extends State<LiveTV> {
   List channels = [];
   List groups = [];
@@ -19,9 +6,8 @@ class _LiveTVState extends State<LiveTV> {
   String _search = '';
   final _searchController = TextEditingController();
   final FocusNode _mainFocusNode = FocusNode();
-
-  // ✅ جديد للبحث
-  final FocusNode searchFocus = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد
+  final FocusNode _firstGridFocusNode = FocusNode(); // ✅ جديد
 
   static const platform = MethodChannel('volume_channel');
 
@@ -35,7 +21,8 @@ class _LiveTVState extends State<LiveTV> {
   @override
   void dispose() {
     _mainFocusNode.dispose();
-    searchFocus.dispose(); // ✅
+    _searchFocusNode.dispose(); // ✅
+    _firstGridFocusNode.dispose(); // ✅
     _searchController.dispose();
     super.dispose();
   }
@@ -112,7 +99,11 @@ class _LiveTVState extends State<LiveTV> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
+              colors: [
+                Color(0xFF0f0c29),
+                Color(0xFF302b63),
+                Color(0xFF24243e),
+              ],
             ),
           ),
           child: SafeArea(
@@ -124,16 +115,25 @@ class _LiveTVState extends State<LiveTV> {
                       children: [
                         Container(
                           width: 280,
-                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
                           child: Column(
                             children: [
                               Padding(
                                 padding: EdgeInsets.all(16),
-                                child: Row(children: [
-                                  IconButton(icon: Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                                  SizedBox(width: 8),
-                                  Text(Lang.get('categories'), style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold)),
-                                ]),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.arrow_back, color: Colors.white), 
+                                      onPressed: () => Navigator.pop(context)
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(Lang.get('categories'), style: TextStyle(color: Colors.cyan, fontSize: 22, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                               ),
                               Expanded(
                                 child: ListView.builder(
@@ -151,22 +151,36 @@ class _LiveTVState extends State<LiveTV> {
                                         }
                                         return KeyEventResult.ignored;
                                       },
-                                      child: Builder(builder: (ctx) {
-                                        final hasFocus = Focus.of(ctx).hasFocus;
-                                        return AnimatedContainer(
-                                          duration: Duration(milliseconds: 150),
-                                          margin: EdgeInsets.symmetric(vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: hasFocus ? Colors.cyan.withOpacity(0.3) : (active ? Colors.cyan.withOpacity(0.15) : Colors.transparent),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: hasFocus ? Colors.cyan : (active ? Colors.cyan.withOpacity(0.5) : Colors.transparent), width: hasFocus ? 2 : 1),
-                                          ),
-                                          child: ListTile(
-                                            title: Text(g['category_name'], maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: hasFocus || active ? Colors.cyan : Colors.white, fontSize: 16, fontWeight: hasFocus || active ? FontWeight.bold : FontWeight.normal)),
-                                            onTap: () => setState(() => sel = g['category_id']),
-                                          ),
-                                        );
-                                      }),
+                                      child: Builder(
+                                        builder: (ctx) {
+                                          final hasFocus = Focus.of(ctx).hasFocus;
+                                          return AnimatedContainer(
+                                            duration: Duration(milliseconds: 150),
+                                            margin: EdgeInsets.symmetric(vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: hasFocus ? Colors.cyan.withOpacity(0.3) : (active ? Colors.cyan.withOpacity(0.15) : Colors.transparent),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: hasFocus ? Colors.cyan : (active ? Colors.cyan.withOpacity(0.5) : Colors.transparent),
+                                                width: hasFocus ? 2 : 1,
+                                              ),
+                                            ),
+                                            child: ListTile(
+                                              title: Text(
+                                                g['category_name'], 
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: hasFocus || active ? Colors.cyan : Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: hasFocus || active ? FontWeight.bold : FontWeight.normal,
+                                                )
+                                              ),
+                                              onTap: () => setState(() => sel = g['category_id']),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     );
                                   },
                                 ),
@@ -178,86 +192,122 @@ class _LiveTVState extends State<LiveTV> {
                         Expanded(
                           child: Column(
                             children: [
-                              // ✅ البحث مع السهم لوطا
-                              Focus(
-                                focusNode: searchFocus,
-                                onKeyEvent: (node, event) {
-                                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                                    searchFocus.unfocus();
-                                    return KeyEventResult.handled;
-                                  }
-                                  return KeyEventResult.ignored;
-                                },
-                                child: Container(
-                                  height: 50,
-                                  margin: EdgeInsets.only(bottom: 10, top: 5, right: 10),
-                                  padding: EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: searchFocus.hasFocus ? Colors.cyan : Colors.cyan.withOpacity(0.3), width: searchFocus.hasFocus ? 2 : 1),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.search, color: Colors.cyan, size: 24),
-                                      SizedBox(width: 10),
-                                      Expanded(
+                              Container(
+                                height: 50,
+                                margin: EdgeInsets.only(bottom: 10, top: 5, right: 10),
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.cyan.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.search, color: Colors.cyan, size: 24),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Focus(
+                                        onKeyEvent: (node, event) {
+                                          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                                            _searchFocusNode.unfocus();
+                                            if (filtered.isNotEmpty) _firstGridFocusNode.requestFocus();
+                                            return KeyEventResult.handled;
+                                          }
+                                          return KeyEventResult.ignored;
+                                        },
                                         child: TextField(
-                                          focusNode: searchFocus, // ✅
                                           controller: _searchController,
+                                          focusNode: _searchFocusNode, // ✅
                                           onChanged: (v) => setState(() => _search = v),
-                                          onSubmitted: (_) => searchFocus.unfocus(), // ✅
                                           style: TextStyle(color: Colors.white, fontSize: 18),
-                                          decoration: InputDecoration(hintText: Lang.get('search_channel'), hintStyle: TextStyle(color: Colors.white54), border: InputBorder.none),
+                                          decoration: InputDecoration(
+                                            hintText: Lang.get('search_channel'),
+                                            hintStyle: TextStyle(color: Colors.white54),
+                                            border: InputBorder.none,
+                                          ),
                                         ),
                                       ),
-                                      if (_search.isNotEmpty)
-                                        IconButton(icon: Icon(Icons.clear, color: Colors.white54), onPressed: () { _searchController.clear(); setState(() => _search = ''); searchFocus.unfocus(); }),
-                                    ],
-                                  ),
+                                    ),
+                                    if (_search.isNotEmpty)
+                                      IconButton(
+                                        icon: Icon(Icons.clear, color: Colors.white54),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() => _search = '');
+                                        },
+                                      ),
+                                  ],
                                 ),
                               ),
                               Expanded(
                                 child: GridView.builder(
                                   padding: EdgeInsets.all(10),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, childAspectRatio: 0.85, mainAxisSpacing: 16, crossAxisSpacing: 16),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 5,
+                                    childAspectRatio: 0.85,
+                                    mainAxisSpacing: 16,
+                                    crossAxisSpacing: 16,
+                                  ),
                                   itemCount: filtered.length,
                                   itemBuilder: (_, i) {
                                     final ch = filtered[i];
                                     final logo = ch['stream_icon'] ?? '';
                                     return Focus(
+                                      focusNode: i == 0 ? _firstGridFocusNode : null, // ✅
                                       autofocus: i == 0 && sel == 'All' && _search.isEmpty,
                                       onKeyEvent: (node, event) {
-                                        if (event is KeyDownEvent) {
-                                          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-                                            _openChannel(ch, filtered, i);
-                                            return KeyEventResult.handled;
-                                          }
-                                          // ✅ السهم فوق يطلع للبحث
-                                          if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 5) {
-                                            FocusScope.of(context).requestFocus(searchFocus);
-                                            return KeyEventResult.handled;
-                                          }
+                                        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+                                          _openChannel(ch, filtered, i);
+                                          return KeyEventResult.handled;
                                         }
                                         return KeyEventResult.ignored;
                                       },
-                                      child: Builder(builder: (ctx) {
-                                        final hasFocus = Focus.of(ctx).hasFocus;
-                                        return GestureDetector(
-                                          onTap: () => _openChannel(ch, filtered, i),
-                                          child: AnimatedContainer(
-                                            duration: Duration(milliseconds: 150),
-                                            decoration: BoxDecoration(color: Color(0xFF1A1A1A).withOpacity(0.8), borderRadius: BorderRadius.circular(14), border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1), boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : []),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(12),
-                                              child: Stack(fit: StackFit.expand, children: [
-                                                logo.isNotEmpty ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24))) : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
-                                                Positioned(bottom: 0, left: 0, right: 0, child: Container(padding: EdgeInsets.symmetric(vertical: 8, horizontal: 6), decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.9)])), child: Text(ch['name'] ?? '', textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal)))),
-                                              ]),
+                                      child: Builder(
+                                        builder: (ctx) {
+                                          final hasFocus = Focus.of(ctx).hasFocus;
+                                          return GestureDetector(
+                                            onTap: () => _openChannel(ch, filtered, i),
+                                            child: AnimatedContainer(
+                                              duration: Duration(milliseconds: 150),
+                                              decoration: BoxDecoration(
+                                                color: Color(0xFF1A1A1A).withOpacity(0.8),
+                                                borderRadius: BorderRadius.circular(14),
+                                                border: Border.all(color: hasFocus ? Colors.cyan : Colors.white12, width: hasFocus ? 3 : 1),
+                                                boxShadow: hasFocus ? [BoxShadow(color: Colors.cyan.withOpacity(0.4), blurRadius: 12)] : [],
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: Stack(
+                                                  fit: StackFit.expand,
+                                                  children: [
+                                                    logo.isNotEmpty
+                                                        ? Image.network(logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)))
+                                                        : Center(child: Icon(Icons.tv, size: 50, color: Colors.white24)),
+                                                    Positioned(
+                                                      bottom: 0,
+                                                      left: 0,
+                                                      right: 0,
+                                                      child: Container(
+                                                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                                                        decoration: BoxDecoration(
+                                                          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.9)]),
+                                                        ),
+                                                        child: Text(
+                                                          ch['name'] ?? '',
+                                                          textAlign: TextAlign.center,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: hasFocus ? FontWeight.bold : FontWeight.normal),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      }),
+                                          );
+                                        },
+                                      ),
                                     );
                                   },
                                 ),
@@ -281,9 +331,19 @@ class _LiveTVState extends State<LiveTV> {
     String pass = p.getString('password') ?? '';
     String url = '$server/live/$user/$pass/${ch['stream_id']}.ts';
     
-    final channelList = list.map((e) => {'name': e['name'], 'url': '$server/live/$user/$pass/${e['stream_id']}.ts', 'logo': e['stream_icon']}).toList();
+    final channelList = list.map((e) => {
+      'name': e['name'],
+      'url': '$server/live/$user/$pass/${e['stream_id']}.ts',
+      'logo': e['stream_icon'],
+    }).toList();
 
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: ch['name'], logo: ch['stream_icon'], channelList: channelList, currentIndex: i)));
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(
+      url: url,
+      title: ch['name'],
+      logo: ch['stream_icon'],
+      channelList: channelList,
+      currentIndex: i,
+    )));
     if (mounted) setState(() {});
   }
 }
