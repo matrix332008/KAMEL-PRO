@@ -19,7 +19,6 @@ class _FilmesScreenState extends State<FilmesScreen> {
   String _search = '';
   final _searchController = TextEditingController();
 
-  // ✅ جديد
   final FocusNode searchFocus = FocusNode();
   final FocusNode firstGridFocus = FocusNode();
 
@@ -51,7 +50,6 @@ class _FilmesScreenState extends State<FilmesScreen> {
     setState(() => loading = false);
   }
 
-  // ✅ جديد: يرجع الفوكس
   void _returnFocusToGrid() {
     searchFocus.unfocus();
     Future.delayed(Duration(milliseconds: 100), () {
@@ -74,13 +72,14 @@ class _FilmesScreenState extends State<FilmesScreen> {
         actions: [Padding(padding: EdgeInsets.all(16), child: Text('${filtered.length}', style: TextStyle(color: Colors.white70)))],
       ),
       body: loading
-     ? Center(child: CircularProgressIndicator(color: Colors.red))
+   ? Center(child: CircularProgressIndicator(color: Colors.red))
           : Column(
               children: [
-                // --- SEARCH BAR معدل ---
+                // ✅ التركيز مصلح
                 Focus(
+                  focusNode: searchFocus,
                   onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown && searchFocus.hasFocus) {
+                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
                       _returnFocusToGrid();
                       return KeyEventResult.handled;
                     }
@@ -133,7 +132,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')),
-                 ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+               ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -153,9 +152,16 @@ class _FilmesScreenState extends State<FilmesScreen> {
                         focusNode: i == 0? firstGridFocus : null,
                         autofocus: i == 0,
                         onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _play(m);
-                            return KeyEventResult.handled;
+                          if (event is KeyDownEvent) {
+                            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+                              _play(m);
+                              return KeyEventResult.handled;
+                            }
+                            // ✅ اطلع للبحث
+                            if (event.logicalKey == LogicalKeyboardKey.arrowUp && i < 6) {
+                              FocusScope.of(context).requestFocus(searchFocus);
+                              return KeyEventResult.handled;
+                            }
                           }
                           return KeyEventResult.ignored;
                         },
@@ -175,7 +181,7 @@ class _FilmesScreenState extends State<FilmesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: m['stream_icon']!= null && m['stream_icon'].toString().isNotEmpty
-                                       ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
+                                     ? Image.network(m['stream_icon'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.movie, size: 50, color: Colors.white30)),
                                       ),
                                     ),
