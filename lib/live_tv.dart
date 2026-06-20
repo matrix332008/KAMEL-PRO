@@ -18,33 +18,31 @@ class _LiveTVState extends State<LiveTV> {
   bool loading = true;
   String _search = '';
   final _searchController = TextEditingController();
-  final FocusNode _mainFocusNode = FocusNode(); // ✅ جديد للصوت
-  final FocusNode _searchFocusNode = FocusNode(); // ✅ جديد للبحث
+  final FocusNode _mainFocusNode = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode(); // باش نهبطو من البحث
 
-  // ✅ Channel للصوت - لازم تزيد MainActivity.kt مبعد
   static const platform = MethodChannel('volume_channel');
 
   @override
   void initState() {
     super.initState();
     _load();
-    _mainFocusNode.requestFocus(); // ✅ جديد
+    _mainFocusNode.requestFocus();
   }
 
   @override
   void dispose() {
-    _mainFocusNode.dispose(); // ✅ جديد
-    _searchFocusNode.dispose(); // ✅ جديد
+    _mainFocusNode.dispose();
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  // ✅ جديد: نشدو ازرار الصوت قبل ما يمشو للـ Focus
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp) {
         _changeVolume(true);
-        return KeyEventResult.handled; // ما نخليوش يكمل
+        return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.audioVolumeDown) {
         _changeVolume(false);
@@ -58,7 +56,6 @@ class _LiveTVState extends State<LiveTV> {
     return KeyEventResult.ignored;
   }
 
-  // ✅ جديد: نبعثو للـ Native Android باش يزيد/ينقص الصوت
   void _changeVolume(bool up) async {
     try {
       await platform.invokeMethod('setVolume', {'up': up});
@@ -103,7 +100,6 @@ class _LiveTVState extends State<LiveTV> {
       filtered = filtered.where((e) => (e['name'] ?? '').toString().toLowerCase().contains(_search.toLowerCase())).toList();
     }
     
-    // ✅ لفينا كل شي بـ Focus
     return Focus(
       focusNode: _mainFocusNode,
       autofocus: true,
@@ -221,7 +217,6 @@ class _LiveTVState extends State<LiveTV> {
                                     Icon(Icons.search, color: Colors.cyan, size: 24),
                                     SizedBox(width: 10),
                                     Expanded(
-                                      // ✅ حل مشكلة البحث
                                       child: Focus(
                                         onKeyEvent: (node, event) {
                                           if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
@@ -249,7 +244,6 @@ class _LiveTVState extends State<LiveTV> {
                                         onPressed: () {
                                           _searchController.clear();
                                           setState(() => _search = '');
-                                          _searchFocusNode.requestFocus();
                                         },
                                       ),
                                   ],
@@ -269,7 +263,7 @@ class _LiveTVState extends State<LiveTV> {
                                     final ch = filtered[i];
                                     final logo = ch['stream_icon'] ?? '';
                                     return Focus(
-                                      autofocus: i == 0, // ✅ كان مقيد، توا ديما أول قناة تاخذ الفوكس
+                                      autofocus: i == 0,
                                       onKeyEvent: (node, event) {
                                         if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
                                           _openChannel(ch, filtered, i);
