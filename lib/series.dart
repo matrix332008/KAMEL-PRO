@@ -51,7 +51,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.transparent, title: Text(Lang.get('series').toUpperCase())),
       body: loading
-? Center(child: CircularProgressIndicator(color: Colors.orange))
+   ? Center(child: CircularProgressIndicator(color: Colors.orange))
           : Column(
               children: [
                 // --- SEARCH BAR جديد ---
@@ -69,23 +69,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
                       Icon(Icons.search, color: Colors.orange, size: 22),
                       SizedBox(width: 8),
                       Expanded(
-                        child: Focus(
-                          onKeyEvent: (node, event) {
-                            if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                              FocusScope.of(context).focusInDirection(TraversalDirection.down);
-                              return KeyEventResult.handled;
-                            }
-                            return KeyEventResult.ignored;
-                          },
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (v) => setState(() => _search = v),
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText: Lang.get('search_series'), // ← تبدل
-                              hintStyle: TextStyle(color: Colors.white54),
-                              border: InputBorder.none,
-                            ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _search = v),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'بحث عن مسلسل...',
+                            hintStyle: TextStyle(color: Colors.white54),
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
@@ -107,7 +98,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       _buildChip('all', Lang.get('all')), // <-- هنا
-           ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
+               ...cats.map((c) => _buildChip(c['category_id'].toString(), c['category_name'])),
                     ],
                   ),
                 ),
@@ -148,7 +139,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(6),
                                         child: s['cover']!= null && s['cover'].toString().isNotEmpty
-                                 ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
+                                     ? Image.network(s['cover'], fit: BoxFit.cover, width: double.infinity, errorBuilder: (_, __, ___) => Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)))
                                             : Container(color: Colors.grey[900], child: Icon(Icons.tv, size: 50, color: Colors.white30)),
                                       ),
                                     ),
@@ -249,8 +240,8 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         children: [
           // المواسم مربعات
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8), // <-- صلحتها هنا
-            child: Text(Lang.get('seasons'), style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)), // ← تبدل
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('المواسم', style: TextStyle(color: Colors.orange, fontSize: 22, fontWeight: FontWeight.bold)),
           ),
           Container(
             height: 80,
@@ -284,7 +275,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                             border: Border.all(color: hasFocus? Colors.white : Colors.transparent, width: 3),
                           ),
                           child: Center(
-                            child: Text('${Lang.get('season')} $season', style: TextStyle( // ← تبدل
+                            child: Text('الموسم $season', style: TextStyle(
                               color: isSel? Colors.black : Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold
@@ -302,7 +293,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           // الحلقات مربعات
           Padding(
             padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Text('${Lang.get('episodes')} - ${Lang.get('season')} $selectedSeason', style: TextStyle(color: Colors.white70, fontSize: 16)), // ← تبدل
+            child: Text('الحلقات - الموسم $selectedSeason', style: TextStyle(color: Colors.white70, fontSize: 16)),
           ),
           Expanded(
             child: GridView.builder(
@@ -342,7 +333,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  '${Lang.get('episode')} ${i+1}', // ← تبدل
+                                  'الحلقة ${i+1}',
                                   style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: hasFocus? FontWeight.bold : FontWeight.normal),
                                   overflow: TextOverflow.ellipsis,
                                 ),
