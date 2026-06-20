@@ -1,7 +1,7 @@
 name: kamel_pro
 description: "KAMEL PRO IPTV - Android TV App"
 publish_to: 'none'
-version: 1.0.4+32       # ✅ زدنا +1 باش Github Actions يعمل build جديد
+version: 1.0.4+33       # ✅ زدنا +1 باش Github Actions يعمل build جديد
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
