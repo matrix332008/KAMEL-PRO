@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /about.html
+Allow: /contact.html
+
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://kamel-pro.com/sitemap.xml
