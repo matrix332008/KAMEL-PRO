@@ -3,69 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KAMEL PRO - Secure Media Player & Playlist Manager</title>
-<meta name="description" content="KAMEL PRO is a secure media player application to manage your personal playlists.">
-<link rel="canonical" href="https://kamel-pro.com/">
+<title>KAMEL PRO - Media Player</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1238527510792689" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-:root{--purple:#6c4df5;--dark:#0b0b1a;--card:#15152b;--red:#ff3b5c}
-*{box-sizing:border-box}body{margin:0;background:var(--dark);color:#fff;font-family:system-ui;line-height:1.7}
+:root{--dark:#0b0b1a;--card:#15152b;--red:#ff3b5c;--purple:#6c4df5}
+*{box-sizing:border-box}body{margin:0;background:var(--dark);color:#fff;font-family:system-ui;line-height:1.8}
 .header{background:linear-gradient(135deg,#5a3df5,#8a5df5);padding:18px 16px 40px;display:flex;justify-content:space-between}
-.logo{color:var(--red);font-weight:900;font-size:34px;line-height:.9}
-.top-right{display:flex;gap:10px;align-items:center}
+.logo{color:var(--red);font-weight:900;font-size:32px;line-height:.9}
 .lang{background:rgba(0,0,0,.25);border:none;color:#fff;padding:8px 14px;border-radius:20px}
-.avatar{width:58px;height:58px;border-radius:50%;border:3px solid #fff;object-fit:cover}
-.container{max-width:460px;margin:-28px auto 40px;background:var(--card);border-radius:28px;padding:26px 20px}
-.input{width:100%;padding:16px;background:#0f0f1f;border:1px solid #2a2a4a;border-radius:14px;color:#fff;font-size:16px;margin:10px 0;text-align:right}
-.btn{width:100%;padding:16px;background:var(--red);border:none;border-radius:14px;color:#fff;font-weight:700;font-size:17px;margin-top:14px;cursor:pointer;display:block;text-align:center;text-decoration:none}
-.btn-dl{background:#2a2a3f;display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:#fff;text-decoration:none;border:none;width:100%;padding:16px;border-radius:14px;font-weight:700;font-size:16px;cursor:pointer}
+.avatar{width:58px;height:58px;border-radius:50%;border:3px solid #fff}
+.container{max-width:460px;margin:-28px auto 30px;background:var(--card);border-radius:28px;padding:26px 20px}
+.input{width:100%;padding:16px;background:#0f0f1f;border:1px solid #2a2a4a;border-radius:14px;color:#fff;margin:10px 0;text-align:right}
+.btn{width:100%;padding:16px;background:var(--red);border:none;border-radius:14px;color:#fff;font-weight:700;margin-top:14px;cursor:pointer}
+.btn-dl{background:#2a2a3f;display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:#fff;text-decoration:none;width:100%;padding:16px;border-radius:14px;font-weight:700}
 .btn-dl.play{background:#1a1a4a;border:1px solid #3a3a6a}
-.qr-link{display:block;text-align:center;margin:14px 0;color:#7aa7ff;text-decoration:none;font-weight:700}
+.qr-link{display:block;text-align:center;margin:14px 0;color:#7aa7ff;font-weight:700;text-decoration:none}
 #reader{width:100%;margin-top:10px;display:none;border-radius:12px;overflow:hidden;background:#000}
 .page{display:none}.page.active{display:block}
-.item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
+.item{background:#0f0f1f;padding:16px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between}
+.content{max-width:900px;margin:0 auto;padding:20px}
+.content h2{color:var(--red);font-size:26px;margin:50px 0 20px;text-align:right}
+.content h3{color:#a78bfa;font-size:18px;margin:25px 0 12px;text-align:right}
+.content p{color:#c5c5d6;text-align:right;line-height:2;font-size:15px}
+.card{background:#15152b;border:1px solid #2a2a4a;border-radius:16px;padding:22px;margin:16px 0;text-align:right}
+.card i{color:var(--purple);font-size:28px;display:block;margin-bottom:10px}
+.legal{border:1px solid #ff3b5c;background:#2a0f15;border-radius:16px;padding:22px;margin:30px 0}
+footer{text-align:center;padding:30px 20px;background:#0f0f1f;border-top:1px solid #2a2a4a;font-size:14px}
+footer a{color:#7aa7ff;margin:0 10px;text-decoration:none}
 .whatsapp{position:fixed;bottom:20px;left:20px;background:#25D366;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;z-index:999;text-decoration:none}
-footer{text-align:center;padding:30px 20px;background:#0f0f1f;margin-top:40px;font-size:14px;border-top:1px solid #2a2a4a}
-footer a{color:#7aa7ff;margin:0 12px;text-decoration:none}
-.terms-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:9999;display:none;align-items:center;justify-content:center;padding:15px}
-.terms-overlay.show{display:flex}
-.terms-modal{background:#15152b;border-radius:20px;max-width:650px;width:100%;max-height:90vh;display:flex;flex-direction:column;border:1px solid #3a3a6a}
-.terms-header{background:linear-gradient(135deg,#c9184a,#6a040f);padding:18px 24px;border-radius:20px 20px 0 0}
-.terms-header h2{margin:0;font-size:22px;font-weight:900;color:#fff;text-align:center}
-.terms-body{padding:20px 24px;overflow-y:auto;color:#ddd;font-size:14px;line-height:1.8;text-align:left;max-height:60vh}
-.terms-body h3{color:#fff;margin:18px 0 8px;font-size:15px}
-.terms-footer{padding:16px 24px;display:flex;justify-content:center;border-top:1px solid #2a2a4a;background:#0f0f1f;border-radius:0 0 20px 20px}
-.btn-agree{background:#2dc653;border:none;color:#fff;padding:14px 60px;border-radius:12px;font-size:17px;font-weight:800;cursor:pointer}
+.terms-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:none;align-items:center;justify-content:center;padding:15px}
+.terms-overlay.show{display:flex}.terms-modal{background:#15152b;border-radius:20px;max-width:600px;width:100%;border:1px solid #3a3a6a}
+.terms-header{padding:18px;background:linear-gradient(135deg,#c9184a,#6a040f);border-radius:20px 20px 0 0;text-align:center}
+.terms-body{padding:20px;color:#ddd;font-size:13px;max-height:60vh;overflow:auto}
+.terms-footer{padding:16px;text-align:center;border-top:1px solid #2a2a4a}.btn-agree{background:#2dc653;border:none;color:#fff;padding:12px 50px;border-radius:12px;font-weight:800}
 </style>
 </head>
 <body>
-<div class="terms-overlay" id="termsModal">
-<div class="terms-modal">
-<div class="terms-header"><h2>Terms of Use - KAMEL PRO</h2></div>
-<div class="terms-body">
-<p><strong>Last Updated: July 2026 - Contact: matrix332008@gmail.com</strong></p>
-<h3>1. What is KAMEL PRO?</h3>
-<p><strong>KAMEL PRO is a MEDIA PLAYER ONLY.</strong> Like VLC, it helps users manage personal M3U and Xtream playlists. We DO NOT provide, host, or sell any channels, movies, or subscriptions.</p>
-<h3>2. No Content Provided</h3>
-<p>All playlists must be provided by the user. We have no control over external URLs. User is 100% responsible for legality of content they add.</p>
-<h3>3. User Responsibility</h3>
-<p>You must have legal rights to access content you add. Illegal use is prohibited. You must comply with your local copyright laws.</p>
-<h3>4. DMCA Policy</h3>
-<p>We respect IP rights. As we host NO content, we cannot remove external content. For complaints, contact us at <strong>matrix332008@gmail.com</strong> and we will respond within 24h. If you believe your work is accessed via a user playlist, contact the playlist provider directly.</p>
-<h3>5. Privacy - Only MAC & ID Stored</h3>
-<p>We only store MAC address and Activation ID to activate your device. We do NOT collect videos, history, or personal data. Full Privacy Policy available on our website.</p>
-<h3>6. Disclaimer</h3>
-<p>Service provided AS IS. No warranty. Not liable for third-party playlists issues.</p>
-<h3>7. Contact</h3>
-<p>Email: matrix332008@gmail.com | WhatsApp: +420777099379<br>Owner: Kamel Assakri - Prachovice, Czech Republic</p>
-<p><strong>By clicking I Agree you confirm KAMEL PRO is only a tool and provides NO content.</strong></p>
-</div>
-<div class="terms-footer"><button class="btn-agree" onclick="acceptTerms()">I Agree - Continue</button></div>
-</div>
-</div>
-<div class="header"><div><div class="logo">KAMEL<br>PRO</div><div style="font-size:14px;opacity:.9" id="subtitle">إدارة اشتراكاتك</div></div><div class="top-right"><select class="lang" id="langSel" onchange="setLang(this.value)"><option value="ar">عربي 🇹🇳</option><option value="cz">CZ 🇨🇿</option><option value="fr">FR 🇫🇷</option><option value="de">DE 🇩🇪</option><option value="en">EN 🇬🇧</option></select><img src="https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/assets/avatar.png" class="avatar"></div></div>
+<div class="terms-overlay" id="termsModal"><div class="terms-modal"><div class="terms-header"><h2>Terms - KAMEL PRO</h2></div><div class="terms-body">MEDIA PLAYER ONLY. Contact matrix332008@gmail.com</div><div class="terms-footer"><button class="btn-agree" onclick="acceptTerms()">I Agree</button></div></div></div>
+
+<div class="header"><div><div class="logo">KAMEL<br>PRO</div><div id="subtitle" style="font-size:14px;opacity:.9">إدارة اشتراكاتك</div></div><div style="display:flex;gap:10px;align-items:center"><select class="lang" id="langSel" onchange="setLang(this.value)"><option value="ar">عربي 🇹🇳</option><option value="cz">CZ 🇨🇿</option><option value="fr">FR 🇫🇷</option><option value="de">DE 🇩🇪</option><option value="en">EN 🇬🇧</option></select><img src="https://raw.githubusercontent.com/matrix332008/KAMEL-PRO/main/assets/avatar.png" class="avatar"></div></div>
+
 <div class="container">
 <div id="p1" class="page active">
 <h2 style="text-align:right" id="t-activate">فعّل جهازك</h2>
@@ -77,30 +57,128 @@ footer a{color:#7aa7ff;margin:0 12px;text-decoration:none}
 <a href="#" class="qr-link" onclick="startQR();return false" id="t-qr">📷 امسح QR من التلفاز</a>
 <div id="reader"></div>
 </div>
-<div id="p2" class="page"><h2 id="t-lists">قوائمي</h2><div id="macShow" style="opacity:.7;margin-bottom:10px"></div><div class="item" onclick="f('m3u')"><div>📄 <b id="t-addm3u">إضافة M3U</b></div><span>+</span></div><div class="item" onclick="f('xt')"><div>#️⃣ <b id="t-addxt">إضافة Xtream</b></div><span>+</span></div><div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()" id="t-save1">حفظ</button></div><div id="fx" style="display:none"><input id="xs" class="input" placeholder="Server"><input id="xu" class="input" placeholder="User"><input id="xp" class="input" placeholder="Pass" type="password"><button class="btn" onclick="sx()" id="t-save2">حفظ</button></div><div id="list"></div></div>
-<div id="p3" class="page"><h2 id="t-edit">تعديل الاشتراك</h2><div id="editM3U" style="display:none"><input id="eu" class="input" placeholder="رابط M3U"></div><div id="editXt" style="display:none"><input id="es" class="input" placeholder="Server URL"><input id="euser" class="input" placeholder="Username"><input id="epass" class="input" placeholder="Password" type="text"></div><button class="btn" onclick="saveEdit()" id="t-saveEdit">💾 حفظ التعديل</button><button class="btn" style="background:#444;margin-top:8px" onclick="backToList()" id="t-back">رجوع</button></div>
+<div id="p2" class="page"><h2 id="t-lists">قوائمي</h2><div id="macShow"></div><div class="item" onclick="f('m3u')"><b id="t-addm3u">إضافة M3U</b><span>+</span></div><div class="item" onclick="f('xt')"><b id="t-addxt">إضافة Xtream</b><span>+</span></div><div id="fm" style="display:none"><input id="mu" class="input" placeholder="http://...m3u"><button class="btn" onclick="sm()" id="t-save1">حفظ</button></div><div id="fx" style="display:none"><input id="xs" class="input" placeholder="Server"><input id="xu" class="input" placeholder="User"><input id="xp" class="input" placeholder="Pass" type="password"><button class="btn" onclick="sx()" id="t-save2">حفظ</button></div><div id="list"></div></div>
+<div id="p3" class="page"><h2 id="t-edit">تعديل</h2><div id="editM3U" style="display:none"><input id="eu" class="input"></div><div id="editXt" style="display:none"><input id="es" class="input"><input id="euser" class="input"><input id="epass" class="input"></div><button class="btn" onclick="saveEdit()" id="t-saveEdit">حفظ</button><button class="btn" style="background:#444" onclick="backToList()" id="t-back">رجوع</button></div>
 </div>
+
+<div class="content">
+<h2 id="c-what">ما هو تطبيق KAMEL PRO ؟</h2>
+<p id="c-what1">KAMEL PRO هو مشغل وسائط (Media Player) عصري وآمن تم تطويره لمساعدتك على تنظيم وإدارة قوائم التشغيل الخاصة بك بكل سهولة. التطبيق لا يحتوي على أي محتوى، لا يبيع اشتراكات، ولا يوفر قنوات تلفزيونية أو أفلام. هو أداة فقط تشبه VLC أو MX Player ولكن مخصصة لإدارة روابط M3U و Xtream الخاصة بالمستخدم.</p>
+<p id="c-what2">فكرة التطبيق جاءت لحل مشكلة كبيرة: العديد من المستخدمين لديهم روابط IPTV قانونية من مزوديهم المحليين لكنهم لا يجدون مشغل آمن وسهل الاستعمال على التلفاز الذكي. KAMEL PRO يوفر واجهة نظيفة، تفعيل بالـ MAC، ومزامنة فورية بين موقع الويب والتلفاز.</p>
+<p id="c-what3">نحن نركز على ثلاث نقاط أساسية: الخصوصية، السرعة، والامتثال للقانون. نحن لا نتبع ما تشاهده، لا نخزن محتوى قوائمك، ولا نبيع بياناتك. كل ما نخزنه هو عنوان MAC ومعرف التفعيل لربط جهازك فقط.</p>
+
+<h2 id="c-featMain">مميزات KAMEL PRO</h2>
+<div class="card"><i class="fa-solid fa-shield-halved"></i><h3 id="c-f1t">مشغل فقط - بدون محتوى</h3><p id="c-f1d">نحن لا نوفر أي محتوى مقرصن. التطبيق مشغل وسائط فقط، المستخدم هو المسؤول الوحيد عن المحتوى الذي يضيفه.</p></div>
+<div class="card"><i class="fa-solid fa-list"></i><h3 id="c-f2t">إدارة M3U و Xtream</h3><p id="c-f2d">أضف روابط M3U أو بيانات Xtream (سيرفر، يوزر، باسورد) من هاتفك وشاهدها مباشرة على التلفاز بدون كتابة معقدة.</p></div>
+<div class="card"><i class="fa-solid fa-qrcode"></i><h3 id="c-f3t">تفعيل سريع بـ QR</h3><p id="c-f3d">لا حاجة لكتابة MAC طويل. افتح التطبيق على التلفاز وامسح كود QR من هذا الموقع ليتم التفعيل في ثانية.</p></div>
+<div class="card"><i class="fa-solid fa-language"></i><h3 id="c-f4t">متعدد اللغات</h3><p id="c-f4d">يدعم العربية، الإنجليزية، الفرنسية، التشيكية والألمانية، مع واجهة تتكيف مع اتجاه اللغة.</p></div>
+<div class="card"><i class="fa-solid fa-bolt"></i><h3 id="c-f5t">سريع وخفيف</h3><p id="c-f5d">مصمم ليعمل بسلاسة على أجهزة Android TV الضعيفة والقديمة بدون تقطيع أو استهلاك كبير للرام.</p></div>
+<div class="card"><i class="fa-solid fa-lock"></i><h3 id="c-f6t">خصوصية أولا</h3><p id="c-f6d">نستخدم تشفير HTTPS وتخزين آمن عبر Supabase. لا نتتبع سجل المشاهدة ولا نبيع بياناتك لأي طرف ثالث.</p></div>
+
+<h2 id="c-howMain">كيف تستعمل KAMEL PRO ؟</h2>
+<h3 id="c-s1t">الخطوة 1: حمّل التطبيق</h3><p id="c-s1d">حمّل تطبيق KAMEL PRO على تلفازك الذكي أو جهاز Android TV Box. بعد فتح التطبيق سيظهر لك عنوان MAC الخاص بجهازك وكود ID من 6 أرقام.</p>
+<h3 id="c-s2t">الخطوة 2: فعّل جهازك هنا</h3><p id="c-s2d">ارجع لهذا الموقع kamel-pro.com، أدخل الـ MAC والـ ID في الخانات بالأعلى واضغط دخول. يمكنك أيضا الضغط على "امسح QR من التلفاز" لتفعيل أسرع.</p>
+<h3 id="c-s3t">الخطوة 3: أضف قائمة التشغيل</h3><p id="c-s3d">بعد الدخول، اختر إضافة M3U إذا كان عندك رابط مباشر، أو إضافة Xtream إذا كان عندك سيرفر ويوزر وباسورد. اضغط حفظ وستظهر القائمة فورا على التلفاز.</p>
+
+<h2 id="c-faqMain">أسئلة شائعة - FAQ</h2>
+<div class="card"><h3 id="c-q1">هل KAMEL PRO يوفر قنوات أو أفلام؟</h3><p id="c-a1">لا، نهائيا. التطبيق لا يحتوي على أي قنوات أو أفلام. هو مشغل فقط مثل VLC. يجب أن يكون عندك اشتراك قانوني من مزود خدمة.</p></div>
+<div class="card"><h3 id="c-q2">لماذا يطلب MAC و ID؟</h3><p id="c-a2">لربط موقع الويب بجهاز التلفاز الخاص بك بشكل آمن. بدون هذا الربط لن نستطيع مزامنة قوائمك.</p></div>
+<div class="card"><h3 id="c-q3">هل بياناتي آمنة؟</h3><p id="c-a3">نعم، نحن نخزن فقط MAC و ID. لا نخزن روابطك أو محتواك. كل البيانات مشفرة ومحمية.</p></div>
+<div class="card"><h3 id="c-q4">التطبيق لا يعمل، ماذا أفعل؟</h3><p id="c-a4">تأكد أنك أدخلت MAC بشكل صحيح، وأن التلفاز متصل بالإنترنت، وأن رابط M3U الخاص بك يعمل. تواصل معنا عبر صفحة الاتصال.</p></div>
+
+<h2 id="c-legalMain" style="color:#ff3b5c">تنبيه قانوني مهم</h2>
+<div class="legal"><p id="c-legal">KAMEL PRO يحترم حقوق الملكية الفكرية. يمنع منعا باتا استخدام التطبيق لمشاهدة محتوى مقرصن أو غير قانوني. المستخدم هو المسؤول الوحيد عن قانونية المحتوى الذي يضيفه. باستخدامك للتطبيق، أنت توافق على الامتثال لجميع قوانين حقوق النشر في بلدك. إذا كنت مزود محتوى وتعتقد أن هناك انتهاك، يرجى التواصل معنا فورا عبر صفحة الاتصال.</p></div>
+</div>
+
 <footer><a href="/about.html">About</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/contact.html">Contact</a><p>© 2026 KAMEL PRO | matrix332008@gmail.com | Media Player Only</p></footer>
-<a href="https://wa.me/420777099379?text=سلام%20كمال%20نحب%20نسأل%20على%20KAMEL%20PRO" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+<a href="https://wa.me/420777099379" class="whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
 <script>
 const supa = window.supabase.createClient('https://pmgdzroirlegkpqzcyra.supabase.co','sb_publishable_gkeT9X4EbhXj3Rb2HoKNag_pj7JpdFj');
 let currentMac='',html5Qr,editId=null,editType='';
 window.addEventListener('DOMContentLoaded',()=>{if(!localStorage.getItem('terms_accepted')){document.getElementById('termsModal').classList.add('show');} setLang(localStorage.getItem('lang')||'ar');});
 function acceptTerms(){localStorage.setItem('terms_accepted','true');document.getElementById('termsModal').classList.remove('show');}
-function formatMac(input){let v=input.value.toUpperCase().replace(/[^A-F0-9]/g,'');if(v.length>12)v=v.substring(0,12);let out='';for(let i=0;i<v.length;i++){out+=v[i];if(i%2===1&&i<v.length-1)out+=':';}input.value=out;}
-const LANGS={ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl1:'Google Play - تحميل التطبيق',dl2:'📥 تحميل التطبيق المباشر',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل الاشتراك',saveEdit:'💾 حفظ التعديل',back:'رجوع'},cz:{dir:'ltr',subtitle:'Správa předplatných',activate:'Aktivujte zařízení',login:'Přihlásit →',dl1:'Google Play - Stáhnout',dl2:'📥 Přímé stažení',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Přidat M3U',addxt:'Přidat Xtream',save:'Uložit',edit:'Upravit',saveEdit:'💾 Uložit',back:'Zpět'},fr:{dir:'ltr',subtitle:'Gérez vos abonnements',activate:'Activez votre appareil',login:'Connexion →',dl1:'Google Play - Télécharger',dl2:'📥 Téléchargement direct',qr:'📷 Scanner QR',lists:'Mes listes',addm3u:'Ajouter M3U',addxt:'Ajouter Xtream',save:'Enregistrer',edit:'Modifier',saveEdit:'💾 Enregistrer',back:'Retour'},de:{dir:'ltr',subtitle:'Abos verwalten',activate:'Gerät aktivieren',login:'Anmelden →',dl1:'Google Play - Herunterladen',dl2:'📥 Direkt Download',qr:'📷 QR scannen',lists:'Meine Listen',addm3u:'M3U hinzufügen',addxt:'Xtream hinzufügen',save:'Speichern',edit:'Bearbeiten',saveEdit:'💾 Speichern',back:'Zurück'},en:{dir:'ltr',subtitle:'Manage subscriptions',activate:'Activate your device',login:'Login →',dl1:'Google Play - Download',dl2:'📥 Direct Download',qr:'📷 Scan QR',lists:'My Lists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit Subscription',saveEdit:'💾 Save',back:'Back'}};
-let CUR=LANGS.ar;
-function setLang(l){CUR=LANGS[l]||LANGS.ar;localStorage.setItem('lang',l);document.documentElement.lang=l;document.documentElement.dir=CUR.dir;document.getElementById('langSel').value=l;document.getElementById('subtitle').textContent=CUR.subtitle;document.getElementById('t-activate').textContent=CUR.activate;document.getElementById('t-login').textContent=CUR.login;document.getElementById('t-dl1').textContent=CUR.dl1;document.getElementById('t-dl2').textContent=CUR.dl2;document.getElementById('t-qr').textContent=CUR.qr;document.getElementById('t-lists').textContent=CUR.lists;document.getElementById('t-addm3u').textContent=CUR.addm3u;document.getElementById('t-addxt').textContent=CUR.addxt;document.getElementById('t-save1').textContent=CUR.save;document.getElementById('t-save2').textContent=CUR.save;document.getElementById('t-edit').textContent=CUR.edit;document.getElementById('t-saveEdit').textContent=CUR.saveEdit;document.getElementById('t-back').textContent=CUR.back;}
-async function login(){const macInput=document.getElementById('mac').value.trim().toUpperCase();const key=document.getElementById('key').value.trim();if(!macInput||!key)return alert('أدخل البيانات');let {data}=await supa.from('devices').select('mac_address,activation_key').eq('mac_address',macInput).eq('activation_key',key).maybeSingle();if(!data){return alert('MAC أو ID غالط');}currentMac=macInput;await supa.from('devices').update({last_seen:new Date().toISOString()}).eq('mac_address',currentMac);document.getElementById('p1').classList.remove('active');document.getElementById('p2').classList.add('active');document.getElementById('macShow').textContent=currentMac;load();}
+function formatMac(i){let v=i.value.toUpperCase().replace(/[^A-F0-9]/g,'');if(v.length>12)v=v.substring(0,12);let o='';for(let k=0;k<v.length;k++){o+=v[k];if(k%2===1&&k<v.length-1)o+=':';}i.value=o;}
+
+const LANGS={
+ar:{dir:'rtl',subtitle:'إدارة اشتراكاتك',activate:'فعّل جهازك',login:'دخول →',dl1:'Google Play - تحميل التطبيق',dl2:'📥 تحميل التطبيق المباشر',qr:'📷 امسح QR من التلفاز',lists:'قوائمي',addm3u:'إضافة M3U',addxt:'إضافة Xtream',save:'حفظ',edit:'تعديل',saveEdit:'حفظ',back:'رجوع',what:'ما هو تطبيق KAMEL PRO ؟',what1:'KAMEL PRO هو مشغل وسائط (Media Player) عصري وآمن تم تطويره لمساعدتك على تنظيم وإدارة قوائم التشغيل الخاصة بك بكل سهولة. التطبيق لا يحتوي على أي محتوى، لا يبيع اشتراكات، ولا يوفر قنوات تلفزيونية أو أفلام. هو أداة فقط تشبه VLC أو MX Player ولكن مخصصة لإدارة روابط M3U و Xtream الخاصة بالمستخدم.',what2:'فكرة التطبيق جاءت لحل مشكلة كبيرة: العديد من المستخدمين لديهم روابط IPTV قانونية من مزوديهم المحليين لكنهم لا يجدون مشغل آمن وسهل الاستعمال على التلفاز الذكي. KAMEL PRO يوفر واجهة نظيفة، تفعيل بالـ MAC، ومزامنة فورية بين موقع الويب والتلفاز.',what3:'نحن نركز على ثلاث نقاط أساسية: الخصوصية، السرعة، والامتثال للقانون. نحن لا نتبع ما تشاهده، لا نخزن محتوى قوائمك، ولا نبيع بياناتك. كل ما نخزنه هو عنوان MAC ومعرف التفعيل لربط جهازك فقط.',featMain:'مميزات KAMEL PRO',f1t:'مشغل فقط - بدون محتوى',f1d:'نحن لا نوفر أي محتوى مقرصن. التطبيق مشغل وسائط فقط، المستخدم هو المسؤول الوحيد عن المحتوى الذي يضيفه.',f2t:'إدارة M3U و Xtream',f2d:'أضف روابط M3U أو بيانات Xtream (سيرفر، يوزر، باسورد) من هاتفك وشاهدها مباشرة على التلفاز بدون كتابة معقدة.',f3t:'تفعيل سريع بـ QR',f3d:'لا حاجة لكتابة MAC طويل. افتح التطبيق على التلفاز وامسح كود QR من هذا الموقع ليتم التفعيل في ثانية.',f4t:'متعدد اللغات',f4d:'يدعم العربية، الإنجليزية، الفرنسية، التشيكية والألمانية، مع واجهة تتكيف مع اتجاه اللغة.',f5t:'سريع وخفيف',f5d:'مصمم ليعمل بسلاسة على أجهزة Android TV الضعيفة والقديمة بدون تقطيع أو استهلاك كبير للرام.',f6t:'خصوصية أولا',f6d:'نستخدم تشفير HTTPS وتخزين آمن عبر Supabase. لا نتتبع سجل المشاهدة ولا نبيع بياناتك لأي طرف ثالث.',howMain:'كيف تستعمل KAMEL PRO ؟',s1t:'الخطوة 1: حمّل التطبيق',s1d:'حمّل تطبيق KAMEL PRO على تلفازك الذكي أو جهاز Android TV Box. بعد فتح التطبيق سيظهر لك عنوان MAC الخاص بجهازك وكود ID من 6 أرقام.',s2t:'الخطوة 2: فعّل جهازك هنا',s2d:'ارجع لهذا الموقع kamel-pro.com، أدخل الـ MAC والـ ID في الخانات بالأعلى واضغط دخول. يمكنك أيضا الضغط على "امسح QR من التلفاز" لتفعيل أسرع.',s3t:'الخطوة 3: أضف قائمة التشغيل',s3d:'بعد الدخول، اختر إضافة M3U إذا كان عندك رابط مباشر، أو إضافة Xtream إذا كان عندك سيرفر ويوزر وباسورد. اضغط حفظ وستظهر القائمة فورا على التلفاز.',faqMain:'أسئلة شائعة - FAQ',q1:'هل KAMEL PRO يوفر قنوات أو أفلام؟',a1:'لا، نهائيا. التطبيق لا يحتوي على أي قنوات أو أفلام. هو مشغل فقط مثل VLC. يجب أن يكون عندك اشتراك قانوني من مزود خدمة.',q2:'لماذا يطلب MAC و ID؟',a2:'لربط موقع الويب بجهاز التلفاز الخاص بك بشكل آمن. بدون هذا الربط لن نستطيع مزامنة قوائمك.',q3:'هل بياناتي آمنة؟',a3:'نعم، نحن نخزن فقط MAC و ID. لا نخزن روابطك أو محتواك. كل البيانات مشفرة ومحمية.',q4:'التطبيق لا يعمل، ماذا أفعل؟',a4:'تأكد أنك أدخلت MAC بشكل صحيح، وأن التلفاز متصل بالإنترنت، وأن رابط M3U الخاص بك يعمل. تواصل معنا عبر صفحة الاتصال.',legalMain:'تنبيه قانوني مهم',legal:'KAMEL PRO يحترم حقوق الملكية الفكرية. يمنع منعا باتا استخدام التطبيق لمشاهدة محتوى مقرصن أو غير قانوني. المستخدم هو المسؤول الوحيد عن قانونية المحتوى الذي يضيفه. باستخدامك للتطبيق، أنت توافق على الامتثال لجميع قوانين حقوق النشر في بلدك. إذا كنت مزود محتوى وتعتقد أن هناك انتهاك، يرجى التواصل معنا فورا عبر صفحة الاتصال.'},
+en:{dir:'ltr',subtitle:'Manage subscriptions',activate:'Activate device',login:'Login →',dl1:'Google Play - Download',dl2:'📥 Direct Download',qr:'📷 Scan QR from TV',lists:'My Lists',addm3u:'Add M3U',addxt:'Add Xtream',save:'Save',edit:'Edit',saveEdit:'Save',back:'Back',what:'What is KAMEL PRO?',what1:'KAMEL PRO is a modern and secure media player to help you organize your personal playlists easily. No content, no subscriptions, no channels. Tool like VLC.',what2:'Many users have legal IPTV links but no good player on smart TV. KAMEL PRO provides clean UI, MAC activation and instant sync.',what3:'We focus on privacy, speed and legal compliance. We dont track what you watch, we dont store your playlists, we dont sell data. Only MAC and ID.',featMain:'KAMEL PRO Features',f1t:'Player Only - No Content',f1d:'We provide no pirated content. Player only, user responsible.',f2t:'M3U and Xtream Management',f2d:'Add M3U links or Xtream data from phone and watch directly on TV.',f3t:'Fast QR Activation',f3d:'No need to type long MAC. Scan QR from TV app to activate in one second.',f4t:'Multi Language',f4d:'Supports Arabic, English, French, Czech and German.',f5t:'Fast and Light',f5d:'Designed to run smoothly on weak Android TV devices without buffering.',f6t:'Privacy First',f6d:'HTTPS encryption and secure storage via Supabase. No tracking, no selling data.',howMain:'How to use KAMEL PRO?',s1t:'Step 1: Download App',s1d:'Download KAMEL PRO on your smart TV or Android TV Box. You will see MAC and 6 digit ID.',s2t:'Step 2: Activate here',s2d:'Go to kamel-pro.com, enter MAC and ID and press Login. You can also scan QR for faster activation.',s3t:'Step 3: Add Playlist',s3d:'After login, choose Add M3U if you have direct link, or Add Xtream if you have server, user, password. Save and it appears instantly on TV.',faqMain:'FAQ',q1:'Does KAMEL PRO provide channels or movies?',a1:'No, never. No channels or movies. Player only like VLC. You must have legal subscription.',q2:'Why MAC and ID?',a2:'To link website with your TV securely. Without this we cannot sync your lists.',q3:'Is my data safe?',a3:'Yes, we store only MAC and ID. No links, no content. All data encrypted.',q4:'App not working, what to do?',a4:'Make sure MAC is correct, TV connected to internet, and your M3U link works. Contact us.',legalMain:'Important Legal Notice',legal:'KAMEL PRO respects intellectual property. It is strictly forbidden to use app to watch pirated or illegal content. User is solely responsible for legality of content he adds.'},
+fr:{dir:'ltr',subtitle:'Gerez abonnements',activate:'Activez appareil',login:'Connexion →',dl1:'Google Play - Telecharger',dl2:'📥 Telechargement direct',qr:'📷 Scanner QR',lists:'Mes listes',addm3u:'Ajouter M3U',addxt:'Ajouter Xtream',save:'Enregistrer',edit:'Modifier',saveEdit:'Enregistrer',back:'Retour',what:'Quest ce que KAMEL PRO?',what1:'KAMEL PRO est un lecteur multimedia moderne et securise pour organiser vos playlists perso. Aucun contenu, aucun abonnement. Outil comme VLC.',what2:'Beaucoup ont des liens IPTV legaux mais pas de bon lecteur sur smart TV. KAMEL PRO offre UI propre, activation MAC et synchro instantanee.',what3:'On se concentre sur confidentialite, vitesse et legalite. On ne trace pas, on ne stocke pas vos playlists, on ne vend pas vos donnees.',featMain:'Fonctionnalites KAMEL PRO',f1t:'Lecteur seulement - Sans contenu',f1d:'Aucun contenu pirate. Lecteur seulement, utilisateur responsable.',f2t:'Gestion M3U et Xtream',f2d:'Ajoutez liens M3U ou donnees Xtream depuis telephone et regardez direct sur TV.',f3t:'Activation rapide QR',f3d:'Pas besoin de taper long MAC. Scannez QR depuis app TV pour activer en une seconde.',f4t:'Multi langues',f4d:'Supporte Arabe, Anglais, Francais, Tcheque et Allemand.',f5t:'Rapide et leger',f5d:'Concu pour fonctionner sur appareils Android TV faibles sans coupure.',f6t:'Confidentialite dabord',f6d:'Chiffrement HTTPS et stockage securise via Supabase. Pas de suivi, pas de vente.',howMain:'Comment utiliser KAMEL PRO?',s1t:'Etape 1: Telecharger app',s1d:'Telechargez KAMEL PRO sur smart TV ou Android TV Box. Vous verrez MAC et ID a 6 chiffres.',s2t:'Etape 2: Activez ici',s2d:'Allez sur kamel-pro.com, entrez MAC et ID et appuyez Connexion. Vous pouvez aussi scanner QR.',s3t:'Etape 3: Ajouter liste',s3d:'Apres connexion, choisissez Ajouter M3U si vous avez lien direct, ou Ajouter Xtream si vous avez serveur, user, password. Enregistrez.',faqMain:'FAQ',q1:'KAMEL PRO fournit chaines ou films?',a1:'Non, jamais. Aucune chaine ou film. Lecteur seulement comme VLC. Vous devez avoir abonnement legal.',q2:'Pourquoi MAC et ID?',a2:'Pour lier site web avec votre TV de maniere securisee.',q3:'Mes donnees sont securisees?',a3:'Oui, on stocke seulement MAC et ID. Pas de liens, pas de contenu. Tout chiffre.',q4:'App ne marche pas, que faire?',a4:'Verifiez MAC correct, TV connecte internet, et votre lien M3U marche. Contactez nous.',legalMain:'Avis legal important',legal:'KAMEL PRO respecte propriete intellectuelle. Interdit dutiliser app pour contenu pirate ou illegal.'},
+de:{dir:'ltr',subtitle:'Abos verwalten',activate:'Gerat aktivieren',login:'Anmelden →',dl1:'Google Play - Herunterladen',dl2:'📥 Direkt Download',qr:'📷 QR scannen',lists:'Meine Listen',addm3u:'M3U hinzufugen',addxt:'Xtream hinzufugen',save:'Speichern',edit:'Bearbeiten',saveEdit:'Speichern',back:'Zuruck',what:'Was ist KAMEL PRO?',what1:'KAMEL PRO ist ein moderner sicherer Media Player zum Organisieren Ihrer Playlists. Kein Inhalt, keine Abos. Tool wie VLC.',what2:'Viele haben legale IPTV Links aber keinen guten Player auf Smart TV. KAMEL PRO bietet saubere UI, MAC Aktivierung und sofortige Sync.',what3:'Wir konzentrieren uns auf Datenschutz, Geschwindigkeit und Recht. Wir tracken nicht, speichern keine Playlists, verkaufen keine Daten.',featMain:'KAMEL PRO Funktionen',f1t:'Nur Player - Kein Inhalt',f1d:'Kein Raubkopie Inhalt. Nur Player, Nutzer verantwortlich.',f2t:'M3U und Xtream Verwaltung',f2d:'Fugen Sie M3U Links oder Xtream Daten vom Handy hinzu und schauen Sie direkt auf TV.',f3t:'Schnelle QR Aktivierung',f3d:'Kein langes MAC tippen. QR von TV App scannen um in einer Sekunde zu aktivieren.',f4t:'Mehrsprachig',f4d:'Unterstutzt Arabisch, Englisch, Franzosisch, Tschechisch und Deutsch.',f5t:'Schnell und leicht',f5d:'Entwickelt um reibungslos auf schwachen Android TV Geraten zu laufen.',f6t:'Datenschutz zuerst',f6d:'HTTPS Verschlusselung und sichere Speicherung via Supabase. Kein Tracking.',howMain:'Wie benutzt man KAMEL PRO?',s1t:'Schritt 1: App herunterladen',s1d:'Laden Sie KAMEL PRO auf Smart TV oder Android TV Box herunter. Sie sehen MAC und 6-stellige ID.',s2t:'Schritt 2: Hier aktivieren',s2d:'Gehen Sie zu kamel-pro.com, geben Sie MAC und ID ein und drucken Anmelden. Sie konnen auch QR scannen.',s3t:'Schritt 3: Playlist hinzufugen',s3d:'Nach Login, wahlen Sie M3U hinzufugen wenn Sie direkten Link haben, oder Xtream hinzufugen wenn Sie Server, User, Passwort haben.',faqMain:'FAQ',q1:'Bietet KAMEL PRO Kanale oder Filme?',a1:'Nein, niemals. Keine Kanale oder Filme. Nur Player wie VLC. Sie mussen legales Abo haben.',q2:'Warum MAC und ID?',a2:'Um Website mit Ihrem TV sicher zu verbinden.',q3:'Sind meine Daten sicher?',a3:'Ja, wir speichern nur MAC und ID. Keine Links, kein Inhalt. Alles verschlusselt.',q4:'App funktioniert nicht, was tun?',a4:'Stellen Sie sicher MAC korrekt, TV mit Internet verbunden, und Ihr M3U Link funktioniert.',legalMain:'Wichtiger rechtlicher Hinweis',legal:'KAMEL PRO respektiert geistiges Eigentum. Es ist strengstens verboten App zum Anschauen von Raubkopien zu verwenden.'},
+cz:{dir:'ltr',subtitle:'Sprava predplatnych',activate:'Aktivujte zarizeni',login:'Prihlasit →',dl1:'Google Play - Stahnout',dl2:'📥 Prime stazeni',qr:'📷 Naskenovat QR',lists:'Moje seznamy',addm3u:'Pridat M3U',addxt:'Pridat Xtream',save:'Ulozit',edit:'Upravit',saveEdit:'Ulozit',back:'Zpet',what:'Co je KAMEL PRO?',what1:'KAMEL PRO je moderni bezpecny prehravac pro organizaci osobnich playlistu. Zadny obsah, zadne predplatne. Nastroj jako VLC.',what2:'Mnoho uzivatelu ma legalni IPTV odkazy ale zadny dobry prehravac na smart TV. KAMEL PRO nabizi ciste UI, aktivaci MAC a okamzitou synchronizaci.',what3:'Zamerujeme se na soukromi, rychlost a legalitu. Nesledujeme co sledujete, neukladame vase playlisty, neprodavame data.',featMain:'Funkce KAMEL PRO',f1t:'Pouze prehravac - Zadny obsah',f1d:'Zadny piratsky obsah. Pouze prehravac, uzivatel zodpovedny.',f2t:'Sprava M3U a Xtream',f2d:'Pridavejte M3U odkazy nebo Xtream data z telefonu a sledujte primo na TV.',f3t:'Rychla QR aktivace',f3d:'Neni treba psat dlouhy MAC. Naskenujte QR z TV aplikace pro aktivaci za sekundu.',f4t:'Vicejazyky',f4d:'Podporuje arabstinu, anglictinu, francouzstinu, cestinu a nemcinu.',f5t:'Rychly a lehký',f5d:'Navrzen pro plynuly chod na slabe Android TV zarizeni bez sekání.',f6t:'Soukromi na prvnim miste',f6d:'HTTPS sifrovani a bezpecne ulozeni pres Supabase. Zadne sledovani.',howMain:'Jak pouzivat KAMEL PRO?',s1t:'Krok 1: Stahnout aplikaci',s1d:'Stahnete KAMEL PRO na smart TV nebo Android TV Box. Uvidite MAC a 6-mistne ID.',s2t:'Krok 2: Aktivujte zde',s2d:'Jdete na kamel-pro.com, zadejte MAC a ID a stisknete Prihlasit. Muzete take naskenovat QR.',s3t:'Krok 3: Pridat playlist',s3d:'Po prihlaseni zvolte Pridat M3U pokud mate primy odkaz, nebo Pridat Xtream pokud mate server, uzivatele, heslo. Ulozte.',faqMain:'FAQ',q1:'Poskytuje KAMEL PRO kanaly nebo filmy?',a1:'Ne, nikdy. Zadne kanaly nebo filmy. Pouze prehravac jako VLC. Musite mit legalni predplatne.',q2:'Proc MAC a ID?',a2:'Pro bezpecne propojeni webu s vasi TV.',q3:'Jsou moje data bezpecna?',a3:'Ano, ukladame pouze MAC a ID. Zadne odkazy, zadny obsah. Vse sifrovane.',q4:'Aplikace nefunguje, co delat?',a4:'Ujistete se MAC spravne, TV pripojena k internetu a vas M3U odkaz funguje.',legalMain:'Dulezite pravni upozorneni',legal:'KAMEL PRO respektuje dusevni vlastnictvi. Je prisne zakazano pouzivat aplikaci ke sledovani piratskeho nebo nelegalniho obsahu.'}
+};
+
+function setLang(l){
+ if(!l) l='ar';
+ l=String(l).toLowerCase().trim();
+ const C=LANGS[l]||LANGS.ar;
+ try{localStorage.setItem('lang',l);}catch(e){}
+ document.documentElement.lang=l;document.documentElement.dir=C.dir;
+ const $=id=>document.getElementById(id);
+ if($('langSel')) $('langSel').value=l;
+ if($('subtitle')) $('subtitle').textContent=C.subtitle;
+ if($('t-activate')) $('t-activate').textContent=C.activate;
+ if($('t-login')) $('t-login').textContent=C.login;
+ if($('t-dl1')) $('t-dl1').textContent=C.dl1;
+ if($('t-dl2')) $('t-dl2').textContent=C.dl2;
+ if($('t-qr')) $('t-qr').textContent=C.qr;
+ if($('t-lists')) $('t-lists').textContent=C.lists;
+ if($('t-addm3u')) $('t-addm3u').textContent=C.addm3u;
+ if($('t-addxt')) $('t-addxt').textContent=C.addxt;
+ if($('t-save1')) $('t-save1').textContent=C.save;
+ if($('t-save2')) $('t-save2').textContent=C.save;
+ if($('t-edit')) $('t-edit').textContent=C.edit;
+ if($('t-saveEdit')) $('t-saveEdit').textContent=C.saveEdit;
+ if($('t-back')) $('t-back').textContent=C.back;
+ if($('c-what')) $('c-what').textContent=C.what;
+ if($('c-what1')) $('c-what1').textContent=C.what1;
+ if($('c-what2')) $('c-what2').textContent=C.what2;
+ if($('c-what3')) $('c-what3').textContent=C.what3;
+ if($('c-featMain')) $('c-featMain').textContent=C.featMain;
+ if($('c-f1t')) $('c-f1t').textContent=C.f1t;
+ if($('c-f1d')) $('c-f1d').textContent=C.f1d;
+ if($('c-f2t')) $('c-f2t').textContent=C.f2t;
+ if($('c-f2d')) $('c-f2d').textContent=C.f2d;
+ if($('c-f3t')) $('c-f3t').textContent=C.f3t;
+ if($('c-f3d')) $('c-f3d').textContent=C.f3d;
+ if($('c-f4t')) $('c-f4t').textContent=C.f4t;
+ if($('c-f4d')) $('c-f4d').textContent=C.f4d;
+ if($('c-f5t')) $('c-f5t').textContent=C.f5t;
+ if($('c-f5d')) $('c-f5d').textContent=C.f5d;
+ if($('c-f6t')) $('c-f6t').textContent=C.f6t;
+ if($('c-f6d')) $('c-f6d').textContent=C.f6d;
+ if($('c-howMain')) $('c-howMain').textContent=C.howMain;
+ if($('c-s1t')) $('c-s1t').textContent=C.s1t;
+ if($('c-s1d')) $('c-s1d').textContent=C.s1d;
+ if($('c-s2t')) $('c-s2t').textContent=C.s2t;
+ if($('c-s2d')) $('c-s2d').textContent=C.s2d;
+ if($('c-s3t')) $('c-s3t').textContent=C.s3t;
+ if($('c-s3d')) $('c-s3d').textContent=C.s3d;
+ if($('c-faqMain')) $('c-faqMain').textContent=C.faqMain;
+ if($('c-q1')) $('c-q1').textContent=C.q1;
+ if($('c-a1')) $('c-a1').textContent=C.a1;
+ if($('c-q2')) $('c-q2').textContent=C.q2;
+ if($('c-a2')) $('c-a2').textContent=C.a2;
+ if($('c-q3')) $('c-q3').textContent=C.q3;
+ if($('c-a3')) $('c-a3').textContent=C.a3;
+ if($('c-q4')) $('c-q4').textContent=C.q4;
+ if($('c-a4')) $('c-a4').textContent=C.a4;
+ if($('c-legalMain')) $('c-legalMain').textContent=C.legalMain;
+ if($('c-legal')) $('c-legal').textContent=C.legal;
+ const al=C.dir==='rtl'?'right':'left';
+ document.querySelectorAll('.content h2,.content h3,.content p,.card').forEach(e=>e.style.textAlign=al);
+}
+
+async function login(){const m=document.getElementById('mac').value.trim().toUpperCase();const k=document.getElementById('key').value.trim();if(!m||!k)return alert('ادخل البيانات');let {data}=await supa.from('devices').select('mac_address,activation_key').eq('mac_address',m).eq('activation_key',k).maybeSingle();if(!data)return alert('MAC او ID غالط');currentMac=m;await supa.from('devices').update({last_seen:new Date().toISOString()}).eq('mac_address',currentMac);document.getElementById('p1').classList.remove('active');document.getElementById('p2').classList.add('active');document.getElementById('macShow').textContent=currentMac;load();}
 function f(t){document.getElementById('fm').style.display=t==='m3u'?'block':'none';document.getElementById('fx').style.display=t==='xt'?'block':'none';}
-async function sm(){const url=document.getElementById('mu').value.trim();if(!url)return alert('أدخل الرابط');await supa.from('playlists').insert({mac:currentMac,type:'m3u',url,name:'M3U'});document.getElementById('mu').value='';alert('تم الحفظ ✓');load();}
-async function sx(){const server=document.getElementById('xs').value.trim();const user=document.getElementById('xu').value.trim();const pass=document.getElementById('xp').value;if(!server||!user)return alert('أدخل البيانات');await supa.from('playlists').insert({mac:currentMac,type:'xtream',server_url:server,username:user,password:pass,name:'Xtream'});alert('تم الحفظ ✓');load();}
+async function sm(){const u=document.getElementById('mu').value.trim();if(!u)return alert('ادخل الرابط');await supa.from('playlists').insert({mac:currentMac,type:'m3u',url:u,name:'M3U'});document.getElementById('mu').value='';alert('تم الحفظ ✓');load();}
+async function sx(){const s=document.getElementById('xs').value.trim();const u=document.getElementById('xu').value.trim();const p=document.getElementById('xp').value;if(!s||!u)return alert('ادخل البيانات');await supa.from('playlists').insert({mac:currentMac,type:'xtream',server_url:s,username:u,password:p,name:'Xtream'});alert('تم الحفظ ✓');load();}
 async function load(){const {data}=await supa.from('playlists').select().eq('mac',currentMac).order('created_at',{ascending:false});document.getElementById('list').innerHTML=(data||[]).map(p=>`<div class="item"><div>${p.type.toUpperCase()}<br><small style="opacity:.7">${p.url||p.server_url}</small></div><div><button onclick="window.edit('${p.id}')" style="background:none;border:none;color:#7aa7ff">✏️</button><button onclick="window.del('${p.id}')" style="background:none;border:none;color:#ff5c5c">🗑️</button></div></div>`).join('');}
 window.del=async function(id){if(confirm('حذف؟')){await supa.from('playlists').delete().eq('id',id);load();}}
 window.edit=async function(id){const {data}=await supa.from('playlists').select().eq('id',id).single();editId=id;editType=data.type;document.getElementById('p2').classList.remove('active');document.getElementById('p3').classList.add('active');if(data.type==='m3u'){document.getElementById('editM3U').style.display='block';document.getElementById('editXt').style.display='none';document.getElementById('eu').value=data.url||'';}else{document.getElementById('editM3U').style.display='none';document.getElementById('editXt').style.display='block';document.getElementById('es').value=data.server_url||'';document.getElementById('euser').value=data.username||'';document.getElementById('epass').value=data.password||'';}}
 async function saveEdit(){if(!editId)return;if(editType==='m3u'){await supa.from('playlists').update({url:document.getElementById('eu').value.trim()}).eq('id',editId);}else{await supa.from('playlists').update({server_url:document.getElementById('es').value.trim(),username:document.getElementById('euser').value.trim(),password:document.getElementById('epass').value}).eq('id',editId);}alert('تم التعديل ✓');backToList();load();}
 function backToList(){document.getElementById('p3').classList.remove('active');document.getElementById('p2').classList.add('active');}
-function startQR(){const reader=document.getElementById('reader');reader.style.display='block';reader.innerHTML='<div style="padding:30px;text-align:center">📷 جاري فتح الكاميرا...<br>لو انت في معاينة Meta AI، افتح الرابط في Safari/Chrome باش تخدم الكاميرا</div>';if(typeof Html5Qrcode === 'undefined'){reader.innerHTML='<div style="padding:20px;text-align:center;color:#ff5c5c">المكتبة لم تحمل، افتح الموقع من Safari</div>';return;}if(html5Qr){try{html5Qr.clear();}catch(e){}}html5Qr=new Html5Qrcode("reader");html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},txt=>{try{html5Qr.stop();}catch(e){}reader.style.display='none';try{const d=JSON.parse(txt);if(d.mac){document.getElementById('mac').value=d.mac;formatMac(document.getElementById('mac'));}if(d.id||d.key||d.activation){document.getElementById('key').value=d.id||d.key||d.activation;}if(d.mac) setTimeout(()=>login(),300);}catch(e){const parts=txt.split('|');if(parts.length>=2){document.getElementById('mac').value=parts[0];formatMac(document.getElementById('mac'));document.getElementById('key').value=parts[1]||parts[2]||'';} else {document.getElementById('mac').value=txt;}}},err=>{}).catch(e=>{reader.innerHTML='<div style="padding:20px;color:#ff5c5c;text-align:center">❌ الكاميرا مرفوضة في هذه المعاينة<br>افتح https://kamel-pro.com في Safari و ستعمل 100%<br><br><button onclick="document.getElementById(\'reader\').style.display=\'none\'" style="background:#ff5c5c;color:#fff;border:none;padding:10px 20px;border-radius:10px">إغلاق</button></div>';});}
+function startQR(){const r=document.getElementById('reader');r.style.display='block';html5Qr=new Html5Qrcode("reader");html5Qr.start({facingMode:"environment"},{fps:10,qrbox:250},txt=>{html5Qr.stop();r.style.display='none';try{const d=JSON.parse(txt);document.getElementById('mac').value=d.mac||'';formatMac(document.getElementById('mac'));document.getElementById('key').value=d.id||'';login();}catch(e){const p=txt.split('|');if(p.length>=2){document.getElementById('mac').value=p[0];formatMac(document.getElementById('mac'));document.getElementById('key').value=p[1];}}}).catch(e=>alert('الكاميرا تحتاج HTTPS'));}
 </script>
 </body>
 </html>
